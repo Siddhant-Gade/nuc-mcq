@@ -114,7 +114,7 @@
 }
 
 .table tbody tr:hover {
-  background: var(--color-surface);
+  background: var(--color-surface-container);
 }
 
 .thActions {

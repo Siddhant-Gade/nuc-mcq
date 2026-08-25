@@ -4,49 +4,16 @@
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
-  transition:
-    transform var(--transition-lift),
-    box-shadow var(--transition-lift),
-    border-color var(--transition-hover);
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
-  opacity: 0;
-  transition: opacity var(--transition-hover);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  transition: box-shadow 0.15s, border-color var(--transition-hover);
 }
 
 .card:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-}
-
-.card:hover::before {
-  opacity: 1;
 }
 
 .card:focus-within {
   outline: none;
-  box-shadow: var(--focus-ring), var(--shadow-md);
   border-color: var(--color-primary);
-}
-
-/* Glass variant — use together with .card e.g. className={`${s.card} ${s.cardGlass}`} */
-.cardGlass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur-amount));
-  -webkit-backdrop-filter: blur(var(--blur-amount));
-  border-color: var(--glass-border);
-  box-shadow: var(--glass-shadow);
 }
 
 .statCard {
@@ -58,39 +25,15 @@
   flex-direction: column;
   gap: 0.5rem;
   box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
-  transition:
-    transform var(--transition-lift),
-    box-shadow var(--transition-lift),
-    border-color var(--transition-hover);
-}
-
-.statCard::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
-  opacity: 0;
-  transition: opacity var(--transition-hover);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  transition: box-shadow 0.15s, border-color var(--transition-hover);
 }
 
 .statCard:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-}
-
-.statCard:hover::before {
-  opacity: 1;
 }
 
 .statCard:focus-within {
   outline: none;
-  box-shadow: var(--focus-ring), var(--shadow-md);
   border-color: var(--color-primary);
 }
 
@@ -197,16 +140,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card,
-  .statCard,
-  .card::before,
-  .statCard::before,
   .statProgressFill {
     transition: none !important;
-  }
-
-  .card:hover,
-  .statCard:hover {
-    transform: none;
   }
 }

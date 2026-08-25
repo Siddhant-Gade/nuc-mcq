@@ -27,50 +27,17 @@
   gap: 0.75rem;
   position: relative;
   overflow: hidden;
-  /* hover elevation */
-  transition:
-    transform 150ms ease,
-    box-shadow 150ms ease,
-    border-color 150ms ease,
-    background 150ms ease;
-}
-
-/* top 3px accent bar — per Operational Dashboard palette */
-.statCard::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.statCard:nth-child(1)::before {
-  background: var(--color-primary);
-}
-
-.statCard:nth-child(2)::before {
-  background: var(--color-success);
-}
-
-.statCard:nth-child(3)::before {
-  background: var(--color-warning);
-}
-
-.statCard:nth-child(4)::before {
-  background: var(--color-info);
+  transition: box-shadow 150ms ease, border-color 150ms ease;
 }
 
 .statCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   border-color: color-mix(in srgb, var(--color-outline-variant) 80%, var(--color-outline) 20%);
-  cursor: pointer;
 }
 
 .statCard:focus-within {
-  box-shadow: var(--shadow-lg), var(--focus-ring);
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 .statHeader {
@@ -103,11 +70,6 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  /* subtle inner shadow for depth */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.04),
-    0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .statIconPrimary {
@@ -158,21 +120,6 @@
   transition: width 0.5s ease;
   position: relative;
   overflow: hidden;
-}
-
-/* shimmer when loading / progress active */
-.statProgressFill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.35) 50%,
-    transparent 100%
-  );
-  transform: translateX(-100%);
-  animation: shimmer 1.6s ease-in-out infinite;
 }
 
 .statProgressSuccess {
@@ -230,12 +177,6 @@
   min-height: 320px;
   height: 100%;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 150ms ease, border-color 150ms ease;
-}
-
-.batchPanel:hover,
-.authPanel:hover {
-  box-shadow: var(--shadow-md);
 }
 
 .panelHeader {
@@ -244,12 +185,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* subtle bg gradient */
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-surface-container) 92%, var(--color-surface-card) 8%) 0%,
-    var(--color-surface-card) 100%
-  );
+  background: var(--color-surface-container);
 }
 
 .panelTitle {
@@ -265,7 +201,7 @@
   padding: 0.625rem;
   border-top: 1px solid var(--color-outline-variant);
   text-align: center;
-  background: color-mix(in srgb, var(--color-surface) 55%, var(--color-surface-card) 45%);
+  background: var(--color-surface-container);
 }
 
 .panelLink {
@@ -392,7 +328,7 @@
   border-bottom: 1px solid var(--color-outline-variant);
   position: relative;
   cursor: pointer;
-  transition: background 150ms ease, padding-right 150ms ease;
+  transition: background 150ms ease;
   display: block;
 }
 
@@ -402,34 +338,12 @@
 
 .authItem:hover {
   background: var(--color-surface-container);
-  padding-right: 2rem;
 }
 
 .authItem:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
   background: var(--color-surface-container);
-}
-
-/* chevron reveal on hover */
-.authItem::after {
-  content: "";
-  position: absolute;
-  right: 0.875rem;
-  top: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-right: 1.5px solid var(--color-outline);
-  border-top: 1.5px solid var(--color-outline);
-  transform: translateY(-50%) translateX(-4px) rotate(45deg);
-  opacity: 0;
-  transition: opacity 150ms ease, transform 150ms ease;
-  pointer-events: none;
-}
-
-.authItem:hover::after {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0) rotate(45deg);
 }
 
 .authItemHeader {
@@ -488,54 +402,11 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  /* dashed border treatment */
-  margin: 0.75rem;
-  border: 1px dashed var(--color-outline-variant);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-surface) 70%, var(--color-surface-card) 30%);
   min-height: 140px;
 }
 
-/* dashed icon area inside empty state — rendered via ::before */
-.emptyState::before {
-  content: "";
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  border: 1.5px dashed var(--color-outline-variant);
-  background: var(--color-surface-container);
-  display: block;
-  /* subtle icon placeholder — center dot */
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  /* if text-only emptyState, this gives visual anchor */
-}
-
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .statCard,
-  .statCard:hover {
-    transform: none;
-  }
-
-  .statProgressFill::after {
-    animation: none;
-    display: none;
-  }
-
-  .authItem,
-  .authItem:hover,
-  .authItem::after,
-  .table tbody tr {
-    transition-duration: 0.01ms;
-    transform: none;
-  }
-
-  .authItem::after {
-    transform: translateY(-50%) rotate(45deg);
+  .statProgressFill {
+    transition: none;
   }
 }

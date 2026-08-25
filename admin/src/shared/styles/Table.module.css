@@ -25,14 +25,6 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  backdrop-filter: blur(var(--blur-amount));
-  -webkit-backdrop-filter: blur(var(--blur-amount));
-}
-
-/* Optional glass header variant: add class .headerGlass to <th> or <thead> */
-.table th.headerGlass {
-  background: var(--glass-bg);
-  border-bottom: 1px solid var(--glass-border);
 }
 
 .table td {

@@ -11,15 +11,6 @@
   z-index: 40;
 }
 
-/* header backdrop blur — 80% opacity + blur */
-@supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
-  .header {
-    background: color-mix(in srgb, var(--color-surface-card) 80%, transparent);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
-}
-
 .left {
   display: flex;
   align-items: center;
@@ -97,8 +88,6 @@
   box-shadow: var(--shadow-lg);
   z-index: 100;
   overflow: hidden;
-  /* dropdown enter animation */
-  animation: dropdownIn 150ms ease;
   transform-origin: top left;
 }
 
@@ -231,16 +220,11 @@
   color: var(--color-on-surface-variant);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 150ms ease, transform 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
 .iconButton:hover {
   background: var(--color-surface-container);
-  transform: scale(1.06);
-}
-
-.iconButton:active {
-  transform: scale(0.96);
 }
 
 .iconButton:focus-visible {
@@ -328,7 +312,6 @@
   box-shadow: var(--shadow-lg);
   z-index: 100;
   overflow: hidden;
-  animation: dropdownIn 150ms ease;
   transform-origin: top right;
 }
 
@@ -422,7 +405,6 @@
   z-index: 100;
   overflow: hidden;
   padding: 0.25rem 0;
-  animation: dropdownIn 150ms ease;
   transform-origin: top right;
 }
 
@@ -476,9 +458,6 @@
   line-height: 1rem;
   text-align: center;
   pointer-events: none;
-  /* pulse animation — respects reduced-motion below */
-  animation: pulseBadge 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-error) 35%, transparent);
 }
 
 .notificationPanel {
@@ -495,7 +474,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: dropdownIn 150ms ease;
   transform-origin: top right;
 }
 
@@ -659,43 +637,7 @@
   margin: 0.25rem 0 0;
 }
 
-/* ── Animations ── */
-
-@keyframes dropdownIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulseBadge {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-error) 38%, transparent);
-  }
-  70% {
-    box-shadow: 0 0 0 6px transparent;
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .searchDropdown,
-  .dropdown,
-  .themeDropdown,
-  .notificationPanel {
-    animation: none;
-  }
-
-  .notificationBadge {
-    animation: none;
-  }
-
   .iconButton,
   .iconButton:hover,
   .searchItemArrow {

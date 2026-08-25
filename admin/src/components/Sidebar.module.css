@@ -10,16 +10,6 @@
   top: 0;
   z-index: 50;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
-}
-
-/* backdrop-blur with fallback */
-@supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
-  .sidebar {
-    /* keep token bg but add blur for glass depth */
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
 }
 
 .logoSection {
@@ -41,12 +31,6 @@
   justify-content: center;
   color: var(--color-on-primary);
   flex-shrink: 0;
-  /* subtle glass elevation */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 1px 10px rgba(0, 0, 0, 0.14);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
 }
 
 .logoTitle {
@@ -91,15 +75,12 @@
   position: relative;
   transition:
     background 150ms ease,
-    color 150ms ease,
-    transform 150ms ease,
-    box-shadow 150ms ease;
+    color 150ms ease;
 }
 
 .navLink:hover {
   background: var(--color-sidebar-hover);
   color: var(--color-on-primary);
-  transform: translateX(2px);
 }
 
 .navLink:focus-visible {
@@ -108,64 +89,15 @@
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-sidebar-bg) 70%, transparent);
 }
 
-.navLink:active {
-  transform: translateX(1px) scale(0.99);
-}
-
 .active {
   background: var(--color-sidebar-active);
   color: var(--color-on-primary);
   font-weight: 500;
-  /* subtle elevation for active — token-driven */
-  box-shadow:
-    0 1px 8px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-/* left accent bar for active */
-.active::before {
-  content: "";
-  position: absolute;
-  left: -0.625rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 62%;
-  min-height: 18px;
-  background: var(--color-on-primary);
-  border-radius: 0 999px 999px 0;
-  opacity: 0.95;
-}
-
-/* fallback when rendered inside navList padding context */
-.navLink.active {
-  position: relative;
 }
 
 .bottomSection {
   padding: 0.625rem 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* responsive — overlay/drawer behavior */
-@media (max-width: 767px) {
-  .sidebar {
-    width: 280px;
-    max-width: 84vw;
-    /* overlay drawer — sits above main (main has margin-left:0) */
-    box-shadow: 16px 0 48px rgba(0, 0, 0, 0.22);
-    /* allow future JS toggle: hidden by default when [data-open="false"] */
-    /* default visible as overlay for now — comment out transform to keep accessible without JS */
-  }
-
-  /* helper class for JS-controlled drawer */
-  .sidebar[data-open="false"] {
-    transform: translateX(-100%);
-  }
-
-  .sidebar[data-open="true"] {
-    transform: translateX(0);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

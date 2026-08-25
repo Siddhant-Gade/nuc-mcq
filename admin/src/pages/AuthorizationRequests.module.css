@@ -99,7 +99,7 @@
 }
 
 .tableRow:hover {
-  background: var(--color-surface);
+  background: var(--color-surface-container);
 }
 
 .emptyRow {
