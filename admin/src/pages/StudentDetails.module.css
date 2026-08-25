@@ -1,0 +1,223 @@
+.breadcrumbRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  background: var(--color-surface-card);
+  color: var(--color-on-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.backBtn:hover {
+  background: var(--color-surface-container);
+}
+
+.bentoGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .bentoGrid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.card {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.cardTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.cardBody {
+  padding: 1.25rem;
+}
+
+.photoWrap {
+  margin-bottom: 1rem;
+}
+
+.photo {
+  width: 6rem;
+  height: 6rem;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 1px solid var(--color-outline-variant);
+}
+
+.photoPlaceholder {
+  width: 6rem;
+  height: 6rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.dl {
+  display: flex;
+  flex-direction: column;
+}
+
+.dlRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.dlRow:first-child {
+  padding-top: 0;
+}
+
+.dlRowLast {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dlRow dt {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.dlRow dd {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.emailValue {
+  color: var(--color-primary) !important;
+  cursor: pointer;
+}
+
+.emailValue:hover {
+  text-decoration: underline;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.statusRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statusLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1875rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badgeActive {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.badgePending {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.badgeExpired {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.badgeRevoked {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+.statusActions {
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--color-outline-variant);
+}
+
+.updateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.updateBtn:hover {
+  background: var(--color-primary-hover);
+}
+
+.placeholderCard {
+  background: var(--color-surface-card);
+  border: 1px dashed var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: var(--color-outline);
+  gap: 0.375rem;
+}
+
+.placeholderCard span {
+  font-size: 0.8125rem;
+}

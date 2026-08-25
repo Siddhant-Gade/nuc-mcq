@@ -1,0 +1,198 @@
+.listPanel {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  height: calc(100vh - 200px);
+}
+
+/* Toolbar */
+.toolbar {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-card);
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.tab:hover {
+  background: var(--color-surface-container);
+}
+
+.tabActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.tabActive:hover {
+  background: var(--color-primary-hover);
+}
+
+.tabCount {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* Table */
+.tableScroll {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-surface-container);
+  border-bottom: 1px solid var(--color-outline-variant);
+  color: var(--color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+  color: var(--color-on-surface);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tableRow {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.tableRow:hover {
+  background: var(--color-surface);
+}
+
+.emptyRow {
+  text-align: center;
+  color: var(--color-outline);
+  padding: 2rem !important;
+}
+
+/* Student Cell */
+.studentCell {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.avatarImg {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container);
+}
+
+.avatarInitial {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-on-primary);
+}
+
+.studentName {
+  font-weight: 500;
+}
+
+.idCell {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+}
+
+.timeCell {
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+  white-space: nowrap;
+}
+
+/* Status Badge */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1875rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+}
+
+.statusPending {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.statusPending .dot {
+  background: var(--color-warning);
+}
+
+.statusApproved {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.statusApproved .dot {
+  background: var(--color-success);
+}
+
+.statusRejected {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+.statusRejected .dot {
+  background: var(--color-error);
+}

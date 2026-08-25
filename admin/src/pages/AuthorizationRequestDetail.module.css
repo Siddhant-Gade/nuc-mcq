@@ -1,0 +1,299 @@
+.backLink {
+  margin-bottom: 0.5rem;
+}
+
+.backLink a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-outline);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.backLink a:hover {
+  color: var(--color-primary);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  margin-top: 0.25rem;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.statusDot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+}
+
+.statusPending {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.statusPending .statusDot {
+  background: var(--color-warning);
+}
+
+.statusApproved {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.statusApproved .statusDot {
+  background: var(--color-success);
+}
+
+.statusRejected {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+.statusRejected .statusDot {
+  background: var(--color-error);
+}
+
+.bentoGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .bentoGrid {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
+.profileCard {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profilePhotoWrap {
+  margin-bottom: 0.75rem;
+}
+
+.profilePhoto {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  border: 2px solid var(--color-outline-variant);
+  overflow: hidden;
+  background: var(--color-surface-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profilePhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profileInitial {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.profileName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  margin-bottom: 0.125rem;
+}
+
+.profileId {
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 0.75rem;
+}
+
+.profileBatch {
+  width: 100%;
+  padding: 0.625rem;
+  background: var(--color-surface-container);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.profileBatchLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.profileBatchValue {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.detailsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.infoCard,
+.actionCard {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+}
+
+.cardTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.cardTitle svg {
+  color: var(--color-outline);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 0.75rem;
+}
+
+.infoLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 0.125rem;
+}
+
+.infoValue {
+  font-size: 0.8125rem;
+  color: var(--color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  background: var(--color-surface-container);
+  padding: 0.1875rem 0.375rem;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.newDevice {
+  border: 1px solid var(--color-primary-light);
+}
+
+.actionCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.actionTitle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  margin-bottom: 0.125rem;
+}
+
+.actionSubtitle {
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.rejectBtn,
+.approveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.rejectBtn {
+  border: 1px solid var(--color-outline-variant);
+  background: transparent;
+  color: var(--color-on-surface-variant);
+}
+
+.rejectBtn:hover {
+  background: var(--color-surface-container);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.approveBtn {
+  border: none;
+  background: var(--color-success);
+  color: #ffffff;
+}
+
+.approveBtn:hover {
+  background: #047857;
+}
+
+.reviewedBadge {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-outline);
+}

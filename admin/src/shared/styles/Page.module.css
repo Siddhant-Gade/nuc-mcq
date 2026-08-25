@@ -1,0 +1,128 @@
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.subtext {
+  color: var(--color-on-surface-variant);
+  font-size: 0.8125rem;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 0.75rem;
+}
+
+.breadcrumbLink {
+  color: var(--color-on-surface-variant);
+  transition: color 0.12s;
+}
+
+.breadcrumbLink:hover {
+  color: var(--color-primary);
+}
+
+.breadcrumbSeparator {
+  color: var(--color-outline);
+  margin: 0 0.25rem;
+}
+
+.breadcrumbCurrent {
+  color: var(--color-on-surface);
+  font-weight: 500;
+}
+
+/* Status Badges - Unified */
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.statusPending {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.statusActive {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.statusFull {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+.statusInactive {
+  background: var(--color-surface-container);
+  color: var(--color-outline);
+}
+
+.statusApproved {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.statusRejected {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+.statusExpired {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.statusRevoked {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+/* Error banner - shown when a data fetch or mutation fails */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-error-container);
+  border: 1px solid var(--color-error-light);
+  border-radius: var(--radius-lg);
+  color: var(--color-error);
+  font-size: 0.8125rem;
+}
+
+.errorRetryBtn {
+  flex-shrink: 0;
+  height: 1.75rem;
+  padding: 0 0.75rem;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.errorRetryBtn:hover {
+  background: var(--color-error-light);
+}
