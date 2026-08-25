@@ -11,6 +11,15 @@
   z-index: 40;
 }
 
+/* header backdrop blur — 80% opacity + blur */
+@supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
+  .header {
+    background: color-mix(in srgb, var(--color-surface-card) 80%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
 .left {
   display: flex;
   align-items: center;
@@ -59,10 +68,15 @@
   font-size: 0.8125rem;
   color: var(--color-on-surface);
   outline: none;
-  transition: border-color 0.12s;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 
 .searchInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.searchInput:focus-visible {
   border-color: var(--color-primary);
   box-shadow: var(--focus-ring);
 }
@@ -83,6 +97,9 @@
   box-shadow: var(--shadow-lg);
   z-index: 100;
   overflow: hidden;
+  /* dropdown enter animation */
+  animation: dropdownIn 150ms ease;
+  transform-origin: top left;
 }
 
 .searchDropdownHeader {
@@ -119,13 +136,18 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 150ms ease;
   text-align: left;
 }
 
 .searchItem:hover,
 .searchItemActive {
   background: var(--color-surface-container);
+}
+
+.searchItem:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .searchItemIcon {
@@ -168,12 +190,14 @@
   color: var(--color-outline);
   flex-shrink: 0;
   opacity: 0;
-  transition: opacity 0.1s;
+  transition: opacity 150ms ease, transform 150ms ease;
+  transform: translateX(-4px);
 }
 
 .searchItem:hover .searchItemArrow,
 .searchItemActive .searchItemArrow {
   opacity: 1;
+  transform: translateX(0);
 }
 
 .searchFooter {
@@ -207,11 +231,22 @@
   color: var(--color-on-surface-variant);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 150ms ease, transform 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
 .iconButton:hover {
   background: var(--color-surface-container);
+  transform: scale(1.06);
+}
+
+.iconButton:active {
+  transform: scale(0.96);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
 }
 
 .divider {
@@ -230,11 +265,17 @@
   background: transparent;
   cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: background 0.12s;
+  transition: background 150ms ease, transform 150ms ease;
 }
 
 .userButton:hover {
   background: var(--color-surface-container);
+}
+
+.userButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
 }
 
 .avatar {
@@ -269,7 +310,7 @@
 
 .chevron {
   color: var(--color-outline);
-  transition: transform 0.12s;
+  transition: transform 150ms ease;
 }
 
 .chevronOpen {
@@ -287,6 +328,8 @@
   box-shadow: var(--shadow-lg);
   z-index: 100;
   overflow: hidden;
+  animation: dropdownIn 150ms ease;
+  transform-origin: top right;
 }
 
 .dropdownHeader {
@@ -341,12 +384,17 @@
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 150ms ease;
   text-align: left;
 }
 
 .dropdownItem:hover {
   background: var(--color-surface-container);
+}
+
+.dropdownItem:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .logoutItem {
@@ -374,6 +422,8 @@
   z-index: 100;
   overflow: hidden;
   padding: 0.25rem 0;
+  animation: dropdownIn 150ms ease;
+  transform-origin: top right;
 }
 
 .themeItem {
@@ -388,12 +438,17 @@
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 150ms ease;
   text-align: left;
 }
 
 .themeItem:hover {
   background: var(--color-surface-container);
+}
+
+.themeItem:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .themeItemActive {
@@ -421,6 +476,9 @@
   line-height: 1rem;
   text-align: center;
   pointer-events: none;
+  /* pulse animation — respects reduced-motion below */
+  animation: pulseBadge 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-error) 35%, transparent);
 }
 
 .notificationPanel {
@@ -437,6 +495,8 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: dropdownIn 150ms ease;
+  transform-origin: top right;
 }
 
 .notificationPanelHeader {
@@ -463,11 +523,16 @@
   cursor: pointer;
   padding: 0.125rem 0.375rem;
   border-radius: var(--radius-sm);
-  transition: background 0.12s;
+  transition: background 150ms ease;
 }
 
 .notificationMarkAllBtn:hover {
   background: var(--color-surface-container);
+}
+
+.notificationMarkAllBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .notificationList {
@@ -503,7 +568,7 @@
   background: transparent;
   cursor: pointer;
   text-align: left;
-  transition: background 0.1s;
+  transition: background 150ms ease;
   border-bottom: 1px solid var(--color-outline-variant);
 }
 
@@ -513,6 +578,11 @@
 
 .notificationItem:hover {
   background: var(--color-surface-container);
+}
+
+.notificationItem:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .notificationItemUnread {
@@ -587,4 +657,48 @@
   font-size: 0.75rem;
   color: var(--color-outline);
   margin: 0.25rem 0 0;
+}
+
+/* ── Animations ── */
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseBadge {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-error) 38%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchDropdown,
+  .dropdown,
+  .themeDropdown,
+  .notificationPanel {
+    animation: none;
+  }
+
+  .notificationBadge {
+    animation: none;
+  }
+
+  .iconButton,
+  .iconButton:hover,
+  .searchItemArrow {
+    transform: none;
+  }
 }

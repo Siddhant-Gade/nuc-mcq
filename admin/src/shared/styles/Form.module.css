@@ -9,6 +9,7 @@
   font-weight: 600;
   color: var(--color-on-surface);
   letter-spacing: 0.01em;
+  line-height: 1.4;
 }
 
 .input,
@@ -21,21 +22,54 @@
   color: var(--color-on-surface);
   background: var(--color-surface-card);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.input:focus,
-.select:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.12);
+  transition:
+    border-color var(--transition-hover),
+    box-shadow var(--transition-hover),
+    background var(--transition-hover);
 }
 
 .input::placeholder {
   color: var(--color-outline);
 }
 
-.inputError {
+.input:hover,
+.select:hover {
+  border-color: var(--color-outline);
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.input:focus-visible,
+.select:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.input:disabled,
+.select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--color-surface-container);
+}
+
+.inputError,
+.input[aria-invalid="true"],
+.select[aria-invalid="true"] {
   border-color: var(--color-error);
+}
+
+.inputError:focus,
+.input[aria-invalid="true"]:focus,
+.select[aria-invalid="true"]:focus,
+.inputError:focus-visible,
+.input[aria-invalid="true"]:focus-visible,
+.select[aria-invalid="true"]:focus-visible {
+  border-color: var(--color-error);
+  box-shadow: var(--focus-ring-error);
 }
 
 .errorText {
@@ -44,9 +78,18 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  line-height: 1.4;
 }
 
 .helperText {
   font-size: 0.75rem;
-  color: var(--color-outline);
+  color: var(--color-on-surface-variant);
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input,
+  .select {
+    transition: none !important;
+  }
 }
