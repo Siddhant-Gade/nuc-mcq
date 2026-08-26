@@ -44,6 +44,7 @@ backend/
     middleware/{auth,authorization,error,not-found,validation}.middleware.ts
     modules/auth/auth-token-verifier.ts
     modules/students/{controller,repository,routes,schema,service,types}.ts
+    modules/batches/{controller,repository,routes,schema,service,types}.ts
     types/express.d.ts
     utils/{api-error,api-response}.ts
   drizzle.config.ts
@@ -51,7 +52,7 @@ backend/
 SYSTEM_DESIGN.md               Product and architecture blueprint
 ```
 
-No backend modules currently exist for batches, authorization requests, dashboard, results/sync, broadcasts, study materials, or notifications.
+No backend modules currently exist for authorization requests, dashboard, results/sync, broadcasts, study materials, or notifications.
 
 ## 5. Environment Variables
 
@@ -82,14 +83,22 @@ Resource ownership checks and student identity resolution are not implemented. T
 
 ## 8. Database Design
 
-One generated migration (`0000_unknown_the_liberteens.sql`) defines:
+Two generated migrations define the schema. `0000_unknown_the_liberteens.sql`:
 
 | Table | Important columns and constraints |
 |---|---|
 | `student_profile` | UUID primary key; unique `student_id`; name; optional email/mobile/photo/course info; `institute_id` and `batch_id` are required varchar fields but are not foreign keys |
 | `student_access` | UUID primary key; unique FK `student_profile_id` → `student_profile.id` with cascade delete; unique nullable `auth_user_id`; enum status `PENDING`, `ACTIVE`, `EXPIRED`, `REVOKED`; access timestamps |
 
-No database tables/migrations exist for institutes, batches, authorization requests, results, broadcasts, study materials, notifications, or application admin/teacher profiles.
+`0001_plain_nightmare.sql`:
+
+| Table | Important columns and constraints |
+|---|---|
+| `batch` | varchar(100) `batch_id` natural primary key; `batch_name`; `institute_id`; integer `capacity` with `CHECK (capacity > 0)`; enum status `ACTIVE`, `FULL`, `INACTIVE` defaulting to ACTIVE; timestamps |
+
+Batch enrollment is never stored; it is aggregated at query time from `student_profile.batch_id`. Effective FULL status is derived in the service (stored INACTIVE wins, else enrollment ≥ capacity). No foreign key exists yet between `student_profile.batch_id` and `batch`.
+
+No database tables/migrations exist yet for authorization requests, results, broadcasts, study materials, notifications, or application admin/teacher profiles.
 
 ## 9. API Conventions
 
@@ -111,6 +120,10 @@ Current routes:
 | GET/PATCH | `/api/v1/students/:id` | Implemented; ADMIN only |
 | GET | `/api/v1/students/:id/access` | Implemented; ADMIN only |
 | PATCH | `/api/v1/students/:id/access-status` | Implemented; ADMIN only |
+| GET | `/api/v1/batches` | Implemented; ADMIN only; aggregated enrollment + derived status |
+| GET | `/api/v1/batches/active` | Implemented; ADMIN only; admission-available batches |
+| POST | `/api/v1/batches` | Implemented; ADMIN only; 201 created / 409 duplicate ID |
+| DELETE | `/api/v1/batches/:batchId` | Implemented; ADMIN only; 409 while students assigned (V1 default policy) |
 
 ## 10. Module Status
 
@@ -122,7 +135,7 @@ Current routes:
 | Authentication | COMPLETE | 4 | Supabase JWT verification, verified `authUserId` request context, and safe `/auth/me` behavior are implemented and tested. |
 | Authorization | COMPLETE | 5 | Verified role middleware protects admin routes with 401/403/200 behavior. Resource ownership resolution is intentionally scheduled for Phase 10. |
 | Students | COMPLETE | 6 | CRUD/access-status backend stabilized: access timestamps maintained, service + route tests added; batch/institute FKs deferred to Phase 7. |
-| Batches | NOT STARTED | 7 | Admin UI is mock-only. |
+| Batches | COMPLETE | 7 | Natural-key `batch` table with capacity CHECK; SQL-aggregated enrollment; derived FULL/INACTIVE status; delete blocked while students assigned (documented V1 default); 18 new tests. |
 | Authorization requests | NOT STARTED | 8 | Admin UI is mock-only. |
 | Dashboard | NOT STARTED | 9 | Admin UI calculates mock data. |
 | Student identity resolution | NOT STARTED | 10 | `student_access.auth_user_id` exists but is unused. |
@@ -171,10 +184,12 @@ The eventual `test_result` schema must include `client_event_id` with a database
 | 2026-08-26 | Phase 4 — Authentication | Verified Bearer-token middleware and added `/api/v1/auth/me` tests for missing-token rejection and verifier-derived identity response. | Typecheck, lint, build, and all 12 backend tests passed. No database changes. |
 | 2026-08-26 | Phase 5 — Authorization | Verified role-based authorization on the real admin route for unauthenticated, wrong-role, and ADMIN requests. | Typecheck, lint, build, and all 13 backend tests passed. No database changes. |
 | 2026-08-26 | Phase 6 — Student Module | Fixed access-transition timestamps in `DrizzleStudentRepository.updateAccessStatus` (ACTIVE sets `accessGrantedAt`, REVOKED sets `revokedAt`, EXPIRED touches neither). Confirmed `instituteId` stays strictly required on create. Added `student.service.test.ts` (in-memory fake repository: CRUD, duplicate-ID conflict, transitions, timestamp assertions) and `student.routes.test.ts` (401/403, validation errors, success shapes via stubbed service over real HTTP fixture). | Typecheck, lint, and build passed; all 36 backend tests passed. No database changes. |
+| 2026-08-26 | Phase 7 — Batch Module | Generated and applied migration `0001_plain_nightmare` (`batch_status` enum; `batch` table with natural PK `batch_id`, capacity CHECK). Implemented the batches module (repository with SQL-aggregated enrollment, service deriving FULL/INACTIVE status, controller/routes) wired through DI. Deletion blocked with 409 while students are assigned — documented V1 default policy pending confirmation. Added 18 tests including proof that UI payload extras (`enrolledCount`, `status`) are stripped server-side. | `db:migrate` applied; `db:generate` reports no drift; typecheck/lint/build passed; 54/54 tests passed. |
 
 ## 14. Known Limitations
 
-- Current `student_profile.institute_id` and `batch_id` do not enforce referential integrity; this is intentional until the Phase 7 batch schema is confirmed.
+- Current `student_profile.institute_id` and `batch_id` do not enforce referential integrity. The `batch` table now exists, but the foreign key remains intentionally deferred until existing student rows are reconciled with real batch records (Phase 15 integration).
+- Batch FULL/INACTIVE semantics and the delete-blocked-while-assigned rule are documented V1 defaults derived from UI behavior; they await explicit product confirmation and are trivially adjustable in `batch.service.ts`.
 - The React admission UI (`admin/src/pages/StudentAdmission.tsx`) does not yet send the required `instituteId` field; it must be added before Phase 15 frontend integration.
 - Student pagination/filtering is not implemented; the admin list UI paginates client-side, which is acceptable at demonstration scale.
 - The only verified role source is JWT metadata, but the repository has no implementation for assigning or managing that metadata.

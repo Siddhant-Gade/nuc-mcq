@@ -106,6 +106,7 @@ const startFixture = async (
     allowedCorsOrigins: ['http://localhost:5173'],
     tokenVerifier,
     studentService: service,
+    batchService: {} as never,
   });
   const server = createServer(app);
   server.listen(0, '127.0.0.1');

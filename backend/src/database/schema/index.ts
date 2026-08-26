@@ -1,6 +1,23 @@
-import { pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { check, integer, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const studentAccessStatus = pgEnum('student_access_status', ['PENDING', 'ACTIVE', 'EXPIRED', 'REVOKED']);
+
+export const batchStatus = pgEnum('batch_status', ['ACTIVE', 'FULL', 'INACTIVE']);
+
+export const batches = pgTable(
+  'batch',
+  {
+    batchId: varchar('batch_id', { length: 100 }).primaryKey(),
+    batchName: varchar('batch_name', { length: 200 }).notNull(),
+    instituteId: varchar('institute_id', { length: 100 }).notNull(),
+    capacity: integer('capacity').notNull(),
+    status: batchStatus('status').default('ACTIVE').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check('batch_capacity_positive', sql`${table.capacity} > 0`)],
+);
 
 export const studentProfiles = pgTable('student_profile', {
   id: uuid('id').defaultRandom().primaryKey(),

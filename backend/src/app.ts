@@ -10,14 +10,17 @@ import { ApiError } from './utils/api-error.js';
 import { successResponse } from './utils/api-response.js';
 import { createStudentRouter } from './modules/students/student.routes.js';
 import type { StudentService } from './modules/students/student.service.js';
+import { createBatchRouter } from './modules/batches/batch.routes.js';
+import type { BatchService } from './modules/batches/batch.service.js';
 
 type AppDependencies = {
   allowedCorsOrigins: readonly string[];
   tokenVerifier: AuthTokenVerifier;
   studentService: StudentService;
+  batchService: BatchService;
 };
 
-export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService }: AppDependencies): Express => {
+export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService }: AppDependencies): Express => {
   const app = express();
 
   app.use(createCorsMiddleware(allowedCorsOrigins));
@@ -43,6 +46,7 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService }:
   });
 
   app.use('/api/v1/students', createStudentRouter(studentService, tokenVerifier));
+  app.use('/api/v1/batches', createBatchRouter(batchService, tokenVerifier));
 
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);

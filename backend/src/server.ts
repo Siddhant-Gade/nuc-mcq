@@ -6,16 +6,20 @@ import { closeDatabaseConnection, database } from './database/client.js';
 import { SupabaseJwtVerifier } from './modules/auth/auth-token-verifier.js';
 import { DrizzleStudentRepository } from './modules/students/student.repository.js';
 import { StudentService } from './modules/students/student.service.js';
+import { DrizzleBatchRepository } from './modules/batches/batch.repository.js';
+import { BatchService } from './modules/batches/batch.service.js';
 
 const tokenVerifier = new SupabaseJwtVerifier({
   issuer: env.SUPABASE_JWT_ISSUER,
   audience: env.SUPABASE_JWT_AUDIENCE,
 });
 const studentService = new StudentService(new DrizzleStudentRepository(database));
+const batchService = new BatchService(new DrizzleBatchRepository(database));
 const app = createApp({
   allowedCorsOrigins: env.CORS_ORIGINS,
   tokenVerifier,
   studentService,
+  batchService,
 });
 const server = createServer(app);
 let isShuttingDown = false;

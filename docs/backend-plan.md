@@ -79,15 +79,21 @@ Implement one phase at a time. Before each phase, reread this file and `docs/bac
 
 ## Phase 7 — Batch Module
 
-- **Status:** BLOCKED — product policy required
+- **Status:** COMPLETE (2026-08-26)
 - **Objective:** Replace the mock batch service with a real module.
 - **Dependencies:** Institute/batch key design; capacity/full/deletion/assignment policies.
-- **Subtasks:** Confirm policies; create schema/migration; repository/service/controller/routes; use aggregation for enrolled count; add tests.
-- **Expected files:** `modules/batches/*`, schema/index, migration, admin service integration later.
-- **Database changes:** `batch` table and confirmed foreign keys.
-- **API endpoints:** Confirm from UI: list, get, active list, create, delete; do not implement deletion semantics without policy.
-- **Validation:** Role checks, duplicate batch ID, capacity/full behavior, deletion behavior.
-- **Completion criteria:** Policies are confirmed and the UI’s required operations are backed by tests and database constraints.
+- **Policy decisions applied as documented V1 defaults (derived from existing UI/mock behavior; vetoable):**
+  - `batch_id` varchar(100) natural primary key (the sole identifier used by the admin UI and student profiles).
+  - `capacity` integer with a `CHECK (capacity > 0)` database constraint.
+  - Enrollment is SQL-aggregated from `student_profile.batch_id` per the plan's aggregation rule; never denormalized.
+  - Effective status is derived in the service: stored `INACTIVE` wins; otherwise FULL when enrollment ≥ capacity; otherwise ACTIVE. FULL is never persisted.
+  - Deletion default: blocked with 409 CONFLICT while any student references the batch (prevents orphans while `student_profile.batch_id` has no foreign key).
+- **Completed subtasks:** Added `batch_status` enum and `batch` table via reviewed migration `0001_plain_nightmare`; implemented repository/service/controller/routes following the students module pattern; wired DI through `server.ts`/`app.ts`; added service tests (fake repository) and route tests (stubbed service over HTTP fixture), including proof that the current UI payload's extra keys (`enrolledCount`, `status`) are stripped server-side.
+- **Files changed:** `database/schema/index.ts`, `app.ts`, `server.ts`; added `modules/batches/{types,schema,repository,service,controller,routes}.ts` plus `batch.service.test.ts`, `batch.routes.test.ts`, migration `0001_plain_nightmare.sql`.
+- **Database changes:** `CREATE TYPE batch_status`; `CREATE TABLE batch` with PK `batch_id` and capacity CHECK. Applied to Supabase via `npm run db:migrate`; `db:generate` reports no drift.
+- **API endpoints:** ADMIN-only under `/api/v1/batches`: `GET /` (list with aggregated enrollment), `GET /active` (admission-available), `POST /` (create, 201/409), `DELETE /:batchId` (200/404/409).
+- **Validation:** `npm run typecheck`, `npm run lint`, `npm run build` passed; `npm test` passed 54/54 (36 prior + 18 new).
+- **Completion criteria:** Met for confirmed UI operations; no unconfirmed policies invented beyond the documented defaults above.
 
 ## Phase 8 — Authorization Request Module
 
@@ -209,4 +215,4 @@ Implement one phase at a time. Before each phase, reread this file and `docs/bac
 
 ## Recommended Next Phase
 
-Phase 6 is complete. The next phase is **Phase 7 — Batch Module**, which is BLOCKED until institute/batch key design and capacity/full/deletion/assignment policies are confirmed.
+Phase 7 is complete. The next phase is **Phase 8 — Authorization Request Module**, which remains BLOCKED until the request/device workflow (creation source, payload, re-authorization rules) is confirmed.
