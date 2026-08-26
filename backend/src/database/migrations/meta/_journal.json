@@ -15,6 +15,13 @@
       "when": 1787721262223,
       "tag": "0001_plain_nightmare",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787722156468,
+      "tag": "0002_dashing_the_captain",
+      "breakpoints": true
     }
   ]
 }

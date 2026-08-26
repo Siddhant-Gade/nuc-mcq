@@ -5,6 +5,8 @@ export const studentAccessStatus = pgEnum('student_access_status', ['PENDING', '
 
 export const batchStatus = pgEnum('batch_status', ['ACTIVE', 'FULL', 'INACTIVE']);
 
+export const authorizationRequestStatus = pgEnum('authorization_request_status', ['PENDING', 'APPROVED', 'REJECTED']);
+
 export const batches = pgTable(
   'batch',
   {
@@ -46,4 +48,16 @@ export const studentAccess = pgTable('student_access', {
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const authorizationRequests = pgTable('authorization_request', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  studentProfileId: uuid('student_profile_id')
+    .notNull()
+    .references(() => studentProfiles.id, { onDelete: 'cascade' }),
+  authUserId: uuid('auth_user_id'),
+  requestedAt: timestamp('requested_at', { withTimezone: true }).defaultNow().notNull(),
+  status: authorizationRequestStatus('status').default('PENDING').notNull(),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  reviewedBy: uuid('reviewed_by'),
 });

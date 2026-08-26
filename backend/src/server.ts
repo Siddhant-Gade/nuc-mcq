@@ -8,6 +8,10 @@ import { DrizzleStudentRepository } from './modules/students/student.repository.
 import { StudentService } from './modules/students/student.service.js';
 import { DrizzleBatchRepository } from './modules/batches/batch.repository.js';
 import { BatchService } from './modules/batches/batch.service.js';
+import { DrizzleAuthorizationRequestRepository } from './modules/authorization/authorization.repository.js';
+import { AuthorizationRequestService } from './modules/authorization/authorization.service.js';
+import { DrizzleDashboardRepository } from './modules/dashboard/dashboard.repository.js';
+import { DashboardService } from './modules/dashboard/dashboard.service.js';
 
 const tokenVerifier = new SupabaseJwtVerifier({
   issuer: env.SUPABASE_JWT_ISSUER,
@@ -15,11 +19,17 @@ const tokenVerifier = new SupabaseJwtVerifier({
 });
 const studentService = new StudentService(new DrizzleStudentRepository(database));
 const batchService = new BatchService(new DrizzleBatchRepository(database));
+const authorizationRequestService = new AuthorizationRequestService(
+  new DrizzleAuthorizationRequestRepository(database),
+);
+const dashboardService = new DashboardService(new DrizzleDashboardRepository(database));
 const app = createApp({
   allowedCorsOrigins: env.CORS_ORIGINS,
   tokenVerifier,
   studentService,
   batchService,
+  authorizationRequestService,
+  dashboardService,
 });
 const server = createServer(app);
 let isShuttingDown = false;

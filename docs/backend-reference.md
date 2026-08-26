@@ -45,6 +45,8 @@ backend/
     modules/auth/auth-token-verifier.ts
     modules/students/{controller,repository,routes,schema,service,types}.ts
     modules/batches/{controller,repository,routes,schema,service,types}.ts
+    modules/authorization/{controller,repository,routes,schema,service,types}.ts
+    modules/dashboard/{controller,repository,routes,service,types}.ts
     types/express.d.ts
     utils/{api-error,api-response}.ts
   drizzle.config.ts
@@ -52,7 +54,7 @@ backend/
 SYSTEM_DESIGN.md               Product and architecture blueprint
 ```
 
-No backend modules currently exist for authorization requests, dashboard, results/sync, broadcasts, study materials, or notifications.
+No backend modules currently exist for results/sync (Phase 11), broadcasts, study materials, notifications, or student identity resolution.
 
 ## 5. Environment Variables
 
@@ -96,9 +98,15 @@ Two generated migrations define the schema. `0000_unknown_the_liberteens.sql`:
 |---|---|
 | `batch` | varchar(100) `batch_id` natural primary key; `batch_name`; `institute_id`; integer `capacity` with `CHECK (capacity > 0)`; enum status `ACTIVE`, `FULL`, `INACTIVE` defaulting to ACTIVE; timestamps |
 
-Batch enrollment is never stored; it is aggregated at query time from `student_profile.batch_id`. Effective FULL status is derived in the service (stored INACTIVE wins, else enrollment ≥ capacity). No foreign key exists yet between `student_profile.batch_id` and `batch`.
+`0002_dashing_the_captain.sql`:
 
-No database tables/migrations exist yet for authorization requests, results, broadcasts, study materials, notifications, or application admin/teacher profiles.
+| Table | Important columns and constraints |
+|---|---|
+| `authorization_request` | UUID primary key; FK `student_profile_id` → `student_profile.id` (cascade); nullable `auth_user_id`; `requested_at`; enum status `PENDING`, `APPROVED`, `REJECTED` defaulting to PENDING; nullable `reviewed_at`/`reviewed_by` (reviewed_by stores the admin's auth user id) |
+
+Batch enrollment is never stored; it is aggregated at query time from `student_profile.batch_id`. Effective FULL status is derived in the service (stored INACTIVE wins, else enrollment ≥ capacity). No foreign key exists yet between `student_profile.batch_id` and `batch`. Approval transitions are guarded by a conditional UPDATE on status inside a transaction (no double-review races).
+
+No database tables/migrations exist yet for results, broadcasts, study materials, notifications, or application admin/teacher profiles.
 
 ## 9. API Conventions
 
@@ -124,6 +132,12 @@ Current routes:
 | GET | `/api/v1/batches/active` | Implemented; ADMIN only; admission-available batches |
 | POST | `/api/v1/batches` | Implemented; ADMIN only; 201 created / 409 duplicate ID |
 | DELETE | `/api/v1/batches/:batchId` | Implemented; ADMIN only; 409 while students assigned (V1 default policy) |
+| GET | `/api/v1/authorization-requests` | Implemented; ADMIN only; optional `?status=PENDING\|APPROVED\|REJECTED` filter |
+| GET | `/api/v1/authorization-requests/pending` | Implemented; ADMIN only |
+| GET | `/api/v1/authorization-requests/:id` | Implemented; ADMIN only |
+| POST | `/api/v1/authorization-requests/:id/approve` | Implemented; ADMIN only; transactionally activates access + links auth identity; reviewer derived from JWT; 409 on repeat |
+| POST | `/api/v1/authorization-requests/:id/reject` | Implemented; ADMIN only; reviewer derived from JWT; 409 on repeat |
+| GET | `/api/v1/dashboard/stats` | Implemented; ADMIN only; SQL-aggregated DashboardStats matching the admin UI type |
 
 ## 10. Module Status
 
@@ -136,8 +150,10 @@ Current routes:
 | Authorization | COMPLETE | 5 | Verified role middleware protects admin routes with 401/403/200 behavior. Resource ownership resolution is intentionally scheduled for Phase 10. |
 | Students | COMPLETE | 6 | CRUD/access-status backend stabilized: access timestamps maintained, service + route tests added; batch/institute FKs deferred to Phase 7. |
 | Batches | COMPLETE | 7 | Natural-key `batch` table with capacity CHECK; SQL-aggregated enrollment; derived FULL/INACTIVE status; delete blocked while students assigned (documented V1 default); 18 new tests. |
-| Authorization requests | NOT STARTED | 8 | Admin UI is mock-only. |
-| Dashboard | NOT STARTED | 9 | Admin UI calculates mock data. |
+| Authorization requests | COMPLETE | 8 | Blueprint �17 workflow: transactional approve (activates access + links auth identity, conditional status guard) / reject; reviewer from verified JWT; creation endpoint deferred to Phase 10. |
+| Dashboard | COMPLETE | 9 | `GET /api/v1/dashboard/stats` � all six KPIs aggregated inside PostgreSQL matching the admin UI type. |
+
+
 | Student identity resolution | NOT STARTED | 10 | `student_access.auth_user_id` exists but is unused. |
 | Offline result sync | NOT STARTED | 11 | No Flutter source, result table, or endpoint. |
 | Broadcasts | NOT STARTED | 12 | Admin UI is mock-only. |
@@ -185,6 +201,8 @@ The eventual `test_result` schema must include `client_event_id` with a database
 | 2026-08-26 | Phase 5 — Authorization | Verified role-based authorization on the real admin route for unauthenticated, wrong-role, and ADMIN requests. | Typecheck, lint, build, and all 13 backend tests passed. No database changes. |
 | 2026-08-26 | Phase 6 — Student Module | Fixed access-transition timestamps in `DrizzleStudentRepository.updateAccessStatus` (ACTIVE sets `accessGrantedAt`, REVOKED sets `revokedAt`, EXPIRED touches neither). Confirmed `instituteId` stays strictly required on create. Added `student.service.test.ts` (in-memory fake repository: CRUD, duplicate-ID conflict, transitions, timestamp assertions) and `student.routes.test.ts` (401/403, validation errors, success shapes via stubbed service over real HTTP fixture). | Typecheck, lint, and build passed; all 36 backend tests passed. No database changes. |
 | 2026-08-26 | Phase 7 — Batch Module | Generated and applied migration `0001_plain_nightmare` (`batch_status` enum; `batch` table with natural PK `batch_id`, capacity CHECK). Implemented the batches module (repository with SQL-aggregated enrollment, service deriving FULL/INACTIVE status, controller/routes) wired through DI. Deletion blocked with 409 while students are assigned — documented V1 default policy pending confirmation. Added 18 tests including proof that UI payload extras (`enrolledCount`, `status`) are stripped server-side. | `db:migrate` applied; `db:generate` reports no drift; typecheck/lint/build passed; 54/54 tests passed. |
+| 2026-08-26 | Phase 8 — Authorization Requests | Applied migration `0002_dashing_the_captain` (`authorization_request` per blueprint §17). Implemented the module with transactional approval (conditional status guard, activates access + links auth identity) and rejection; reviewer identity taken only from the verified JWT — route test proves a body-supplied `reviewedBy` is ignored. Creation endpoint deferred to Phase 10. | `db:migrate` applied; typecheck/lint/build passed. |
+| 2026-08-26 | Phase 9 — Admin Dashboard | Implemented `modules/dashboard` with all six KPIs computed inside PostgreSQL (filtered counts + grouped batch-enrollment subquery), returning exactly the admin UI's `DashboardStats`. ADMIN-only route with tests asserting exact shape and role enforcement. | Typecheck/lint/build passed; 70/70 total backend tests passed. |
 
 ## 14. Known Limitations
 

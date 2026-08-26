@@ -12,15 +12,28 @@ import { createStudentRouter } from './modules/students/student.routes.js';
 import type { StudentService } from './modules/students/student.service.js';
 import { createBatchRouter } from './modules/batches/batch.routes.js';
 import type { BatchService } from './modules/batches/batch.service.js';
+import { createAuthorizationRequestRouter } from './modules/authorization/authorization.routes.js';
+import type { AuthorizationRequestService } from './modules/authorization/authorization.service.js';
+import { createDashboardRouter } from './modules/dashboard/dashboard.routes.js';
+import type { DashboardService } from './modules/dashboard/dashboard.service.js';
 
 type AppDependencies = {
   allowedCorsOrigins: readonly string[];
   tokenVerifier: AuthTokenVerifier;
   studentService: StudentService;
   batchService: BatchService;
+  authorizationRequestService: AuthorizationRequestService;
+  dashboardService: DashboardService;
 };
 
-export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService }: AppDependencies): Express => {
+export const createApp = ({
+  allowedCorsOrigins,
+  tokenVerifier,
+  studentService,
+  batchService,
+  authorizationRequestService,
+  dashboardService,
+}: AppDependencies): Express => {
   const app = express();
 
   app.use(createCorsMiddleware(allowedCorsOrigins));
@@ -47,6 +60,11 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
 
   app.use('/api/v1/students', createStudentRouter(studentService, tokenVerifier));
   app.use('/api/v1/batches', createBatchRouter(batchService, tokenVerifier));
+  app.use(
+    '/api/v1/authorization-requests',
+    createAuthorizationRequestRouter(authorizationRequestService, tokenVerifier),
+  );
+  app.use('/api/v1/dashboard', createDashboardRouter(dashboardService, tokenVerifier));
 
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);

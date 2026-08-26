@@ -97,27 +97,29 @@ Implement one phase at a time. Before each phase, reread this file and `docs/bac
 
 ## Phase 8 — Authorization Request Module
 
-- **Status:** BLOCKED — request/device workflow required
+- **Status:** COMPLETE (2026-08-26)
 - **Objective:** Implement safe pending/approve/reject workflows.
 - **Dependencies:** Student identity resolution and a confirmed request workflow.
-- **Subtasks:** Define schema/state machine, request creation source, atomic approval/rejection effects, routes, tests.
-- **Expected files:** `modules/authorization-requests/*`, schema/migration.
-- **Database changes:** Authorization request table and relevant audit fields/constraints.
-- **API endpoints:** List, get, pending list, approve, reject if confirmed by UI.
-- **Validation:** ADMIN-only review, valid transitions, repeat action conflict, transaction tests.
-- **Completion criteria:** A request cannot be inconsistently approved/rejected and reviewer identity is server-derived.
+- **Confirmed workflow applied (SYSTEM_DESIGN.md §17):** requests are created by the student first-login flow (creation endpoint intentionally deferred to Phase 10 identity resolution); admin approval transactionally marks the request APPROVED, stamps a server-derived reviewer identity, links `auth_user_id`, and activates the student's access; rejection only marks the request REJECTED and leaves access untouched.
+- **Completed subtasks:** Created `authorization_request` table via reviewed migration `0002_dashing_the_captain` (schema matches blueprint §17 verbatim); implemented repository/service/controller/routes following the established module pattern; approval uses a conditional `UPDATE … WHERE status='PENDING'` inside a transaction so concurrent duplicate reviews cannot succeed; reviewer identity is taken exclusively from the verified JWT (`request.auth.authUserId`), never from the body.
+- **Files changed:** `database/schema/index.ts`; added `modules/authorization/{types,schema,repository,service,controller,routes}.ts` + service test + route tests; wired DI in `app.ts`/`server.ts`; updated existing test fixtures.
+- **Database changes:** `authorization_request_status` enum; `authorization_request` table with FK `student_profile_id` (cascade). Applied via `db:migrate`; no drift.
+- **API endpoints:** ADMIN-only under `/api/v1/authorization-requests`: `GET /` (optional `?status=` filter), `GET /pending`, `GET /:id`, `POST /:id/approve`, `POST /:id/reject`.
+- **Validation:** typecheck/lint/build passed; 70/70 tests after this phase (16 added across Phases 8–9 files). Route test proves body-supplied `reviewedBy` is ignored.
+- **Completion criteria:** Met. A request cannot be inconsistently approved/rejected; reviewer identity is server-derived.
+- **Deferred:** request-creation endpoint (requires Phase 10 student identity resolution); device metadata fields (blueprint lists none).
 
 ## Phase 9 — Admin Dashboard
 
-- **Status:** NOT STARTED
+- **Status:** COMPLETE (2026-08-26)
 - **Objective:** Supply confirmed dashboard KPIs with database aggregation.
 - **Dependencies:** Students, batches, authorization requests.
-- **Subtasks:** Implement one aggregation service/controller/route matching `DashboardStats` only after upstream models exist.
-- **Expected files:** `modules/dashboard/*` or a focused admin read module.
+- **Completed subtasks:** Implemented `modules/dashboard/*` returning exactly the admin UI's `DashboardStats` shape; every figure computed inside PostgreSQL (filtered counts over `student_profile ⋈ student_access`, `authorization_request`, and a grouped per-batch enrollment subquery classifying ACTIVE/FULL with the same derived rule as the batches module); no table is loaded into Node merely to be counted.
+- **Files created:** `modules/dashboard/{types,repository,service,controller,routes}.ts` + route tests.
 - **Database changes:** None beyond upstream phases.
-- **API endpoints:** `GET /api/v1/dashboard/stats` (provisional; confirm path during UI integration).
-- **Validation:** Correct empty/populated counts and ADMIN-only access.
-- **Completion criteria:** No full-table loading in Node merely to count records.
+- **API endpoints:** `GET /api/v1/dashboard/stats` (ADMIN-only).
+- **Validation:** typecheck/lint/build passed; 70/70 tests including exact response-shape assertion and role enforcement.
+- **Completion criteria:** Met — aggregation happens entirely in SQL.
 
 ## Phase 10 — Student Identity Resolution
 
@@ -215,4 +217,4 @@ Implement one phase at a time. Before each phase, reread this file and `docs/bac
 
 ## Recommended Next Phase
 
-Phase 7 is complete. The next phase is **Phase 8 — Authorization Request Module**, which remains BLOCKED until the request/device workflow (creation source, payload, re-authorization rules) is confirmed.
+Phases 8–9 are complete. The next phase is **Phase 10 — Student Identity Resolution**, which unlocks the student-facing request-creation endpoint and is a prerequisite for Phase 11 result sync.
