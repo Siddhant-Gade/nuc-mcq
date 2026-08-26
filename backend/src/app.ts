@@ -16,6 +16,8 @@ import { createAuthorizationRequestRouter } from './modules/authorization/author
 import type { AuthorizationRequestService } from './modules/authorization/authorization.service.js';
 import { createDashboardRouter } from './modules/dashboard/dashboard.routes.js';
 import type { DashboardService } from './modules/dashboard/dashboard.service.js';
+import { createStudentAccessRouter } from './modules/student-access/student-access.routes.js';
+import type { StudentIdentityService } from './modules/student-access/student-identity.service.js';
 
 type AppDependencies = {
   allowedCorsOrigins: readonly string[];
@@ -24,6 +26,7 @@ type AppDependencies = {
   batchService: BatchService;
   authorizationRequestService: AuthorizationRequestService;
   dashboardService: DashboardService;
+  studentIdentityService: StudentIdentityService;
 };
 
 export const createApp = ({
@@ -33,6 +36,7 @@ export const createApp = ({
   batchService,
   authorizationRequestService,
   dashboardService,
+  studentIdentityService,
 }: AppDependencies): Express => {
   const app = express();
 
@@ -62,9 +66,14 @@ export const createApp = ({
   app.use('/api/v1/batches', createBatchRouter(batchService, tokenVerifier));
   app.use(
     '/api/v1/authorization-requests',
-    createAuthorizationRequestRouter(authorizationRequestService, tokenVerifier),
+    createAuthorizationRequestRouter(
+      authorizationRequestService,
+      tokenVerifier,
+      (authUserId: string) => studentIdentityService.resolve(authUserId),
+    ),
   );
   app.use('/api/v1/dashboard', createDashboardRouter(dashboardService, tokenVerifier));
+  app.use('/api/v1/student', createStudentAccessRouter(studentIdentityService, tokenVerifier));
 
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);

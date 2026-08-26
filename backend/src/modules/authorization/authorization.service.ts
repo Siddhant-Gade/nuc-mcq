@@ -57,6 +57,41 @@ export class AuthorizationRequestService {
     return this.getById(updated.id);
   }
 
+  /**
+   * Phase 10 — confirmed first-login flow (SYSTEM_DESIGN.md §17): a student
+   * whose identity is unlinked or not yet ACTIVE may create exactly one
+   * PENDING request for themselves. Identity comes from the resolved token,
+   * never the body.
+   */
+  public async createForCurrentStudent(input: {
+    studentProfileId: string;
+    authUserId: string;
+    accessStatus: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'REVOKED';
+  }): Promise<AuthorizationRequestView> {
+    if (input.accessStatus === 'ACTIVE') {
+      throw new ApiError(409, 'CONFLICT', 'Student access is already active; no authorization request is needed.');
+    }
+
+    const existingPending = await this.repository.findPendingByAuthUserId(input.authUserId);
+
+    if (existingPending !== undefined) {
+      throw new ApiError(409, 'CONFLICT', 'An authorization request is already pending review.');
+    }
+
+    await this.repository.create(input.studentProfileId, input.authUserId);
+
+    const views = await this.repository.list();
+    const created = views
+      .filter((view) => view.studentProfileId === input.studentProfileId && view.status === 'PENDING')
+      .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())[0];
+
+    if (created === undefined) {
+      throw new ApiError(500, 'INTERNAL_SERVER_ERROR', 'Authorization request was created but could not be read back.');
+    }
+
+    return created;
+  }
+
   private async ensureExists(id: string): Promise<AuthorizationRequestRecord> {
     const record = await this.repository.findById(id);
 

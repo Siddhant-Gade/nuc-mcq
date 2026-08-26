@@ -17,6 +17,8 @@ type Database = NodePgDatabase<typeof schema>;
 export interface StudentRepository {
   list(): Promise<StudentWithAccessRecord[]>;
   findById(id: string): Promise<StudentRecord | undefined>;
+  /** Resolves a verified auth identity to the application student + access row (Phase 10). */
+  findByAuthUserId(authUserId: string): Promise<{ profile: StudentRecord; access: StudentAccessRecord } | undefined>;
   findAccessByStudentId(studentProfileId: string): Promise<StudentAccessRecord | undefined>;
   create(input: CreateStudentInput): Promise<StudentWithAccessRecord>;
   update(id: string, input: UpdateStudentInput): Promise<StudentRecord | undefined>;
@@ -42,6 +44,19 @@ export class DrizzleStudentRepository implements StudentRepository {
   public async findById(id: string): Promise<StudentRecord | undefined> {
     const [student] = await this.database.select().from(studentProfiles).where(eq(studentProfiles.id, id)).limit(1);
     return student;
+  }
+
+  public async findByAuthUserId(
+    authUserId: string,
+  ): Promise<{ profile: StudentRecord; access: StudentAccessRecord } | undefined> {
+    const rows = await this.database
+      .select({ profile: studentProfiles, access: studentAccess })
+      .from(studentAccess)
+      .innerJoin(studentProfiles, eq(studentProfiles.id, studentAccess.studentProfileId))
+      .where(eq(studentAccess.authUserId, authUserId))
+      .limit(1);
+
+    return rows[0];
   }
 
   public async findAccessByStudentId(studentProfileId: string): Promise<StudentAccessRecord | undefined> {

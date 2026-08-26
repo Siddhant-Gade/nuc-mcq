@@ -3,19 +3,56 @@ import { Router } from 'express';
 import { createAuthenticationMiddleware } from '../../middleware/auth.middleware.js';
 import { requireRoles } from '../../middleware/authorization.middleware.js';
 import { validateRequest } from '../../middleware/validation.middleware.js';
+import { ApiError } from '../../utils/api-error.js';
+import { successResponse } from '../../utils/api-response.js';
 import type { AuthTokenVerifier } from '../auth/auth-token-verifier.js';
 import { AuthorizationRequestController } from './authorization.controller.js';
 import { authorizationRequestIdParamsSchema } from './authorization.schema.js';
 import type { AuthorizationRequestService } from './authorization.service.js';
+import type { StudentIdentityService } from '../student-access/student-identity.service.js';
 
 export const createAuthorizationRequestRouter = (
   service: AuthorizationRequestService,
   tokenVerifier: AuthTokenVerifier,
+  resolveStudent: StudentIdentityService['resolve'],
 ): Router => {
   const router = Router();
   const controller = new AuthorizationRequestController(service);
   const authenticate = createAuthenticationMiddleware(tokenVerifier);
   const authorizeAdmin = requireRoles('ADMIN');
+
+  // ── Student self-service (Phase 10, SYSTEM_DESIGN.md §17) ──
+  router.post(
+    '/mine',
+    authenticate,
+    async (request, response, next) => {
+      try {
+        const authUserId = request.auth?.authUserId;
+        if (authUserId === undefined) {
+          throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Authentication token is required.');
+        }
+
+        const identity = await resolveStudent(authUserId);
+
+        if (identity === undefined) {
+          throw new ApiError(403, 'STUDENT_IDENTITY_NOT_LINKED', 'No student profile is linked to this account.');
+        }
+
+        const created = await service.createForCurrentStudent({
+          studentProfileId: identity.profile.id,
+          authUserId,
+          accessStatus: identity.access.status,
+        });
+
+        response.status(201).json(successResponse(created));
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  // ── Admin review surface ──
+  router.use(authenticate, authorizeAdmin);
 
   router.use(authenticate, authorizeAdmin);
 

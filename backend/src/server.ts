@@ -12,6 +12,7 @@ import { DrizzleAuthorizationRequestRepository } from './modules/authorization/a
 import { AuthorizationRequestService } from './modules/authorization/authorization.service.js';
 import { DrizzleDashboardRepository } from './modules/dashboard/dashboard.repository.js';
 import { DashboardService } from './modules/dashboard/dashboard.service.js';
+import { StudentIdentityService } from './modules/student-access/student-identity.service.js';
 
 const tokenVerifier = new SupabaseJwtVerifier({
   issuer: env.SUPABASE_JWT_ISSUER,
@@ -23,6 +24,9 @@ const authorizationRequestService = new AuthorizationRequestService(
   new DrizzleAuthorizationRequestRepository(database),
 );
 const dashboardService = new DashboardService(new DrizzleDashboardRepository(database));
+const studentIdentityService = new StudentIdentityService(
+  (authUserId) => new DrizzleStudentRepository(database).findByAuthUserId(authUserId),
+);
 const app = createApp({
   allowedCorsOrigins: env.CORS_ORIGINS,
   tokenVerifier,
@@ -30,6 +34,7 @@ const app = createApp({
   batchService,
   authorizationRequestService,
   dashboardService,
+  studentIdentityService,
 });
 const server = createServer(app);
 let isShuttingDown = false;

@@ -41,6 +41,14 @@ class FakeAuthorizationRequestRepository implements AuthorizationRequestReposito
     return this.requests.find((request) => request.id === id);
   }
 
+  public async findPendingByAuthUserId(authUserId: string): Promise<AuthorizationRequestRecord | undefined> {
+    return this.requests.find((request) => request.authUserId === authUserId && request.status === 'PENDING');
+  }
+
+  public async create(studentProfileId: string, authUserId: string): Promise<AuthorizationRequestRecord> {
+    return this.seed({ studentProfileId, authUserId, status: 'PENDING' });
+  }
+
   public async approve(
     id: string,
     reviewedBy: string,

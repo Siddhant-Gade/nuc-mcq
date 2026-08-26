@@ -109,6 +109,7 @@ const startFixture = async (
     batchService: {} as never,
     authorizationRequestService: {} as never,
     dashboardService: {} as never,
+    studentIdentityService: {} as never,
   });
   const server = createServer(app);
   server.listen(0, '127.0.0.1');

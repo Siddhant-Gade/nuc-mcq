@@ -76,6 +76,18 @@ class FakeStudentRepository implements StudentRepository {
     return this.students.find((student) => student.id === id);
   }
 
+  public async findByAuthUserId(
+    authUserId: string,
+  ): Promise<{ profile: StudentRecord; access: StudentAccessRecord } | undefined> {
+    const access = this.accessRecords.find((record) => record.authUserId === authUserId);
+    if (access === undefined) {
+      return undefined;
+    }
+
+    const profile = this.students.find((student) => student.id === access.studentProfileId);
+    return profile === undefined ? undefined : { profile, access };
+  }
+
   public async findAccessByStudentId(studentProfileId: string): Promise<StudentAccessRecord | undefined> {
     return this.accessRecords.find((access) => access.studentProfileId === studentProfileId);
   }

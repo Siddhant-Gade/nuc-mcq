@@ -15,6 +15,9 @@ export interface AuthorizationRequestRepository {
   list(): Promise<AuthorizationRequestView[]>;
   listByStatus(status: AuthorizationRequestStatus): Promise<AuthorizationRequestView[]>;
   findById(id: string): Promise<AuthorizationRequestRecord | undefined>;
+  /** Phase 10: finds this identity's own still-pending request, if any. */
+  findPendingByAuthUserId(authUserId: string): Promise<AuthorizationRequestRecord | undefined>;
+  create(studentProfileId: string, authUserId: string): Promise<AuthorizationRequestRecord>;
   /**
    * Atomic review transition. The status guard lives in the UPDATE's WHERE
    * clause so a concurrent duplicate review can never succeed.
@@ -86,6 +89,34 @@ export class DrizzleAuthorizationRequestRepository implements AuthorizationReque
       .from(authorizationRequests)
       .where(eq(authorizationRequests.id, id))
       .limit(1);
+    return record;
+  }
+
+  public async findPendingByAuthUserId(authUserId: string): Promise<AuthorizationRequestRecord | undefined> {
+    const [record] = await this.database
+      .select()
+      .from(authorizationRequests)
+      .where(
+        and(
+          eq(authorizationRequests.authUserId, authUserId),
+          eq(authorizationRequests.status, 'PENDING'),
+        ),
+      )
+      .orderBy(desc(authorizationRequests.requestedAt))
+      .limit(1);
+    return record;
+  }
+
+  public async create(studentProfileId: string, authUserId: string): Promise<AuthorizationRequestRecord> {
+    const [record] = await this.database
+      .insert(authorizationRequests)
+      .values({ studentProfileId, authUserId })
+      .returning();
+
+    if (record === undefined) {
+      throw new Error('Authorization request insert did not return a record.');
+    }
+
     return record;
   }
 
