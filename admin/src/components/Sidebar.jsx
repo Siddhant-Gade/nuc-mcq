@@ -29,7 +29,7 @@ function NavIcon({ icon }) {
         <path d="M16.16 12.44a1.34 1.34 0 0 0 .27 1.48l.05.05a1.63 1.63 0 1 1-2.3 2.3l-.05-.05a1.34 1.34 0 0 0-1.48-.27 1.34 1.34 0 0 0-.81 1.22v.14a1.63 1.63 0 0 1-3.26 0v-.07a1.34 1.34 0 0 0-.87-1.22 1.34 1.34 0 0 0-1.48.27l-.05.05a1.63 1.63 0 1 1-2.3-2.3l.05-.05a1.34 1.34 0 0 0 .27-1.48 1.34 1.34 0 0 0-1.22-.81H3.8a1.63 1.63 0 0 1 0-3.26h.07a1.34 1.34 0 0 0 1.22-.87 1.34 1.34 0 0 0-.27-1.48l-.05-.05a1.63 1.63 0 1 1 2.3-2.3l.05.05a1.34 1.34 0 0 0 1.48.27h.06a1.34 1.34 0 0 0 .81-1.22V3.8a1.63 1.63 0 0 1 3.26 0v.07a1.34 1.34 0 0 0 .81 1.22 1.34 1.34 0 0 0 1.48-.27l.05-.05a1.63 1.63 0 1 1 2.3 2.3l-.05.05a1.34 1.34 0 0 0-.27 1.48v.06a1.34 1.34 0 0 0 1.22.81h.14a1.63 1.63 0 0 1 0 3.26h-.07a1.34 1.34 0 0 0-1.22.81Z" stroke="currentColor" strokeWidth="1.5"/>
       </svg>),
         admin: (<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5 8a5 5 0 0 1 10 0H5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M10 10a3.5 3.5 0 1 0 0-6 3 3 0 0 0 0 6Zm-5 8a5 5 0 0 1 10 0H5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         <path d="M15 7v3M13.5 8.5h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>),
         broadcast: (<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -62,7 +62,7 @@ function NavIcon({ icon }) {
 
 export default function Sidebar() {
     const { t } = useLanguage();
-    const { collapsed, toggle } = useSidebar();
+    const { collapsed, toggle, mobileOpen, closeMobile } = useSidebar();
     const [pendingCount, setPendingCount] = useState(0);
     const intervalRef = useRef(null);
 
@@ -96,59 +96,100 @@ export default function Sidebar() {
         { to: '/settings', label: t('nav.settings'), icon: 'settings' },
     ];
 
-    return (<aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
-      <div className={styles.logoSection}>
-        <div className={styles.logoBrand} onClick={collapsed ? toggle : undefined} style={{ cursor: collapsed ? 'pointer' : 'default' }}>
-          <div className={styles.logoIcon} style={{ overflow: 'hidden', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/logo.png" alt="New Unique Computers" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+    return (
+      <>
+        {/* Mobile backdrop shadow overlay */}
+        {mobileOpen && (
+          <div
+            className={styles.mobileBackdrop}
+            onClick={closeMobile}
+            aria-label="Close navigation"
+          />
+        )}
+
+        <aside
+          className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''} ${mobileOpen ? styles.mobileOpen : ''}`}
+        >
+          <div className={styles.logoSection}>
+            <div
+              className={styles.logoBrand}
+              onClick={collapsed ? toggle : undefined}
+              style={{ cursor: collapsed ? 'pointer' : 'default' }}
+            >
+              <div className={styles.logoIcon} style={{ overflow: 'hidden', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src="/logo.png" alt="New Unique Computers" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+              </div>
+              {(!collapsed || mobileOpen) && (
+                <div className={styles.logoText}>
+                  <h1 className={styles.logoTitle}>{t('header.title')}</h1>
+                  <p className={styles.logoSubtitle}>{t('nav.adminPanel')}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop collapse toggle */}
+            {!collapsed && (
+              <button className={styles.collapseToggleBtn} onClick={toggle} title="Collapse sidebar" aria-label="Collapse sidebar">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
+
+            {/* Mobile close button */}
+            <button className={styles.mobileCloseBtn} onClick={closeMobile} aria-label="Close menu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
-          {!collapsed && (<div className={styles.logoText}>
-              <h1 className={styles.logoTitle}>{t('header.title')}</h1>
-              <p className={styles.logoSubtitle}>{t('nav.adminPanel')}</p>
-            </div>)}
-        </div>
-        {!collapsed && (<button className={styles.collapseToggleBtn} onClick={toggle} title="Collapse sidebar" aria-label="Collapse sidebar">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>)}
-      </div>
 
-      <nav className={styles.nav}>
-        <ul className={styles.navList}>
-          {navItems.map((item) => (<li key={item.to}>
-              <NavLink
-                to={item.to}
-                end={item.to === '/'}
-                title={collapsed ? item.label : undefined}
-                className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
-              >
-                <span className={styles.iconWrap}>
-                  <NavIcon icon={item.icon}/>
-                  {/* Dot badge shown in collapsed mode */}
-                  {item.badge > 0 && collapsed && (
-                    <span className={styles.badgeDot}>{item.badge > 9 ? '9+' : item.badge}</span>
-                  )}
-                </span>
-                {!collapsed && <span className={styles.linkLabel}>{item.label}</span>}
-                {/* Pill badge shown in expanded mode */}
-                {!collapsed && item.badge > 0 && (
-                  <span className={styles.badgePill}>{item.badge > 9 ? '9+' : item.badge}</span>
-                )}
-              </NavLink>
-            </li>))}
-        </ul>
-      </nav>
+          <nav className={styles.nav}>
+            <ul className={styles.navList}>
+              {navItems.map((item) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    end={item.to === '/'}
+                    title={collapsed && !mobileOpen ? item.label : undefined}
+                    onClick={closeMobile}
+                    className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
+                  >
+                    <span className={styles.iconWrap}>
+                      <NavIcon icon={item.icon}/>
+                      {item.badge > 0 && collapsed && !mobileOpen && (
+                        <span className={styles.badgeDot}>{item.badge > 9 ? '9+' : item.badge}</span>
+                      )}
+                    </span>
+                    {(!collapsed || mobileOpen) && <span className={styles.linkLabel}>{item.label}</span>}
+                    {(!collapsed || mobileOpen) && item.badge > 0 && (
+                      <span className={styles.badgePill}>{item.badge > 9 ? '9+' : item.badge}</span>
+                    )}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-      <div className={styles.bottomSection}>
-        <ul className={styles.navList}>
-          {bottomItems.map((item) => (<li key={item.label}>
-              <NavLink to={item.to} title={collapsed ? item.label : undefined} className={styles.navLink}>
-                <NavIcon icon={item.icon}/>
-                {!collapsed && <span className={styles.linkLabel}>{item.label}</span>}
-              </NavLink>
-            </li>))}
-        </ul>
-      </div>
-    </aside>);
+          <div className={styles.bottomSection}>
+            <ul className={styles.navList}>
+              {bottomItems.map((item) => (
+                <li key={item.label}>
+                  <NavLink
+                    to={item.to}
+                    title={collapsed && !mobileOpen ? item.label : undefined}
+                    onClick={closeMobile}
+                    className={styles.navLink}
+                  >
+                    <NavIcon icon={item.icon}/>
+                    {(!collapsed || mobileOpen) && <span className={styles.linkLabel}>{item.label}</span>}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </>
+    );
 }

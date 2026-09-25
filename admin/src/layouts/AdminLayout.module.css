@@ -52,11 +52,12 @@
 
 /* responsive — sidebar becomes overlay/drawer below 768px */
 @media (max-width: 767px) {
-  .main {
-    margin-left: 0;
+  .main,
+  .mainCollapsed {
+    margin-left: 0 !important;
   }
 
   .content {
-    padding: 1rem;
+    padding: 0.875rem 0.75rem;
   }
 }

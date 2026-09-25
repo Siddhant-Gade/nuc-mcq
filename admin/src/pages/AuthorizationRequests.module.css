@@ -58,7 +58,8 @@
 /* Table */
 .tableScroll {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
