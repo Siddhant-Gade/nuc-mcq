@@ -75,7 +75,17 @@ class MainActivity : FlutterActivity() {
                                 values.put(MediaStore.MediaColumns.IS_PENDING, 0)
                                 resolver.update(uri, values, null, null)
 
-                                savedFilePath = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath}/$fileName"
+                                resolver.query(uri, arrayOf(MediaStore.MediaColumns.DATA), null, null, null)?.use { cursor ->
+                                    if (cursor.moveToFirst()) {
+                                        val dataIdx = cursor.getColumnIndex(MediaStore.MediaColumns.DATA)
+                                        if (dataIdx >= 0) {
+                                            savedFilePath = cursor.getString(dataIdx)
+                                        }
+                                    }
+                                }
+                                if (savedFilePath.isNullOrEmpty()) {
+                                    savedFilePath = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath}/$fileName"
+                                }
                             }
                         } else {
                             // Android 9 and below: direct filesystem write
@@ -184,26 +194,18 @@ class MainActivity : FlutterActivity() {
                                     @Suppress("DEPRECATION")
                                     android.app.Notification.Builder(applicationContext)
                                 }
-                                val rawBitmap = android.graphics.BitmapFactory.decodeResource(resources, R.mipmap.launcher_icon)
-                                val size = minOf(rawBitmap.width, rawBitmap.height)
-                                val circularBitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
-                                val canvas = android.graphics.Canvas(circularBitmap)
-                                val paint = android.graphics.Paint().apply {
-                                    isAntiAlias = true
-                                    shader = android.graphics.BitmapShader(rawBitmap, android.graphics.Shader.TileMode.CLAMP, android.graphics.Shader.TileMode.CLAMP)
-                                }
-                                canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+                                val largeBitmap = android.graphics.BitmapFactory.decodeResource(resources, R.drawable.ic_nuc_large_icon)
 
                                 val notification = notificationBuilder
-                                    .setContentTitle("New Unique Computers")
+                                    .setContentTitle("NucMCQ • New Unique Computers")
                                     .setContentText("You have $count unread notifications")
-                                    .setSmallIcon(R.mipmap.launcher_icon)
-                                    .setLargeIcon(circularBitmap)
+                                    .setSmallIcon(R.drawable.ic_nuc_notification)
+                                    .setLargeIcon(largeBitmap)
                                     .setColor(android.graphics.Color.parseColor("#1A73E8"))
                                     .setStyle(
                                         android.app.Notification.BigTextStyle()
                                             .bigText("You have $count unread notifications. Tap to open and view the latest announcements.")
-                                            .setBigContentTitle("New Unique Computers")
+                                            .setBigContentTitle("NucMCQ • New Unique Computers")
                                             .setSummaryText("Announcements")
                                     )
                                     .setNumber(count)

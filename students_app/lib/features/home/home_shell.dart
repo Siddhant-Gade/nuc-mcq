@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/localization/locale_cubit.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_cubit.dart';
 import '../../../core/widgets/frosted_card.dart';
@@ -55,6 +56,7 @@ class _HomeShellState extends State<HomeShell> {
         // Automatic on-login / on-launch background data synchronization & notices refresh
         context.read<SyncCubit>().syncNow();
         context.read<BroadcastCubit>().load();
+        PushNotificationService.instance.syncTokenWithBackend();
         _checkStudyMaterialsIndicator();
       }
     });

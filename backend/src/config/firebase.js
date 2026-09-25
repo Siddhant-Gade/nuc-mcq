@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 import { env } from './env.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let firebaseApp = null;
 let messagingInstance = null;
 
@@ -15,17 +17,23 @@ export function getFirebaseAdmin() {
 
         if (env.FIREBASE_SERVICE_ACCOUNT_KEY) {
             const parsed = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_KEY);
+            if (parsed.private_key && typeof parsed.private_key === 'string') {
+                parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+            }
             credential = cert(parsed);
         } else if (env.FIREBASE_SERVICE_ACCOUNT_PATH) {
             const resolvedPath = path.resolve(process.cwd(), env.FIREBASE_SERVICE_ACCOUNT_PATH);
             if (fs.existsSync(resolvedPath)) {
-                credential = cert(resolvedPath);
+                const parsed = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
+                credential = cert(parsed);
             }
         } else {
-            // Check default filenames in root backend/ folder
+            // Check default filenames in root backend/ folder and module-relative root
             const defaultPaths = [
                 path.resolve(process.cwd(), 'serviceAccountKey.json'),
                 path.resolve(process.cwd(), 'firebase-service-account.json'),
+                path.resolve(__dirname, '../../serviceAccountKey.json'),
+                path.resolve(__dirname, '../../firebase-service-account.json'),
             ];
             for (const candidate of defaultPaths) {
                 if (fs.existsSync(candidate)) {

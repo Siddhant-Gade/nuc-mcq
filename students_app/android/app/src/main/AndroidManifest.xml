@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.READ_APP_BADGE"/>
     <uses-permission android:name="me.everything.badger.permission.BADGE_COUNT_READ"/>
     <uses-permission android:name="me.everything.badger.permission.BADGE_COUNT_WRITE"/>
-    <application android:label="TypeNova" android:name="${applicationName}" android:icon="@mipmap/launcher_icon" android:requestLegacyExternalStorage="true">
+    <application android:label="NucMCQ" android:name="${applicationName}" android:icon="@mipmap/launcher_icon" android:requestLegacyExternalStorage="true">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:taskAffinity="" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">
             <!-- Specifies an Android theme to apply to this Activity as soon as
                  the Android process has started. This theme is visible to the user
@@ -26,7 +26,7 @@
         </activity>
         <!-- FCM default notification channel & icon -->
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="nuc_priority_channel"/>
-        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@mipmap/launcher_icon"/>
+        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_nuc_notification"/>
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_accent"/>
         <meta-data android:name="flutterEmbedding" android:value="2"/>
     </application>

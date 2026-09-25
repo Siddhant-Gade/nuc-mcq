@@ -22,7 +22,7 @@ class DownloadNotificationService {
     if (_initialized) return;
 
     const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_nuc_notification');
     const initSettings = InitializationSettings(
       android: androidSettings,
     );
@@ -64,7 +64,8 @@ class DownloadNotificationService {
       priority: Priority.high,
       showWhen: true,
       playSound: true,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_nuc_notification',
+      largeIcon: DrawableResourceAndroidBitmap('@drawable/ic_nuc_large_icon'),
     );
 
     const details = NotificationDetails(android: androidDetails);
@@ -92,7 +93,8 @@ class DownloadNotificationService {
       importance: Importance.defaultImportance,
       priority: Priority.defaultPriority,
       showWhen: true,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_nuc_notification',
+      largeIcon: DrawableResourceAndroidBitmap('@drawable/ic_nuc_large_icon'),
     );
 
     const details = NotificationDetails(android: androidDetails);

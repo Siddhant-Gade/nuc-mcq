@@ -13,12 +13,12 @@ class AppSpacing {
   static const double xxxl = 48;
 }
 
-/// Border radius tokens.
+/// Border radius tokens — sharp, crisp box edges.
 class AppRadius {
   AppRadius._();
-  static const double sm = 8;
-  static const double md = 12;
-  static const double lg = 16;
+  static const double sm = 4;
+  static const double md = 6;
+  static const double lg = 8;
   static const double full = 999;
 }
 
@@ -30,53 +30,52 @@ class AppAnim {
   static const Duration slow = Duration(milliseconds: 300);
 }
 
-/// Amazon Prime Video inspired design tokens.
-/// Cinematic, deep midnight obsidian, vibrant Prime cyan & gold accents.
+/// Design tokens for both High-Contrast Light Mode and Dark Mode.
 class AppColors {
   AppColors._();
 
-  // Amazon Prime Core Palette
-  static const Color primeBlue = Color(0xFF00A8E1);       // Prime Video Signature Cyan Blue
-  static const Color primeBlueDark = Color(0xFF0073BB);   // Deep Action Blue
+  // Core Brand & Action Palette
+  static const Color primeBlue = Color(0xFF0284C7);       // Crisp Action Cyan-Blue
+  static const Color primeBlueDark = Color(0xFF0369A1);   // Deep Action Blue
   static const Color primeBlueLight = Color(0xFF38C5F8);  // Electric Glow Blue
-  static const Color primeBlueSurface = Color(0xFF0C243B);// Subtle Cyan Surface Tint
-  static const Color primeBlueBorder = Color(0xFF1E3A5F); // Midnight Blue Border
+  static const Color primeBlueSurface = Color(0xFFE0F2FE);// Light Cyan Surface Tint
+  static const Color primeBlueBorder = Color(0xFF7DD3FC); // Crisp Blue Border
 
-  // Amazon Prime Badges & Gamification Gold/Amber
-  static const Color primeGold = Color(0xFFFFA724);       // Prime Trophy / Crown Gold
+  // Badges & Gamification Gold/Amber
+  static const Color primeGold = Color(0xFFD97706);       // High-contrast Trophy Amber
   static const Color primeGoldLight = Color(0xFFFFC043);  // Bright Gold Glow
-  static const Color primeGoldSurface = Color(0xFF2E2008);// Gold Tint Surface
-  static const Color primeAmber = Color(0xFFFF9900);      // Amazon Brand Amber
+  static const Color primeGoldSurface = Color(0xFFFEF3C7);// Light Gold Tint Surface
+  static const Color primeAmber = Color(0xFFD97706);      // Brand Amber
 
   // Vibrant Gamification Accents
-  static const Color primeEmerald = Color(0xFF00C853);    // Vibrant Success Green
-  static const Color primeEmeraldSurface = Color(0xFF092918);
-  static const Color primeRuby = Color(0xFFFF4D4D);       // Alert / Error Red
-  static const Color primeRubySurface = Color(0xFF381216);
+  static const Color primeEmerald = Color(0xFF15803D);    // High-contrast Success Green
+  static const Color primeEmeraldSurface = Color(0xFFDCFCE7);
+  static const Color primeRuby = Color(0xFFDC2626);       // High-contrast Alert Red
+  static const Color primeRubySurface = Color(0xFFFEE2E2);
 
-  // Cinematic Dark Surfaces (Amazon Prime Video UI)
-  static const Color primeObsidian = Color(0xFF0B111D);   // Prime Midnight Background
-  static const Color primeCard = Color(0xFF131C2E);       // Prime Card Surface
-  static const Color primeCardElevated = Color(0xFF18243C);// Prime Elevated / Modal Card
+  // Dark Surfaces
+  static const Color primeObsidian = Color(0xFF0B111D);   // Midnight Background
+  static const Color primeCard = Color(0xFF131C2E);       // Dark Card Surface
+  static const Color primeCardElevated = Color(0xFF18243C);// Dark Elevated Card
   static const Color primeCardHover = Color(0xFF20304E);  // Interactive Card Glow
-  static const Color primeBorder = Color(0xFF1F2F4C);     // Sleek Divider / Outline
+  static const Color primeBorder = Color(0xFF1F2F4C);     // Dark Divider / Outline
 
-  // Text Hierarchy
-  static const Color textPrimary = Color(0xFFF1F5F9);     // High-contrast Ice White
-  static const Color textSecondary = Color(0xFF94A3B8);   // Cool Slate
-  static const Color textTertiary = Color(0xFF64748B);    // Muted Dark Slate
-  static const Color surfaceWhite = Color(0xFF131C2E);    // Dark Prime Card base
-  static const Color bgGrey = Color(0xFF0B111D);          // Deep Midnight
-  static const Color borderLight = Color(0xFF1F2F4C);     // Cinematic Border
-  static const Color dividerLight = Color(0xFF1A2740);
+  // Light Mode Text & Surface Hierarchy (High-Contrast & Clearly Visible)
+  static const Color textPrimary = Color(0xFF0F172A);     // Deep Slate Black
+  static const Color textSecondary = Color(0xFF334155);   // Dark Slate
+  static const Color textTertiary = Color(0xFF475569);    // Medium-Dark Slate
+  static const Color surfaceWhite = Color(0xFFFFFFFF);    // Pure White Card Surface
+  static const Color bgGrey = Color(0xFFF1F5F9);          // Clean Light Slate Background
+  static const Color borderLight = Color(0xFFCBD5E1);     // Crisp Visible Box Border
+  static const Color dividerLight = Color(0xFFE2E8F0);    // Clean Light Divider
 
   // Surface Tints & Glows
-  static const Color surfaceTintLight = Color(0x1A00A8E1);// 10% Prime Blue
-  static const Color surfaceTintDark = Color(0x3300A8E1); // 20% Prime Blue
+  static const Color surfaceTintLight = Color(0x1A0284C7);
+  static const Color surfaceTintDark = Color(0x3300A8E1);
 
   // Shadows
-  static const Color shadowLight = Color(0x40000000);     // 25% Black
-  static const Color shadowDark = Color(0x80000000);      // 50% Cinematic Deep Black
+  static const Color shadowLight = Color(0x180F172A);     // Crisp Light Shadow
+  static const Color shadowDark = Color(0x80000000);      // 50% Deep Black
 
   // Dark Mode Palette
   static const Color darkBg = Color(0xFF0B111D);
@@ -88,18 +87,18 @@ class AppColors {
   static const Color darkBluePrimary = Color(0xFF00A8E1);
   static const Color darkBlueSurface = Color(0xFF0C243B);
 
-  // Backward-compatibility Aliases (retaining properties mapped to Prime Video aesthetics)
-  static const Color googleBlue = primeBlue;
-  static const Color googleBlueDark = primeBlueDark;
-  static const Color googleBlueLight = primeBlueLight;
-  static const Color googleBlueSurface = primeBlueSurface;
-  static const Color googleBlueBorder = primeBlueBorder;
-  static const Color googleGreen = primeEmerald;
-  static const Color googleGreenSurface = primeEmeraldSurface;
-  static const Color googleYellow = primeGold;
-  static const Color googleYellowSurface = primeGoldSurface;
-  static const Color googleRed = primeRuby;
-  static const Color googleRedSurface = primeRubySurface;
+  // Semantic Aliases
+  static const Color googleBlue = Color(0xFF0284C7);
+  static const Color googleBlueDark = Color(0xFF0369A1);
+  static const Color googleBlueLight = Color(0xFF38BDF8);
+  static const Color googleBlueSurface = Color(0xFFE0F2FE);
+  static const Color googleBlueBorder = Color(0xFF7DD3FC);
+  static const Color googleGreen = Color(0xFF15803D);
+  static const Color googleGreenSurface = Color(0xFFDCFCE7);
+  static const Color googleYellow = Color(0xFFD97706);
+  static const Color googleYellowSurface = Color(0xFFFEF3C7);
+  static const Color googleRed = Color(0xFFDC2626);
+  static const Color googleRedSurface = Color(0xFFFEE2E2);
 }
 
 class AppTheme {

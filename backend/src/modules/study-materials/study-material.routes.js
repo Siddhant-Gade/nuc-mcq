@@ -6,7 +6,7 @@ import { createAuthenticationMiddleware } from '../../middleware/auth.middleware
 import { requireRoles } from '../../middleware/authorization.middleware.js';
 import { validateRequest } from '../../middleware/validation.middleware.js';
 import { ApiError } from '../../utils/api-error.js';
-import { MAX_DOCUMENT_BYTES } from '../../utils/storage.js';
+import { MAX_DOCUMENT_BYTES, downloadDocumentBuffer } from '../../utils/storage.js';
 import { StudyMaterialController } from './study-material.controller.js';
 import { createDocumentBodySchema, createVideoSchema, studyMaterialIdParamsSchema, updateStudyMaterialSchema, } from './study-material.schema.js';
 const ALLOWED_MIME_TYPES = new Set([
@@ -61,19 +61,20 @@ export const createStudyMaterialAdminRouter = (service, tokenVerifier, requireAc
     router.post('/documents', ...requireAdmin, uploadSingleDocument, validateRequest({ body: createDocumentBodySchema }), controller.createDocument);
     router.post('/videos', ...requireAdmin, validateRequest({ body: createVideoSchema }), controller.createVideo);
     router.patch('/:id', ...requireAdmin, validateRequest({ params: studyMaterialIdParamsSchema, body: updateStudyMaterialSchema }), controller.update);
-    router.get('/files/{*filePath}', (request, response) => {
-        const rawPath = request.params.filePath || '';
+    router.get('/files/{*filePath}', async (request, response) => {
+        const rawParam = request.params.filePath;
+        const rawPath = Array.isArray(rawParam) ? rawParam.join('/') : (rawParam || '');
         const decoded = decodeURIComponent(rawPath);
-        const candidates = [
-            path.resolve(process.cwd(), 'uploads', 'study-materials', decoded),
-            path.resolve(process.cwd(), 'backend', 'uploads', 'study-materials', decoded),
-        ];
-        const safePath = candidates.find((candidate) => fs.existsSync(candidate));
-        if (!safePath) {
-            response.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'File not found.' } });
+        const buffer = await downloadDocumentBuffer(decoded);
+        if (buffer) {
+            const baseName = path.basename(decoded);
+            response.setHeader('Content-Type', 'application/octet-stream');
+            response.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(baseName)}"`);
+            response.setHeader('Content-Length', String(buffer.length));
+            response.status(200).send(buffer);
             return;
         }
-        response.download(safePath);
+        response.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'File not found.' } });
     });
     router.post('/:id/publish', ...requireAdmin, validateRequest({ params: studyMaterialIdParamsSchema }), controller.publish);
     router.delete('/:id', ...requireAdmin, validateRequest({ params: studyMaterialIdParamsSchema }), controller.remove);

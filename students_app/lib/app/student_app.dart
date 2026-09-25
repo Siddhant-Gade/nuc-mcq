@@ -126,7 +126,7 @@ class _StudentAppState extends State<StudentApp> {
               builder: (context, themeMode) {
                 return MaterialApp(
                   navigatorKey: rootNavigatorKey,
-                  title: 'MSCIT Student - New Unique Computers',
+                  title: 'NucMCQ - New Unique Computers',
                   debugShowCheckedModeBanner: false,
                   theme: AppTheme.lightTheme,
                   darkTheme: AppTheme.darkTheme,

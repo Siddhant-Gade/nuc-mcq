@@ -214,25 +214,21 @@ class DashboardTab extends StatelessWidget {
                 final unlockedBadges = stats?.unlockedBadges ?? const <String>[];
 
                 return Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [const Color(0xFF131C2E), const Color(0xFF0E1626)]
-                          : [const Color(0xFF0F172A), const Color(0xFF1E293B)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    color: isDark ? const Color(0xFF131C2E) : Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
-                      color: AppColors.primeBlue.withOpacity(0.35),
+                      color: isDark ? AppColors.primeBlue.withOpacity(0.35) : const Color(0xFFCBD5E1),
                       width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primeBlue.withOpacity(0.12),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
+                        color: isDark
+                            ? AppColors.primeBlue.withOpacity(0.12)
+                            : Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -243,35 +239,28 @@ class DashboardTab extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            width: 48,
-                            height: 48,
+                            width: 44,
+                            height: 44,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFFFFA724), Color(0xFFFF8800)],
+                                colors: [Color(0xFFFFA724), Color(0xFFE65100)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFFFA724).withOpacity(0.35),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Center(
                               child: Text(
                                 'L$level',
                                 style: GoogleFonts.inter(
-                                  fontSize: 17,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w800,
-                                  color: Colors.black,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,23 +272,26 @@ class DashboardTab extends StatelessWidget {
                                       style: GoogleFonts.inter(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
                                       ),
                                     ),
                                     const SizedBox(width: 6),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primeGold.withOpacity(0.18),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(color: AppColors.primeGold.withOpacity(0.5), width: 0.8),
+                                        color: isDark ? AppColors.primeGold.withOpacity(0.18) : const Color(0xFFFEF3C7),
+                                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                                        border: Border.all(
+                                          color: isDark ? AppColors.primeGold.withOpacity(0.5) : const Color(0xFFF59E0B),
+                                          width: 1,
+                                        ),
                                       ),
                                       child: Text(
                                         '$totalXp XP',
                                         style: GoogleFonts.inter(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.primeGold,
+                                          color: isDark ? const Color(0xFFFFC043) : const Color(0xFFB45309),
                                         ),
                                       ),
                                     ),
@@ -309,28 +301,29 @@ class DashboardTab extends StatelessWidget {
                                 Text(
                                   totalTests > 0
                                       ? '$totalTests tests completed • ${(stats?.passRate ?? 0).toStringAsFixed(0)}% accuracy'
-                                      : 'Complete tests to climb rank & unlock Prime badges!',
+                                      : 'Complete tests to climb rank & unlock badges!',
                                   style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    color: const Color(0xFF94A3B8),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          // Streak Counter Pill (Amazon Prime Gold Style)
+                          // Streak Counter Box
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: currentStreak > 0
-                                  ? const Color(0xFF2E2008)
-                                  : const Color(0xFF1E293B),
-                              borderRadius: BorderRadius.circular(20),
+                                  ? (isDark ? const Color(0xFF2E2008) : const Color(0xFFFEF3C7))
+                                  : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               border: Border.all(
                                 color: currentStreak > 0
-                                    ? AppColors.primeGold
-                                    : const Color(0xFF334155),
-                                width: 1.2,
+                                    ? const Color(0xFFF59E0B)
+                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                                width: 1,
                               ),
                             ),
                             child: Row(
@@ -340,8 +333,8 @@ class DashboardTab extends StatelessWidget {
                                   Icons.local_fire_department_rounded,
                                   size: 16,
                                   color: currentStreak > 0
-                                      ? AppColors.primeGold
-                                      : const Color(0xFF64748B),
+                                      ? const Color(0xFFD97706)
+                                      : (isDark ? const Color(0xFF64748B) : const Color(0xFF475569)),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -350,8 +343,8 @@ class DashboardTab extends StatelessWidget {
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: currentStreak > 0
-                                        ? const Color(0xFFFFD54F)
-                                        : const Color(0xFF94A3B8),
+                                        ? (isDark ? const Color(0xFFFFD54F) : const Color(0xFFB45309))
+                                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155)),
                                   ),
                                 ),
                               ],
@@ -361,7 +354,7 @@ class DashboardTab extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
 
-                      // Level Progress Bar with Prime Cyan Gradient
+                      // Level Progress Bar
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -372,34 +365,34 @@ class DashboardTab extends StatelessWidget {
                                 'Level $level Progress',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF94A3B8),
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
                                 ),
                               ),
                               Text(
                                 '$currentLevelXp / 150 XP',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primeBlueLight,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? AppColors.primeBlueLight : AppColors.primeBlueDark,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 6),
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                             child: LinearProgressIndicator(
                               value: levelProgress,
-                              minHeight: 7,
-                              backgroundColor: const Color(0xFF1E293B),
+                              minHeight: 8,
+                              backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
                               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primeBlue),
                             ),
                           ),
                         ],
                       ),
 
-                      // Unlocked Achievement Badges Carousel (Prime Award Style)
+                      // Unlocked Achievement Badges Carousel
                       if (unlockedBadges.isNotEmpty) ...[
                         const SizedBox(height: 14),
                         SingleChildScrollView(
@@ -410,10 +403,10 @@ class DashboardTab extends StatelessWidget {
                                 margin: const EdgeInsets.only(right: 8),
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0F172A),
-                                  borderRadius: BorderRadius.circular(16),
+                                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFEF3C7),
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
                                   border: Border.all(
-                                    color: AppColors.primeGold.withOpacity(0.6),
+                                    color: const Color(0xFFF59E0B),
                                     width: 1,
                                   ),
                                 ),
@@ -421,8 +414,8 @@ class DashboardTab extends StatelessWidget {
                                   badge,
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFFFFD54F),
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? const Color(0xFFFFD54F) : const Color(0xFF92400E),
                                   ),
                                 ),
                               );
@@ -597,7 +590,7 @@ class DashboardTab extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.15),
@@ -650,7 +643,8 @@ class DashboardTab extends StatelessWidget {
                         color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          width: 1.2,
                         ),
                       ),
                       child: Row(
@@ -659,7 +653,7 @@ class DashboardTab extends StatelessWidget {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: const Color(0xFF8B5CF6).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: const Icon(
                               Icons.bookmark_added_rounded,
@@ -676,7 +670,7 @@ class DashboardTab extends StatelessWidget {
                                   'Question Bank',
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                                   ),
                                 ),
@@ -684,7 +678,8 @@ class DashboardTab extends StatelessWidget {
                                   '969 Questions',
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
                                   ),
                                 ),
                               ],
@@ -705,7 +700,8 @@ class DashboardTab extends StatelessWidget {
                         color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          width: 1.2,
                         ),
                       ),
                       child: Row(
@@ -714,7 +710,7 @@ class DashboardTab extends StatelessWidget {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF59E0B).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: const Icon(
                               Icons.menu_book_rounded,
@@ -731,7 +727,7 @@ class DashboardTab extends StatelessWidget {
                                   'Study Notes',
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                                   ),
                                 ),
@@ -739,7 +735,8 @@ class DashboardTab extends StatelessWidget {
                                   'Shortcuts & Tips',
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
                                   ),
                                 ),
                               ],

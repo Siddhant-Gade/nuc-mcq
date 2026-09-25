@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { ApiError } from '../../utils/api-error.js';
-import { MAX_DOCUMENT_BYTES, SIGNED_URL_EXPIRY_SECONDS, createSignedDownloadUrl, removeDocument, uploadDocument, } from '../../utils/storage.js';
+import { MAX_DOCUMENT_BYTES, SIGNED_URL_EXPIRY_SECONDS, createSignedDownloadUrl, downloadDocumentBuffer, removeDocument, uploadDocument, } from '../../utils/storage.js';
 import { buildYoutubeEmbedUrl, detectDocumentType, isAllowedContentType, parseYoutubeVideoId } from './study-material.content.js';
 export const supabaseStudyMaterialStorage = {
     uploadDocument: (materialId, instituteId, fileName, buffer, contentType) => uploadDocument(materialId, instituteId, fileName, buffer, contentType),
     createSignedDownloadUrl: (filePath) => createSignedDownloadUrl(filePath),
+    downloadDocumentBuffer: (filePath) => downloadDocumentBuffer(filePath),
     removeDocument: (filePath) => removeDocument(filePath),
 };
 const notFound = (id) => new ApiError(404, 'NOT_FOUND', `No study material with id ${id} was found.`);
@@ -72,6 +73,7 @@ export class StudyMaterialService {
         const signedUrl = await this.storage.createSignedDownloadUrl(filePath);
         return {
             kind: 'DOCUMENT',
+            filePath,
             fileName: record.fileName ?? 'document',
             signedUrl,
             expiresInSeconds: SIGNED_URL_EXPIRY_SECONDS,

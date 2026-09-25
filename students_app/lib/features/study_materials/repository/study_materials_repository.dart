@@ -11,6 +11,7 @@ class StudyMaterialsRepository {
 
   final Dio? _dio;
   List<StudyMaterialModel> _materials = [];
+  final Map<String, Uint8List> _bytesCache = {};
 
   Future<List<StudyMaterialModel>> getAllMaterials() async {
     if (_dio != null) {
@@ -54,26 +55,77 @@ class StudyMaterialsRepository {
     return null;
   }
 
-  /// Downloads raw material file bytes from the authenticated backend endpoint
+  /// Downloads raw material file bytes with caching and multi-tier fallback
   Future<Uint8List?> downloadMaterialBytes(String id) async {
+    final cached = _bytesCache[id];
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
+
     if (_dio == null) {
       debugPrint('[StudyMaterials] Dio client is null');
       return null;
     }
+
+    // Tier 1: Direct authenticated download endpoint
     try {
       final response = await _dio.get<List<int>>(
         '/api/v1/student/study-materials/$id/download',
         options: Options(
           responseType: ResponseType.bytes,
+          followRedirects: true,
+          receiveTimeout: const Duration(seconds: 45),
           headers: {'Accept': '*/*'},
         ),
       );
       if (response.data != null && response.data!.isNotEmpty) {
-        return Uint8List.fromList(response.data!);
+        final bytes = Uint8List.fromList(response.data!);
+        _bytesCache[id] = bytes;
+        return bytes;
       }
     } catch (e) {
-      debugPrint('[StudyMaterials] Download error for material $id: $e');
+      debugPrint('[StudyMaterials] Direct download attempt failed for $id: $e');
     }
+
+    // Tier 2: Fetch signed/access URL and download via clean client (avoids forwarding Bearer header to signed storage URL)
+    try {
+      final access = await getMaterialAccess(id);
+      final url = access?['url']?.toString();
+      if (url != null && url.isNotEmpty) {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          final cleanDio = Dio(
+            BaseOptions(
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 45),
+              responseType: ResponseType.bytes,
+            ),
+          );
+          final response = await cleanDio.get<List<int>>(url);
+          if (response.data != null && response.data!.isNotEmpty) {
+            final bytes = Uint8List.fromList(response.data!);
+            _bytesCache[id] = bytes;
+            return bytes;
+          }
+        } else {
+          final response = await _dio.get<List<int>>(
+            url,
+            options: Options(
+              responseType: ResponseType.bytes,
+              receiveTimeout: const Duration(seconds: 45),
+              headers: {'Accept': '*/*'},
+            ),
+          );
+          if (response.data != null && response.data!.isNotEmpty) {
+            final bytes = Uint8List.fromList(response.data!);
+            _bytesCache[id] = bytes;
+            return bytes;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[StudyMaterials] Access URL fallback failed for $id: $e');
+    }
+
     return null;
   }
 

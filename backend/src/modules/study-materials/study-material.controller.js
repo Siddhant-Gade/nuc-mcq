@@ -112,15 +112,25 @@ export class StudyMaterialController {
         if (outcome.kind !== 'DOCUMENT') {
             throw new ApiError(400, 'VALIDATION_ERROR', 'This material is not a document.');
         }
+        const rawPath = outcome.filePath || decodeURIComponent(outcome.signedUrl.replace('/api/v1/study-materials/files/', ''));
+        if (typeof this.service.storage?.downloadDocumentBuffer === 'function' && rawPath) {
+            const buffer = await this.service.storage.downloadDocumentBuffer(rawPath);
+            if (buffer) {
+                const safeName = encodeURIComponent(outcome.fileName || 'document');
+                response.setHeader('Content-Type', 'application/octet-stream');
+                response.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+                response.setHeader('Content-Length', String(buffer.length));
+                response.status(200).send(buffer);
+                return;
+            }
+        }
         if (outcome.signedUrl.startsWith('http://') || outcome.signedUrl.startsWith('https://')) {
             response.redirect(outcome.signedUrl);
             return;
         }
-        const rawPath = outcome.signedUrl.replace('/api/v1/study-materials/files/', '');
-        const decoded = decodeURIComponent(rawPath);
         const candidates = [
-            path.resolve(process.cwd(), 'uploads', 'study-materials', decoded),
-            path.resolve(process.cwd(), 'backend', 'uploads', 'study-materials', decoded),
+            path.resolve(process.cwd(), 'uploads', 'study-materials', rawPath),
+            path.resolve(process.cwd(), 'backend', 'uploads', 'study-materials', rawPath),
         ];
         const safePath = candidates.find((candidate) => fs.existsSync(candidate));
         if (!safePath) {

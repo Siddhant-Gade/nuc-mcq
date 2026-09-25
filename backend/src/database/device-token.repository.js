@@ -1,5 +1,5 @@
 import { eq, inArray } from 'drizzle-orm';
-import { studentDeviceTokens, studentProfiles } from './schema/index.js';
+import { studentAccess, studentDeviceTokens, studentProfiles } from './schema/index.js';
 
 export class DrizzleDeviceTokenRepository {
     database;
@@ -24,7 +24,7 @@ export class DrizzleDeviceTokenRepository {
                 .set({
                     authUserId,
                     devicePlatform,
-                    updatedAt: now,
+                    lastSeenAt: now,
                 })
                 .where(eq(studentDeviceTokens.id, existing.id));
             return;
@@ -34,8 +34,8 @@ export class DrizzleDeviceTokenRepository {
             authUserId,
             fcmToken,
             devicePlatform,
+            lastSeenAt: now,
             createdAt: now,
-            updatedAt: now,
         });
     }
 
@@ -79,6 +79,10 @@ export class DrizzleDeviceTokenRepository {
             .where(inArray(studentDeviceTokens.authUserId, authUserIds));
     }
 
+    async getTokensForAuthUsers(authUserIds) {
+        return this.getTokensForUsers(authUserIds);
+    }
+
     /**
      * Get all active tokens.
      */
@@ -96,8 +100,12 @@ export class DrizzleDeviceTokenRepository {
             .select({ fcmToken: studentDeviceTokens.fcmToken })
             .from(studentDeviceTokens)
             .innerJoin(
+                studentAccess,
+                eq(studentAccess.authUserId, studentDeviceTokens.authUserId)
+            )
+            .innerJoin(
                 studentProfiles,
-                eq(studentProfiles.studentId, studentDeviceTokens.authUserId)
+                eq(studentProfiles.id, studentAccess.studentProfileId)
             )
             .where(eq(studentProfiles.batchId, batchId));
     }
