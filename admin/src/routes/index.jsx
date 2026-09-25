@@ -1,0 +1,55 @@
+import { createBrowserRouter } from 'react-router-dom';
+import AdminLayout from '../layouts/AdminLayout';
+import Dashboard from '../pages/Dashboard';
+import StudentAnalytics from '../pages/StudentAnalytics';
+import StudentList from '../pages/StudentList';
+import StudentAdmission from '../pages/StudentAdmission';
+import StudentDetails from '../pages/StudentDetails';
+import AuthorizationRequests from '../pages/AuthorizationRequests';
+import AuthorizationRequestDetail from '../pages/AuthorizationRequestDetail';
+import Batches from '../pages/Batches';
+import Broadcasts from '../pages/Broadcasts';
+import StudyMaterials from '../pages/StudyMaterials';
+import QuestionBank from '../pages/QuestionBank';
+import CreateAdmin from '../pages/CreateAdmin';
+import ImportAdmissions from '../pages/ImportAdmissions';
+import Settings from '../pages/Settings';
+import LoginPage from '../pages/Login';
+import NotFound from '../pages/NotFound';
+import ErrorPage from '../pages/ErrorPage';
+import Teachers from '../pages/Teachers';
+import TeacherAnalytics from '../pages/TeacherAnalytics';
+const router = createBrowserRouter([
+    {
+        path: '/login',
+        element: <LoginPage />,
+    },
+    {
+        path: '/',
+        element: <AdminLayout />,
+        errorElement: <ErrorPage />,
+        children: [
+            { index: true, element: <Dashboard /> },
+            { path: 'analytics', element: <StudentAnalytics /> },
+            { path: 'students', element: <StudentList /> },
+            { path: 'students/admit', element: <StudentAdmission /> },
+            { path: 'students/import', element: <ImportAdmissions /> },
+            { path: 'students/:id', element: <StudentDetails /> },
+            { path: 'authorization-requests', element: <AuthorizationRequests /> },
+            { path: 'authorization-requests/:id', element: <AuthorizationRequestDetail /> },
+            { path: 'batches', element: <Batches /> },
+            { path: 'teachers', element: <Teachers /> },
+            { path: 'teacher-analytics', element: <TeacherAnalytics /> },
+            { path: 'broadcasts', element: <Broadcasts /> },
+            { path: 'study-materials', element: <StudyMaterials /> },
+            { path: 'question-bank', element: <QuestionBank /> },
+            { path: 'admin/create', element: <CreateAdmin /> },
+            { path: 'settings', element: <Settings /> },
+        ],
+    },
+    {
+        path: '*',
+        element: <NotFound />,
+    },
+]);
+export default router;

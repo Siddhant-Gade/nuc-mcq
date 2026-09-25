@@ -37,7 +37,7 @@
                                           XLSX exports)
 ```
 
-The Student app provides **offline-capable test execution with local-first completed-result persistence** (Flutter, Android + Windows) — it is **not** a fully offline-first application (Section 5 defines the exact boundary). The question bank is bundled with the app and test-taking is fully local; the network is used for login/authorization, result synchronization, announcements, study materials, and other centralized server data. The Admin and Teacher web apps (React) are online-only by nature (office/institute use) and do not need offline design.
+The Student app provides **offline-capable test execution with local-first completed-result persistence** (Flutter, Android + Windows) — it is **not** a fully offline-first application (Section 5 defines the exact boundary). The question bank is bundled with the app and test-taking is fully local; an active network connection is **required during student login / authentication**, at which point **data automatically synchronizes in the background** (pending offline test results are uploaded, announcements and student profile status are fetched). Once authenticated, the student can take tests and practice completely offline. The Admin and Teacher web apps (React) are online-only by nature (office/institute use) and do not need offline design.
 
 This is a **single-institute V1 deployment**. The system is not a multi-tenant SaaS platform and must not claim to be one anywhere in this document, in code, or in future planning, unless multi-institute isolation is actually designed and implemented later (Section 23).
 
@@ -114,24 +114,26 @@ The **Repository** is the boundary between the UI/Cubit layer and durable/networ
 
 The Flutter Student application is **not** a fully offline-first application. Offline capability is scoped specifically to **test execution** and **completed-result safety** — not to the entire app.
 
-### 5.1 Online / Offline Boundary
+### 5.1 Online / Offline Boundary & Automatic Sync Contract
+ 
+**Requires active internet connectivity (Mandatory Online Operations):**
+- **Student Login / Sign In & Initial Authentication**: The application strictly requires an active internet connection to authenticate credentials, obtain/verify the Supabase JWT, and resolve server-side student permissions.
+- **Automatic Data Synchronization on Login**: Immediately upon successful login or active session verification, the app **automatically triggers full background synchronization**:
+  - **Push (Upload)**: Any previously recorded local completed test results marked `PENDING` are uploaded to the backend.
+  - **Pull (Download)**: The latest institute announcements/broadcasts, updated student access status, and study materials metadata are refreshed automatically without requiring manual action.
 
-**Works without network connectivity:**
+**Works 100% offline (once logged in):**
 - Local question bank access
 - Local exam blueprint access
-- Test generation
-- Test execution
-- Answer evaluation
+- Test generation (Practice and Exam modes)
+- Test execution and live timer
+- Answer evaluation and immediate feedback (Practice mode)
 - Score calculation (client-calculated — Section 12.5)
-- Completed test result persistence (local, durable)
+- Completed test result persistence (local, durable in Drift/SQLite)
+- Local Bookmarks and Question Bank browsing
 
-**May require connectivity:**
-- Login / initial authorization
-- Authorization refresh/revocation updates
-- Result synchronization
-- Announcements (Section 20)
-- Study materials (Section 21)
-- Other centralized server data
+**Automatic Post-Test Sync (Opportunistic):**
+- When a student completes a test, it is **always saved locally first**; if internet connectivity is detected at that moment, the app automatically attempts immediate background synchronization without blocking the student's result screen. If offline, the result remains safely in `PENDING` state until the next login, app launch, or network reconnect.
 
 Bundled question banks and exam blueprints exist as **requirement-driven local content** — they exist because a student must be able to take a test with zero connectivity. They are not evidence of, or a requirement for, a universal "everything works offline" design goal; they support one specific offline-capable feature (test execution), not the whole application.
 
@@ -578,21 +580,27 @@ Local sync states: `PENDING`, `SYNCING`, `SYNCED`, `FAILED` — their exact mean
 
 ### 13.1 Synchronization triggers
 
-Sync is attempted when appropriate — not continuously in the background:
+Sync runs **automatically** on specific lifecycle and user events, rather than running continuously via battery-draining polling services:
 
-1. Internet connectivity becomes available
-2. Application starts
-3. Application returns to foreground
-4. A test completes while connectivity is already available
-5. Manual "Sync Now" fallback if needed
+1. **Student Login / Sign In (Primary Automatic Trigger — Mandatory Online Gate)**:
+   - When a student signs in with email/password, active internet connectivity is required.
+   - Immediately upon authentication confirmation and session verification, the background sync pipeline triggers automatically:
+     - **Push**: Scans local storage for any `PENDING` test results and uploads them to `POST /api/v1/results/sync`.
+     - **Pull**: Fetches the newest announcements/broadcasts and refreshes the student's status.
+2. **Session Restore / App Launch**: When the app starts with a stored valid session, if network is available, automatic background sync runs immediately.
+3. **Test Completion (Opportunistic Auto-Sync)**: Immediately upon finishing and locally saving a test, the app attempts an asynchronous background sync if connected. If offline, the result remains in `PENDING` to be synced automatically on the next login or reconnection.
+4. **Network Reconnection / Return to Foreground**: When the device regains connectivity while the app is open.
+5. **Manual "Sync Now" Button**: Retained as a clear user-initiated fallback in Settings and the Right-Side Profile Drawer.
 
 ```
-Internet available
+Student Signs In (Online) / App Resumes / Test Completes
         ↓
-Check local database for pending records
+Trigger Auto-Sync in Background
+        ↓
+Check local database for PENDING records & Pull latest notices
         │
-        ├── NO  → do nothing
-        └── YES → start synchronization
+        ├── PENDING found → POST /api/v1/results/sync → Mark SYNCED on success
+        └── No pending   → Complete sync status update
 ```
 
 No aggressive continuous background sync for V1 — it adds battery cost and platform-specific complexity (WorkManager on Android, no true background execution on Windows) without a real requirement driving it. No always-running background service is introduced. Revisit only if a genuine need emerges.

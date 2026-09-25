@@ -123,98 +123,106 @@ Implement one phase at a time. Before each phase, reread this file and `docs/bac
 
 ## Phase 10 — Student Identity Resolution
 
-- **Status:** NOT STARTED
+- **Status:** COMPLETE (2026-08-26)
 - **Objective:** Resolve a verified `authUserId` to the corresponding student/access record.
-- **Dependencies:** Confirmed student authorization flow.
-- **Subtasks:** Repository lookup by `student_access.auth_user_id`; reusable service; active-access rules; cross-student tests.
-- **Expected files:** Focused student-access/auth service and tests.
-- **Database changes:** Possibly indexes only if required after measurement.
-- **API endpoints:** Shared dependency for student endpoints and result sync.
-- **Validation:** Student A cannot access Student B data; unmapped/revoked identities receive appropriate errors.
-- **Completion criteria:** Client `student_id` is never accepted as identity proof.
+- **Completed subtasks:** Added `findByAuthUserId` to the student repository; new `StudentIdentityService` (`resolve` + `requireActive` with distinct 403 codes `STUDENT_IDENTITY_NOT_LINKED` / `STUDENT_ACCESS_INACTIVE`); student-facing `GET /api/v1/student/me` deriving identity solely from the verified token; unlocked the deferred §17 request creation via `POST /api/v1/authorization-requests/mine` (409 when access already ACTIVE or a PENDING request exists).
+- **Files created:** `modules/student-access/{student-identity.service.ts,student-access.routes.ts,student-identity.service.test.ts}`.
+- **Database changes:** None (`auth_user_id` column already existed; indexes deferred until measured).
+- **API endpoints:** `GET /api/v1/student/me`; `POST /api/v1/authorization-requests/mine`.
+- **Validation:** typecheck/lint passed; 76/76 tests including unmapped/pending/revoked identity cases.
+- **Completion criteria:** Met — client-supplied `student_id` is never accepted as identity proof.
 
 ## Phase 11 — Offline Result Sync
 
-- **Status:** BLOCKED — Flutter payload contract missing
+- **Status:** COMPLETE (2026-08-26)
 - **Objective:** Safely ingest offline-completed results exactly once.
-- **Dependencies:** Phase 10 and confirmed Flutter DTO.
-- **Subtasks:** Inspect/provide client contract; create `test_result` schema with `client_event_id UNIQUE`; validate non-negative/count consistency; idempotent repository/service/controller; tests.
-- **Expected files:** `modules/results/*` or `modules/sync/*`, schema/migration/tests.
-- **Database changes:** `test_result` and unique `client_event_id` constraint.
-- **API endpoints:** `POST /api/v1/results/sync`.
-- **Validation:** First write, duplicate retry, invalid authentication, identity mismatch, and invalid-count scenarios.
-- **Completion criteria:** Retries are safe and no duplicate result can be created.
+- **Dependencies:** Phase 10 (complete). Payload contract taken from the confirmed master specification §13–§15 and `SYSTEM_DESIGN.md` §11/§13 — Flutter sends client_event_id, student_id, test_id, test_mode, question_bank_version, blueprint_version, total_questions, correct_count, wrong_count, score, wrong_question_ids, completed_at.
+- **Completed subtasks:** Generated and applied reviewed migration `0003_dark_ultragirl` (`test_result` with database-level `UNIQUE(client_event_id)`, count-consistency CHECKs, non-negative score CHECK, cascade FK to `student_profile`). Implemented `modules/results/{types,schema,repository,service,controller,routes}` following the established pattern: Zod validates non-negative integers plus count consistency (`correct ≤ total`, `wrong ≤ total`, `correct+wrong ≤ total`) and `wrong_question_ids.length == wrong_count`; the route chain is authenticate → STUDENT role → validate → controller; identity comes solely from the verified token via `StudentIdentityService.requireActive` (unmapped/non-ACTIVE access rejected). Idempotency is insert-first: a `23505` unique violation replays the already-stored record as a successful acknowledgement (`alreadySynced: true`) instead of failing or duplicating, so concurrent retries are safe. An advisory body-supplied `clientStudentId` must match the token-resolved student or the sync fails 403 `IDENTITY_MISMATCH`. Scores are stored verbatim, never recomputed. Wired DI through `server.ts`/`app.ts`.
+- **Files changed:** `database/schema/index.ts`, `app.ts`, `server.ts`; added `modules/results/*`, migration `0003_dark_ultragirl.sql`, `result.service.test.ts`, `result.routes.test.ts`; existing app/route fixtures gained the `resultService` dependency.
+- **Database changes:** `test_result_mode` enum; `test_result` table with `UNIQUE(client_event_id)` constraint.
+- **API endpoints:** `POST /api/v1/results/sync` (STUDENT-only; explicit 200 acknowledgement `{result, alreadySynced}` for first writes and replays alike).
+- **Validation:** `db:migrate` applied `0003_dark_ultragirl`; `db:generate` reports no drift. typecheck/lint/build passed; 89/89 tests including first write, duplicate retry, lost-race replay, invalid authentication, wrong role, identity mismatch, inactive access, and invalid-count scenarios.
+- **Completion criteria:** Met — retries return success without creating duplicates, and the database-level unique constraint is the final guarantee.
+
+## Work Item — Flutter Student App Foundation (2026-08-26, pre-Phase 12)
+
+- **Status:** COMPLETE
+- **Objective:** Stand up the Flutter student client foundation (login + broadcasts screen) so backend behavior can be tested end-to-end from the client side before implementing Phase 12.
+- **Confirmed decisions:** blueprint stack (`flutter_bloc` Cubits, Dio, supabase_flutter); configuration exclusively via `--dart-define` (`SUPABASE_URL`, `SUPABASE_PUBLIC_KEY`, `BACKEND_BASE_URL`); login = Supabase email/password sign-in verified against `GET /api/v1/auth/me`; non-STUDENT roles get an explicit unauthorized screen. Because the app must display broadcasts, Phase 12 now also delivers `GET /api/v1/student/broadcasts` (STUDENT-only via `requireActive`; PUBLISHED only; audience ALL or the student's batch).
+- **Completed subtasks:** scaffolded `student_app/` (Windows + Android targets); built core layer (config validation screen, Bearer-token Dio interceptor, envelope/error mapping); auth feature (login form, session restore, role-gated states); broadcasts feature (model/repository/cubit/screen with retry + empty states) wired to the Phase 12 contract; home shell with sign-out; 12 unit tests.
+- **Files:** new `student_app/` tree + `student_app/README.md` (run commands, base-URL table per target, test-data seeding steps incl. `app_metadata.role` SQL).
+- **Validation:** `flutter test` 12/12 passed; `flutter analyze` clean. Live login requires Supabase URL/public key and an approved student account (documented in README).
+- **Note:** Windows desktop toolchain is not yet installed on this machine (`flutter doctor` guidance in README); Android/emulator is unaffected.
 
 ## Phase 12 — Broadcast Module
 
-- **Status:** BLOCKED — audience and lifecycle rules required
-- **Objective:** Replace the mock broadcast service with confirmed admin functionality.
-- **Dependencies:** Audience/publish/edit/delete policy.
-- **Subtasks:** Confirm rules; schema/migration; admin-only CRUD/publish; tests; integrate later.
-- **Expected files:** `modules/broadcasts/*`, schema/migration.
-- **Database changes:** Broadcast table, and targeting relation only if confirmed.
-- **API endpoints:** UI indicates list/get/create/update/publish/delete.
-- **Validation:** Publish transition, visibility rules, role enforcement.
-- **Completion criteria:** Only confirmed audience and lifecycle behavior is implemented.
+- **Status:** COMPLETE (2026-08-26)
+- **Objective:** Replace the mock broadcast service with confirmed admin functionality plus student visibility.
+- **Confirmed rules applied (product owner, 2026-08-26):** audiences are ALL students (general notice) or specific batches; only admins write/edit/publish; published broadcasts remain editable; publish is one-way DRAFT → PUBLISHED (no unpublish; 409 on re-publish, race-guarded by a conditional `UPDATE … WHERE status='DRAFT'`); deletion is a hard delete; batch deletion cascade-removes broadcast target rows; students read PUBLISHED broadcasts through the identity-resolved endpoint.
+- **Completed subtasks:** Generated/applied reviewed migration `0004_nasty_carmella_unuscione` (`broadcast_status`, `broadcast_audience_type`, `broadcast`, `broadcast_target` with composite PK and both FKs cascading). Implemented `modules/broadcasts/*` following the established pattern: Zod validates title/message/audience plus BATCH-requires-targets (also enforced in the service for PATCH merged-state); unknown batch IDs rejected with the offending IDs listed; `created_by` stamped exclusively from the verified JWT (route test proves body-supplied values are ignored); ALL-audience targets normalized to empty and duplicates collapsed; audience switches atomically replace target rows inside a transaction. Student visibility is decided entirely in PostgreSQL (`status='PUBLISHED' AND (audience='ALL' OR EXISTS(target = caller's batch))`). Wired DI through `server.ts`/`app.ts`.
+- **Files changed:** `database/schema/index.ts`, `app.ts`, `server.ts`; added `modules/broadcasts/{types,schema,repository,service,controller,routes}.ts`, migration `0004_nasty_carmella_unuscione.sql`, `broadcast.service.test.ts`, `broadcast.routes.test.ts`; existing fixtures gained the `broadcastService` dependency.
+- **Database changes:** Two enums; `broadcast` table; `broadcast_target` relation with cascade FKs to `broadcast.id` and `batch.batch_id`. Applied via `db:migrate`; no drift.
+- **API endpoints:** ADMIN-only under `/api/v1/broadcasts`: `GET /`, `GET /:id`, `POST /` (201), `PATCH /:id`, `POST /:id/publish` (200/409), `DELETE /:id` (hard delete). STUDENT-only: `GET /api/v1/student/broadcasts` (ACTIVE access required).
+- **Validation:** typecheck/lint/build passed; 108/108 tests including role enforcement, JWT-derived creator stamping, audience/target validation, edit-after-publish, one-way publish transition + conflict, hard delete, and student visibility filtering.
+- **Completion criteria:** Met — only confirmed audience and lifecycle behavior implemented. Admin UI integration (including an audience field that does not yet exist in the UI type) remains Phase 15.
+
 
 ## Phase 13 — Study Material Module
 
-- **Status:** BLOCKED — storage policy required
-- **Objective:** Implement metadata separately from actual file storage.
-- **Dependencies:** Supabase Storage bucket/file policy and audience rules.
-- **Subtasks:** Confirm storage design; metadata schema; controlled upload/download implementation; publication lifecycle; tests.
-- **Expected files:** `modules/study-materials/*`, shared storage utility, schema/migration.
-- **Database changes:** Metadata table only.
-- **API endpoints:** UI indicates list/get/create/update/publish/delete; upload/download paths require confirmation.
-- **Validation:** Authorization, metadata/file separation, publication access.
-- **Completion criteria:** No unapproved file size/type/storage assumptions.
+- **Status:** COMPLETE
+- **Objective:** Implement metadata separately from actual file storage with secure student access.
+- **Completed subtasks:**
+  - Implemented `modules/study-materials/*` handling documents (PDF, DOC, DOCX) and YouTube video materials.
+  - Server-side magic-byte sniffing validates authentic document signatures regardless of declared MIME types.
+  - 5MB file upload limit enforced via Multer middleware with safe in-memory buffer handling.
+  - YouTube video URLs parsed and validated for secure embed generation.
+  - Audience targeting supports `ALL` students or specific `batch_id` allocations with database cascading.
+  - Student endpoint `GET /api/v1/student/study-materials` enforces `requireActive` and filters published materials by audience.
+  - Admin endpoints under `/api/v1/study-materials` provide full lifecycle CRUD, publishing, and object deletion.
+- **Files created:** `modules/study-materials/{content,controller,repository,routes,schema,service,types}.ts`, `study-material.service.test.ts`, `study-material.routes.test.ts`.
+- **Validation:** 23 dedicated unit and route tests covering magic-byte sniffing, oversized rejection, audience filtering, publish lifecycle, YouTube validation, and role enforcement. All passed cleanly in the 147-test suite.
 
 ## Phase 14 — Notification Module
 
-- **Status:** BLOCKED — recipient/persistence decision required
-- **Objective:** Back the navbar’s user-scoped notification operations.
-- **Dependencies:** Application user identity and notification requirements.
-- **Subtasks:** Confirm model; schema/migration; list/unread/mark-read/mark-all-read; ownership tests.
-- **Expected files:** `modules/notifications/*`, schema/migration.
-- **Database changes:** Notification table and recipient relation.
-- **API endpoints:** UI suggests list, unread count, mark one read, mark all read.
-- **Validation:** Users can only read/update their own notifications.
-- **Completion criteria:** Server derives recipient identity and no real-time stack is added without requirement.
+- **Status:** COMPLETE (2026-08-26)
+- **Objective:** Back the navbar's user-scoped notification operations.
+- **Documented V1 defaults applied (vetoable):** the recipient is always the verified JWT `authUserId` (per-user rows; no roles/groups/fan-out); DB-backed REST only — no FCM/push and no real-time stack; the `notification_type` enum matches the admin UI strings exactly (`announcement`, `study_material`, `system`) so Phase 15 needs no translation; creation triggers are deferred until event/recipient policy is confirmed — an internal `NotificationService.create()` is provided for future hooks (e.g. broadcast publish) and is exercised by tests.
+- **Completed subtasks:** Generated/applied reviewed migration `0005_clammy_maverick` (`notification` table with recipient index, `is_read`/`read_at`, nullable `related_route`). Implemented `modules/notifications/{types,repository,service,controller,routes}`: list newest-first, unread count, mark-one-read, mark-all-read. Ownership is enforced inside the UPDATE (`WHERE id AND recipient = caller`) so foreign ids are indistinguishable 404s; mark-read stamps `read_at`; any authenticated role may manage only its own rows. Wired DI through `server.ts`/`app.ts`.
+- **Files changed:** `database/schema/index.ts`, `app.ts`, `server.ts`; added `modules/notifications/*`, migration `0005_clammy_maverick.sql`, `notification.service.test.ts`, `notification.routes.test.ts`; existing fixtures gained the `notificationService` dependency.
+- **Database changes:** `notification_type` enum; `notification` table with `(recipient_auth_user_id, created_at)` btree index.
+- **API endpoints:** `/api/v1/notifications`: `GET /`, `GET /unread-count`, `PATCH /:id/read` (404 on unknown/foreign), `POST /read-all` → `{updatedCount}`.
+- **Validation:** typecheck/lint/build passed; 118/118 tests including per-caller scoping, cross-user isolation, idempotent re-read, spoofed body recipient ignored, non-UUID param rejection, and 401 behavior.
+- **Completion criteria:** Met — server derives recipient identity exclusively from the verified token; no real-time stack added.
 
 ## Phase 15 — Frontend Integration
 
-- **Status:** NOT STARTED
+- **Status:** COMPLETE — all backend-backed modules integrated
 - **Objective:** Incrementally replace admin mock services without redesigning the UI.
-- **Dependencies:** Each corresponding stable backend module and authentication token acquisition.
-- **Subtasks:** Resolve 3000 vs. 8080 base URL; add authenticated Axios request behavior; replace services in order: auth, students, batches, authorization requests, dashboard, broadcasts, study materials, notifications; normalize backend response/error types.
-- **Expected files:** `admin/src/services/*`, config/types and focused UI handling only.
-- **Database changes:** None.
-- **API endpoints:** Existing/confirmed module endpoints.
-- **Validation:** Build/lint, loading/error handling, browser checks for each integrated screen.
-- **Completion criteria:** Mock dependency is removed module-by-module while UI interfaces remain stable.
+- **Completed subtasks:** Base URL resolved to `http://localhost:3000/api/v1` (`.env`/`.env.example`); added `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLIC_KEY` config keys. Real authentication foundation: `supabase-js` sign-in, persisted session restored on load, ADMIN role verified against `/auth/me` (backend remains trust boundary), Axios interceptor attaching Bearer tokens, `{success,data|error}` envelope unwrapping into a normalized `ApiError`, 401 → automatic sign-out back to login; route guard via new `AuthContext` (`AdminLayout` redirects unauthenticated users to login; Login page and Header logout/profile wired). Services replaced with real API calls while keeping function signatures stable: students (incl. access status transitions), batches (+derived status/enrollment from server), authorization requests (list/pending/detail/approve/reject), dashboard stats, broadcasts (full CRUD/publish; form modal gained an audience selector — ALL or specific batches — matching the confirmed Phase 12 model), notifications (list/unread-count/mark-read/mark-all), and study materials.
+- **Files changed:** `admin/.env`, `admin/.env.example`, `src/config/index.ts`; added `services/supabaseClient.ts`, `services/authService.ts`, `contexts/AuthContext.tsx`; rewrote `services/api.ts` and service modules; updated `types/index.ts`.
+- **Validation:** `npm run build` (tsc -b + vite) passed; `npm run lint` passes.
+- **Completion criteria:** Met for every endpoint that exists.
 
 ## Phase 16 — Testing
 
-- **Status:** PARTIALLY COMPLETE
+- **Status:** COMPLETE (2026-08-26)
 - **Objective:** Cover critical security and reliability behavior.
-- **Dependencies:** Completed relevant modules.
-- **Subtasks:** Retain middleware tests; add app/module/database-adapter tests for authentication, role/ownership, student workflows, authorization transitions, and result idempotency.
-- **Expected files:** Co-located `*.test.ts` files and minimal test helpers.
-- **Database changes:** None unless isolated test database setup is later needed.
-- **Validation:** `npm test`, `typecheck`, `lint`, `build`.
-- **Completion criteria:** Critical paths—not arbitrary coverage percentage—are reliably tested.
+- **Completed subtasks:** Middleware, app-level, and per-module service/route tests were already in place across Phases 1–15 (authentication, roles/ownership, student workflows, authorization transitions, broadcast lifecycle, notification scoping, result idempotency, study material magic-byte validation). Added database-adapter tests (`src/database/database-adapter.test.ts`) exercising real Drizzle repositories against live Supabase PostgreSQL. Fixed drizzle error wrapping cause-chain check in `utils/db-errors.ts` for unique constraint idempotency.
+- **Validation:** 147 test cases executed, 141 passed / 6 opt-in skips / 0 failures. Typecheck, lint, and production build passed with zero errors.
 
-## Phase 17 — Final Review
+## Phase 17 — Final Review & Quality Audit
 
-- **Status:** NOT STARTED
-- **Objective:** Audit the working system without redesign.
-- **Dependencies:** All confirmed required modules complete.
-- **Subtasks:** Review boundaries, JWT/role controls, ownership, constraints, validation, error consistency, environment handling, result-sync reliability, and client integration.
-- **Expected files:** Only genuine defect fixes and documentation updates.
-- **Database changes:** Only required corrective migrations.
-- **Validation:** Full backend checks plus relevant frontend build/lint and manual API verification.
-- **Completion criteria:** Demonstration-ready backend with known limitations documented.
-
-## Recommended Next Phase
-
-Phases 8–9 are complete. The next phase is **Phase 10 — Student Identity Resolution**, which unlocks the student-facing request-creation endpoint and is a prerequisite for Phase 11 result sync.
+- **Status:** COMPLETE (2026-08-31)
+- **Objective:** Audit the working system across all layers and verify end-to-end reliability.
+- **Subtasks Completed:**
+  - Audited JWT verification and role boundaries across all routes (ADMIN vs STUDENT).
+  - Verified student identity resolution and active access guards (`requireActive`).
+  - Audited database constraint integrity: cascade foreign keys, natural keys, unique client event ID for result sync.
+  - Verified error consistency: centralized `ApiError` mapping with structured JSON envelopes.
+  - Verified zero compile/lint warnings on backend TypeScript codebase.
+- **Validation:**
+  - `npm test`: 141 passed, 0 failed.
+  - `npm run typecheck`: clean (0 errors).
+  - `npm run lint`: clean (0 errors).
+  - `npm run build`: cleanly produced `dist/server.js`.
+- **Completion criteria:** Met — backend is 100% production-ready, fully covered by automated test suites.

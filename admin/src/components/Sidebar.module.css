@@ -1,5 +1,5 @@
 .sidebar {
-  width: 250px;
+  width: 260px;
   background: var(--color-sidebar-bg);
   color: var(--color-sidebar-text);
   display: flex;
@@ -9,47 +9,103 @@
   left: 0;
   top: 0;
   z-index: 50;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid var(--color-sidebar-border, var(--color-outline-variant));
+  transition: width 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.collapsed {
+  width: 68px;
 }
 
 .logoSection {
-  padding: 1.25rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1rem 0.875rem;
+  border-bottom: 1px solid var(--color-sidebar-border, var(--color-outline-variant));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-sidebar-surface);
+  min-height: 3.5rem;
+}
+
+.collapsed .logoSection {
+  padding: 1rem 0.5rem;
+  justify-content: center;
+}
+
+.logoBrand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .logoIcon {
-  width: 2rem;
-  height: 2rem;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  width: 2.25rem;
+  height: 2.25rem;
+  background: linear-gradient(135deg, #007acc 0%, #005a9e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-on-primary);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 122, 204, 0.25);
   flex-shrink: 0;
 }
 
+.logoText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .logoTitle {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #ffffff;
-  line-height: 1.3;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-sidebar-title, var(--color-on-surface));
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logoSubtitle {
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-weight: 400;
+  color: var(--color-sidebar-subtitle, var(--color-on-surface-variant));
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.collapseToggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-sidebar-border, var(--color-outline-variant));
+  background: var(--color-sidebar-btn-bg, rgba(0, 0, 0, 0.04));
+  color: var(--color-sidebar-text);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.collapseToggleBtn:hover {
+  background: var(--color-sidebar-btn-hover, rgba(0, 0, 0, 0.08));
+  color: var(--color-sidebar-title, var(--color-on-surface));
 }
 
 .nav {
   flex: 1;
-  padding: 0.75rem 0;
+  padding: 0.875rem 0;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .navList {
@@ -57,52 +113,129 @@
   padding: 0 0.625rem;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+}
+
+.collapsed .navList {
+  padding: 0 0.5rem;
 }
 
 .navLink {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.75rem;
-  min-height: 44px; /* 36-40px + padding = 44px touch target */
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
   color: var(--color-sidebar-text);
   text-decoration: none;
   font-size: 0.8125rem;
-  font-weight: 400;
+  font-weight: 500;
   border-radius: var(--radius-md);
   cursor: pointer;
   position: relative;
-  transition:
-    background 150ms ease,
-    color 150ms ease;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.collapsed .navLink {
+  justify-content: center;
+  padding: 0.625rem 0;
+  width: 100%;
 }
 
 .navLink:hover {
   background: var(--color-sidebar-hover);
-  color: var(--color-on-primary);
+  color: var(--color-sidebar-title, var(--color-on-surface));
 }
 
 .navLink:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.9);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-sidebar-bg) 70%, transparent);
+  outline: none;
+  background: var(--color-sidebar-hover);
+  box-shadow: 0 0 0 2px var(--color-primary);
 }
 
 .active {
-  background: var(--color-sidebar-active);
-  color: var(--color-on-primary);
-  font-weight: 500;
+  background: var(--color-sidebar-active-bg);
+  color: var(--color-sidebar-active-text, var(--color-primary));
+  font-weight: 600;
+  border: 1px solid var(--color-sidebar-border, var(--color-outline-variant));
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  left: -0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 1.25rem;
+  border-radius: 0 2px 2px 0;
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+}
+
+.collapsed .active::before {
+  left: -0.5rem;
+}
+
+.linkLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bottomSection {
-  padding: 0.625rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--color-sidebar-border, var(--color-outline-variant));
+  background: var(--color-sidebar-surface);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sidebar,
   .navLink,
   .navLink:hover {
-    transform: none;
+    transition: none;
   }
+}
+
+/* ── Pending badge ── */
+.iconWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Dot badge: visible in collapsed mode, top-right of icon */
+.badgeDot {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: #ea4335;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  border: 1.5px solid var(--color-sidebar-bg);
+  pointer-events: none;
+}
+
+/* Pill badge: visible in expanded mode, pushed to the far right */
+.badgePill {
+  margin-left: auto;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #ea4335;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  flex-shrink: 0;
 }

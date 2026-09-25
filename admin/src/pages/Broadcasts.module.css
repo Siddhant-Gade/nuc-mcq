@@ -26,11 +26,27 @@
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  user-select: none;
 }
 
 .addBtn:hover {
   background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
+}
+
+.addBtn:active {
+  transform: translateY(1px) scale(0.96);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  filter: brightness(0.9);
+  transition-duration: 0.06s;
+}
+
+.addBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .filterBar {
@@ -187,20 +203,31 @@
   color: var(--color-outline);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .publishBtn:hover {
   color: var(--color-success);
   background: var(--color-success-light);
+  transform: translateY(-1px);
 }
 
 .editBtn:hover {
   color: var(--color-primary);
   background: var(--color-primary-light);
+  transform: translateY(-1px);
 }
 
 .deleteBtn:hover {
   color: var(--color-error);
   background: var(--color-error-container);
+  transform: translateY(-1px);
+}
+
+.publishBtn:active,
+.editBtn:active,
+.deleteBtn:active {
+  transform: scale(0.9);
+  transition-duration: 0.05s;
 }

@@ -1,0 +1,73 @@
+How to use sprint file
+How I recommend you use this
+Step 1 — Give Claude the system design
+
+Then use the master prompt.
+
+Ask:
+
+Create the complete sprint roadmap from Sprint 1 to production readiness, but do not generate implementation code.
+
+Step 2 — Start only Sprint 1
+
+Then ask:
+
+Act as Sprint Master. Generate the detailed task breakdown for Sprint 1 according to the master prompt. Do not plan future implementation tasks beyond Sprint 1.
+
+This prevents context overload.
+
+Step 3 — Give one task to OpenCode
+
+For example:
+
+Implement Task 2 only.
+
+Follow the existing architecture and files.
+
+Do not modify unrelated modules.
+
+Before making changes:
+1. Inspect the relevant existing code.
+2. Explain which files will change.
+3. Implement only Task 2.
+4. Run relevant tests.
+5. Report changed files and test results.
+6. Do not continue to Task 3.
+
+This is the key to keeping coding agents under control.
+
+My strongest recommendation for your setup
+
+Given your goal of reviewing AI-generated code rather than writing every line manually, use:
+
+                CLAUDE
+       ┌────────────────────┐
+       │ Sprint Master      │
+       │ Architecture       │
+       │ Code Review        │
+       └─────────┬──────────┘
+                 │
+         Precise Task
+                 │
+                 ▼
+       ┌────────────────────┐
+       │ OpenCode           │
+       │ Implementation LLM │
+       └─────────┬──────────┘
+                 │
+             Code + Tests
+                 │
+                 ▼
+       ┌────────────────────┐
+       │ Different LLM      │
+       │ Testing / Attack   │
+       └─────────┬──────────┘
+                 │
+                 ▼
+                CLAUDE
+           Final Review
+                 │
+                 ▼
+              Git Commit
+
+This is, in my opinion, the strongest and most cost-efficient workflow for your project: Claude protects the architecture, while cheaper/free OpenCode models do the repetitive implementation work.

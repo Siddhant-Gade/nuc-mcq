@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 coverage/
+serviceAccountKey.json
+firebase-service-account.json
+*.service-account.json
+

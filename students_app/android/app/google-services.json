@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "950049251059",
+    "project_id": "nuctyping",
+    "storage_bucket": "nuctyping.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950049251059:android:360e6d3f3be0886e8e2186",
+        "android_client_info": {
+          "package_name": "com.mscit.student_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcq4mBwAtaHLH4uPzE41zi1ZftWnRUHNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

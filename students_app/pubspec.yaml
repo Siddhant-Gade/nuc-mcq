@@ -1,0 +1,55 @@
+config_name:
+  name: "TypeNova"
+  
+name: student_app
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  supabase_flutter: ^2.17.2
+  flutter_bloc: ^9.1.1
+  dio: ^5.11.0
+  shared_preferences: ^2.3.2
+  google_fonts: ^6.2.1
+  archive: ^3.6.1
+  url_launcher: ^6.3.1
+  path_provider: ^2.1.5
+  flutter_local_notifications: ^22.3.0
+  open_filex: ^4.7.0
+  youtube_player_iframe: ^4.0.4
+  firebase_core: ^4.14.0
+  firebase_messaging: ^16.6.0
+  google_sign_in: ^6.2.2
+  rename: ^2.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  rename_app: ^1.6.6
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/logo.jpeg"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/
+    - assets/subjects/
+    - google_fonts/
+    - assets/fonts/

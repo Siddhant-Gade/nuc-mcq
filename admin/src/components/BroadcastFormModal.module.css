@@ -150,11 +150,18 @@
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .cancelBtn:hover {
   background: var(--color-surface-container);
+  transform: translateY(-1px);
+}
+
+.cancelBtn:active {
+  transform: translateY(1px) scale(0.97);
+  transition-duration: 0.05s;
 }
 
 .draftBtn {
@@ -167,11 +174,18 @@
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .draftBtn:hover {
   background: var(--color-outline-variant);
+  transform: translateY(-1px);
+}
+
+.draftBtn:active {
+  transform: translateY(1px) scale(0.97);
+  transition-duration: 0.05s;
 }
 
 .confirmBtn {
@@ -184,11 +198,22 @@
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  user-select: none;
 }
 
 .confirmBtn:hover:not(:disabled) {
   background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
+}
+
+.confirmBtn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.96);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  filter: brightness(0.9);
+  transition-duration: 0.06s;
 }
 
 .confirmBtn:disabled {

@@ -1,0 +1,306 @@
+.clockPickerContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  background: var(--color-surface-container, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+.clockRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.clockBox {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.625rem;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md, 0.375rem);
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clockBox:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.clockBox:active {
+  transform: translateY(1px) scale(0.98);
+  transition-duration: 0.05s;
+}
+
+.clockBoxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.clockBoxLabel {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
+}
+
+.clockIcon {
+  color: var(--color-primary);
+}
+
+.clockDigitsRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.clockDigits {
+  font-family: ui-monospace, "SF Mono", "Roboto Mono", Menlo, monospace;
+  font-size: 1.1875rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  letter-spacing: -0.02em;
+}
+
+.ampmBadge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  letter-spacing: 0.03em;
+}
+
+.am {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.pm {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.clockDivider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-outline);
+  padding: 0 0.125rem;
+}
+
+/* Hidden but functional native time input positioned over the box */
+.nativeTimeInput {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* Quick Duration Row */
+.quickDurationRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.quickLabel {
+  font-size: 0.6875rem;
+  color: var(--color-on-surface-variant);
+  font-weight: 500;
+  margin-right: 0.125rem;
+}
+
+.durationChip {
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: var(--color-surface-card);
+  color: var(--color-on-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.durationChip:hover {
+  background: var(--color-primary-light, rgba(59, 130, 246, 0.1));
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.durationChip:active {
+  transform: scale(0.95);
+}
+
+/* Days Chips */
+.daysRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.dayChip {
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  background: var(--color-surface-card);
+  color: var(--color-on-surface-variant);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.dayChip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.dayChipActive {
+  background: var(--color-primary);
+  color: var(--color-on-primary, #ffffff);
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Preview / Result Badge */
+.previewCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.625rem;
+  background: var(--color-surface-card);
+  border: 1px dashed var(--color-primary);
+  border-radius: var(--radius-sm, 0.25rem);
+  font-size: 0.75rem;
+}
+
+.previewLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success, #10b981);
+  flex-shrink: 0;
+}
+
+.previewText {
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.clearBtn {
+  background: transparent;
+  border: none;
+  font-size: 0.6875rem;
+  color: var(--color-error, #ef4444);
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  transition: background 0.12s;
+}
+
+.clearBtn:hover {
+  background: var(--color-error-light, rgba(239, 68, 68, 0.1));
+}
+
+.previewCardEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.625rem;
+  background: var(--color-surface-card);
+  border: 1px dashed var(--color-outline-variant);
+  border-radius: var(--radius-sm, 0.25rem);
+  font-size: 0.75rem;
+  color: var(--color-outline);
+}
+
+.setDefaultsBtn {
+  background: transparent;
+  border: none;
+  font-size: 0.6875rem;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.setDefaultsBtn:hover {
+  text-decoration: underline;
+}
+
+/* Footer / Switch Mode */
+.footerRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.switchModeBtn {
+  background: transparent;
+  border: none;
+  font-size: 0.6875rem;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.12s;
+}
+
+.switchModeBtn:hover {
+  color: var(--color-primary);
+}
+
+/* Manual Free-Text Mode */
+.manualWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.manualInput {
+  height: 2rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-sm, 0.25rem);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface);
+  background: var(--color-surface-card);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.manualInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}

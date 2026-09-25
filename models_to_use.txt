@@ -1,0 +1,19 @@
+| Task              | First Choice                        | Alternative             |
+| ----------------- | ----------------------------------- | ----------------------- |
+| Frontend React    | Qwen Coder                          | Kimi / GLM coding model |
+| Flutter           | Qwen Coder                          | GLM coding model        |
+| Spring Boot       | DeepSeek reasoning/coding           | Qwen Coder              |
+| SQL/PostgreSQL    | DeepSeek                            | Qwen Coder              |
+| Testing           | Different model from implementation | GLM / Kimi / Qwen       |
+| Debugging         | DeepSeek                            | GLM                     |
+| Large refactoring | Claude review + strong coding model | Kimi                    |
+| Architecture      | Claude                              | —                       |
+
+practical recommendations
+React Admin      → Qwen Coder
+Flutter          → Qwen Coder
+Spring Boot      → DeepSeek
+Database / SQL   → DeepSeek
+Tests            → GLM or Kimi
+Architecture     → Claude
+Final Review     → Claude
