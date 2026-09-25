@@ -22,7 +22,7 @@ class AppConfig {
 
   static const _backendBaseUrl = String.fromEnvironment(
     'BACKEND_BASE_URL',
-    defaultValue: String.fromEnvironment('API_BASE_URL', defaultValue: 'http://192.168.29.37:3000'),
+    defaultValue: String.fromEnvironment('API_BASE_URL', defaultValue: 'https://nuc-mcq-server.onrender.com'),
   );
   static const _supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',

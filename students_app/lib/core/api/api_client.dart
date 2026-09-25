@@ -76,6 +76,7 @@ ApiException _networkException(DioException error) {
 }
 
 const List<String> _candidateBaseUrls = [
+  'https://nuc-mcq-server.onrender.com',
   'http://192.168.29.37:3000',
   'http://192.168.29.253:3000',
   'http://localhost:3000',
