@@ -48,6 +48,13 @@ const tokenVerifier = {
         const identity = await baseTokenVerifier.verify(accessToken);
         const baseRoles = identity.roles.filter((r) => r !== 'STUDENT');
 
+        // Designate institute Super Admin email
+        const SUPER_ADMIN_EMAIL = 'newuniquesupabase@gmail.com';
+        if (identity.email && identity.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+            if (!baseRoles.includes('ADMIN')) baseRoles.push('ADMIN');
+            if (!baseRoles.includes('SUPER_ADMIN')) baseRoles.push('SUPER_ADMIN');
+        }
+
         const cached = identityCache.get(identity.authUserId);
         if (cached && Date.now() - cached.ts < IDENTITY_CACHE_TTL) {
             identity.roles = cached.roles;
