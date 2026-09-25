@@ -18,11 +18,6 @@ export default function LoginPage() {
     const turnstileContainerRef = useRef(null);
     const turnstileWidgetId = useRef(null);
 
-    // If already authenticated, redirect directly to dashboard
-    if (status === 'authenticated') {
-        return <Navigate to="/" replace />;
-    }
-
     // Sync auth error from context (e.g. from Google OAuth reject)
     useEffect(() => {
         if (authError) {
@@ -32,6 +27,9 @@ export default function LoginPage() {
 
     // Initialize Cloudflare Turnstile widget
     useEffect(() => {
+        // Do not render turnstile if checking or authenticated
+        if (status !== 'unauthenticated') return;
+
         const renderTurnstile = () => {
             if (window.turnstile && turnstileContainerRef.current && turnstileWidgetId.current === null) {
                 try {
@@ -46,7 +44,6 @@ export default function LoginPage() {
                             setTurnstileToken(null);
                         },
                         'error-callback': () => {
-                            // Turnstile had an error; allow fallback or let user retry
                             console.warn('[Turnstile] Widget error or blocked domain.');
                         },
                     });
@@ -72,7 +69,7 @@ export default function LoginPage() {
                 turnstileWidgetId.current = null;
             }
         };
-    }, []);
+    }, [status]);
 
     // Email/Password login
     async function handleEmailPasswordLogin(e) {
@@ -116,7 +113,14 @@ export default function LoginPage() {
         }
     }
 
-    // If still verifying initial session on boot, render an elegant loading state
+    // ALL HOOKS HAVE BEEN EXECUTED ABOVE. Early returns are now 100% compliant with React Rules of Hooks.
+
+    // 1. If already authenticated, redirect directly to dashboard
+    if (status === 'authenticated') {
+        return <Navigate to="/" replace />;
+    }
+
+    // 2. If still verifying initial session on boot, render an elegant loading state
     if (status === 'checking') {
         return (
           <div className={styles.page}>
