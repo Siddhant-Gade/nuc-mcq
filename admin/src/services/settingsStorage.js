@@ -47,15 +47,23 @@ export function loadNotifications() {
 export function saveNotifications(prefs) {
     write('notifications', prefs);
 }
+export function loadAdminInviteEnabled() {
+    return read('adminInviteEnabled', false);
+}
+export function saveAdminInviteEnabled(enabled) {
+    write('adminInviteEnabled', Boolean(enabled));
+}
 export function loadAllSettings() {
     return {
         theme: loadTheme(),
         language: loadLanguage(),
         notifications: loadNotifications(),
+        adminInviteEnabled: loadAdminInviteEnabled(),
     };
 }
 export function resetSettings() {
     remove('theme');
     remove('language');
     remove('notifications');
+    remove('adminInviteEnabled');
 }

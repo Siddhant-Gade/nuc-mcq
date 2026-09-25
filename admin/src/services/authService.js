@@ -68,9 +68,10 @@ export async function restoreSession() {
         const identity = await verifyAdminIdentity();
         return { status: 'authenticated', identity };
     }
-    catch {
+    catch (err) {
         // Expired token or non-admin account — start clean.
         await client.auth.signOut();
-        return { status: 'unauthenticated', identity: null };
+        const message = err?.message || 'Access denied: You are not authorized as an administrator.';
+        throw new Error(message);
     }
 }

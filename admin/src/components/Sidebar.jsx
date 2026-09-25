@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSidebar } from '../contexts/SidebarContext';
 import { getPendingAuthorizationRequests } from '../services';
+import { loadAdminInviteEnabled } from '../services/settingsStorage';
 import styles from './Sidebar.module.css';
 
 function NavIcon({ icon }) {
@@ -89,7 +90,7 @@ export default function Sidebar() {
         { to: '/broadcasts', label: t('nav.broadcasts'), icon: 'broadcast' },
         { to: '/study-materials', label: t('nav.materials'), icon: 'materials' },
         { to: '/question-bank', label: t('nav.questions') || 'Question Bank', icon: 'questions' },
-        { to: '/admin/create', label: t('nav.admin'), icon: 'admin' },
+        ...(loadAdminInviteEnabled() ? [{ to: '/admin/create', label: t('nav.admin'), icon: 'admin' }] : []),
     ];
     const bottomItems = [
         { to: '/settings', label: t('nav.settings'), icon: 'settings' },

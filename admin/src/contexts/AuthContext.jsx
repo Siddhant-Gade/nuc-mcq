@@ -3,17 +3,17 @@ import { restoreSession, signIn as signInService, signOut as signOutService, } f
 import { getErrorMessage } from '../services/api';
 const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
-    const [state, setState] = useState({ status: 'checking', identity: null });
+    const [state, setState] = useState({ status: 'checking', identity: null, authError: null });
     useEffect(() => {
         let cancelled = false;
         restoreSession()
             .then((restored) => {
             if (!cancelled)
-                setState(restored);
+                setState({ ...restored, authError: null });
         })
-            .catch(() => {
+            .catch((err) => {
             if (!cancelled)
-                setState({ status: 'unauthenticated', identity: null });
+                setState({ status: 'unauthenticated', identity: null, authError: err?.message || 'Access denied. Account is not authorized as administrator.' });
         });
         return () => {
             cancelled = true;
@@ -21,20 +21,24 @@ export function AuthProvider({ children }) {
     }, []);
     const value = useMemo(() => ({
         ...state,
+        clearAuthError() {
+            setState((prev) => ({ ...prev, authError: null }));
+        },
         async signIn(email, password) {
-            setState({ status: 'checking', identity: null });
+            setState({ status: 'checking', identity: null, authError: null });
             try {
                 const identity = await signInService(email, password);
-                setState({ status: 'authenticated', identity });
+                setState({ status: 'authenticated', identity, authError: null });
             }
             catch (error) {
-                setState({ status: 'unauthenticated', identity: null });
-                throw new Error(getErrorMessage(error));
+                const msg = getErrorMessage(error);
+                setState({ status: 'unauthenticated', identity: null, authError: msg });
+                throw new Error(msg);
             }
         },
         async signOut() {
             await signOutService();
-            setState({ status: 'unauthenticated', identity: null });
+            setState({ status: 'unauthenticated', identity: null, authError: null });
         },
     }), [state]);
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

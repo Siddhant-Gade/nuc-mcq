@@ -6,6 +6,7 @@ const config = {
     supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
     // Publishable key (or legacy anon key) — public-safe, never the service-role key.
     supabasePublicKey: import.meta.env.VITE_SUPABASE_PUBLIC_KEY || '',
+    turnstileSiteKey: import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAAFDXtqSW6bl_n8Uh',
     appName: 'New Unique Computers',
 };
 export function missingConfigKeys() {
