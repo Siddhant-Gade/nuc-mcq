@@ -1,5 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-export const applicationRoles = ['STUDENT', 'TEACHER', 'ADMIN'];
+export const applicationRoles = ['STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'];
 const getVerifiedRoles = (appMetadata) => {
     if (appMetadata === null || typeof appMetadata !== 'object') {
         return [];

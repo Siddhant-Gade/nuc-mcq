@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
     loadNotifications,
     saveNotifications,
@@ -22,6 +23,7 @@ const THEME_OPTIONS = [
 ];
 
 export default function Settings() {
+    const { identity } = useAuth();
     const { theme, setTheme } = useTheme();
     const { language, setLanguage, t } = useLanguage();
     const [notifications, setNotifications] = useState(loadNotifications);
@@ -146,15 +148,15 @@ export default function Settings() {
           <div className={styles.accountInfo}>
             <div className={styles.accountRow}>
               <span className={styles.accountLabel}>Name</span>
-              <span className={styles.accountValue}>Admin User</span>
+              <span className={styles.accountValue}>{identity?.name || 'Administrator'}</span>
             </div>
             <div className={styles.accountRow}>
               <span className={styles.accountLabel}>Email</span>
-              <span className={styles.accountValue}>admin@newuniquecomputers.com</span>
+              <span className={styles.accountValue}>{identity?.email || 'newuniquesupabase@gmail.com'}</span>
             </div>
             <div className={styles.accountRow}>
               <span className={styles.accountLabel}>Role</span>
-              <span className={styles.accountValue}>Super Admin</span>
+              <span className={styles.accountValue}>{identity?.roles?.includes('SUPER_ADMIN') ? 'Super Admin' : 'Institute Admin'}</span>
             </div>
             <div className={styles.accountRow}>
               <span className={styles.accountLabel}>Last Login</span>

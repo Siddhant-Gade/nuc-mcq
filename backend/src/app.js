@@ -88,6 +88,12 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
             return;
         }
         const roles = [...request.auth.roles];
+        // Designated institute Super Admin email
+        const SUPER_ADMIN_EMAIL = 'newuniquesupabase@gmail.com';
+        if (request.auth.email && request.auth.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+            if (!roles.includes('SUPER_ADMIN')) roles.push('SUPER_ADMIN');
+            if (!roles.includes('ADMIN')) roles.push('ADMIN');
+        }
         let resolvedStudent = null;
         try {
             const student = await studentIdentityService.resolve?.(request.auth.authUserId, request.auth.email);
