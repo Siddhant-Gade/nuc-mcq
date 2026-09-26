@@ -41,11 +41,19 @@ export class StudentService {
         }
     }
     async update(id, input) {
-        const student = await this.repository.update(id, input);
-        if (student === undefined) {
-            throw new ApiError(404, 'NOT_FOUND', 'Student not found.');
+        try {
+            const student = await this.repository.update(id, input);
+            if (student === undefined) {
+                throw new ApiError(404, 'NOT_FOUND', 'Student not found.');
+            }
+            return student;
         }
-        return student;
+        catch (error) {
+            if (isUniqueViolation(error)) {
+                throw new ApiError(409, 'CONFLICT', 'A student with this Student ID or Email already exists.');
+            }
+            throw error;
+        }
     }
     async updateAccessStatus(id, targetStatus) {
         const currentAccess = await this.getAccessByStudentId(id);

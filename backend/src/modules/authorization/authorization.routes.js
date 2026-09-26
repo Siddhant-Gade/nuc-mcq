@@ -6,7 +6,7 @@ import { ApiError } from '../../utils/api-error.js';
 import { successResponse } from '../../utils/api-response.js';
 import { AuthorizationRequestController } from './authorization.controller.js';
 import { authorizationRequestIdParamsSchema } from './authorization.schema.js';
-export const createAuthorizationRequestRouter = (service, tokenVerifier, resolveStudent) => {
+export const createAuthorizationRequestRouter = (service, tokenVerifier, resolveStudent, findByPrn) => {
     const router = Router();
     const controller = new AuthorizationRequestController(service);
     const authenticate = createAuthenticationMiddleware(tokenVerifier);
@@ -19,8 +19,15 @@ export const createAuthorizationRequestRouter = (service, tokenVerifier, resolve
             if (authUserId === undefined) {
                 throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Authentication token is required.');
             }
-            const identity = await resolveStudent(authUserId, email);
+            let identity = await resolveStudent?.(authUserId, email);
+            const prn = request.body?.prn ? String(request.body.prn).trim() : undefined;
+            if (identity === undefined && prn && findByPrn) {
+                identity = await findByPrn(prn);
+            }
             if (identity === undefined) {
+                if (prn) {
+                    throw new ApiError(404, 'STUDENT_NOT_FOUND', `Student with PRN "${prn}" was not found. Please verify your PRN.`);
+                }
                 throw new ApiError(403, 'STUDENT_IDENTITY_NOT_LINKED', 'No student profile is linked to this account.');
             }
             const created = await service.createForCurrentStudent({

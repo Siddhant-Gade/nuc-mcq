@@ -28,6 +28,13 @@ class _UnauthorizedScreenState extends State<UnauthorizedScreen>
   Timer? _pollTimer;
   bool _isChecking = false;
 
+  // ── PRN linking state (when identity.studentId is not pre-linked) ──────────
+  final _prnController = TextEditingController();
+  String? _resolvedStudentName;
+  bool _isResolvingPrn = false;
+  bool _prnNotFound = false;
+  Timer? _debounceTimer;
+
   // ── celebration animation controllers ──────────────────────────────────────
   bool _isApproved = false;
   late final AnimationController _scaleCtrl;
@@ -74,10 +81,57 @@ class _UnauthorizedScreenState extends State<UnauthorizedScreen>
     _pollTimer = Timer.periodic(const Duration(milliseconds: 3500), (_) {
       _pollApproval();
     });
+
+    if (widget.identity.studentId == null || widget.identity.studentId!.isEmpty) {
+      _prnController.addListener(_onPrnChanged);
+    }
+  }
+
+  void _onPrnChanged() {
+    _debounceTimer?.cancel();
+    final prn = _prnController.text.trim();
+    if (prn.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _resolvedStudentName = null;
+          _prnNotFound = false;
+          _isResolvingPrn = false;
+        });
+      }
+      return;
+    }
+
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () async {
+      if (!mounted) return;
+      setState(() => _isResolvingPrn = true);
+      try {
+        final authRepo = context.read<AuthCubit>().repository;
+        final info = await authRepo.resolveStudent(prn);
+        if (!mounted) return;
+        if (_prnController.text.trim() == prn) {
+          setState(() {
+            _isResolvingPrn = false;
+            _resolvedStudentName = info?['name']?.toString();
+            _prnNotFound = info == null;
+          });
+        }
+      } catch (_) {
+        if (mounted && _prnController.text.trim() == prn) {
+          setState(() {
+            _isResolvingPrn = false;
+            _resolvedStudentName = null;
+            _prnNotFound = false;
+          });
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _prnController.removeListener(_onPrnChanged);
+    _prnController.dispose();
     _pollTimer?.cancel();
     _scaleCtrl.dispose();
     _fadeCtrl.dispose();
@@ -101,8 +155,22 @@ class _UnauthorizedScreenState extends State<UnauthorizedScreen>
 
 
   Future<void> _handleRequestAccess() async {
+    final prn = (widget.identity.studentId != null && widget.identity.studentId!.isNotEmpty)
+        ? widget.identity.studentId!
+        : _prnController.text.trim();
+
+    if (prn.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your Institute PRN / Roll Number.'),
+          backgroundColor: AppColors.googleRed,
+        ),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
-    final success = await context.read<AuthCubit>().requestAccess();
+    final success = await context.read<AuthCubit>().requestAccess(prn: prn);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -210,9 +278,9 @@ class _UnauthorizedScreenState extends State<UnauthorizedScreen>
                         Text(
                           widget.identity.name != null
                               ? 'Student ${widget.identity.name} is pending administrator verification.'
-                              : (widget.identity.studentId != null
+                              : (widget.identity.studentId != null && widget.identity.studentId!.isNotEmpty
                                   ? 'PRN ${widget.identity.studentId} is pending administrator verification.'
-                                  : 'Your account is pending administrator verification.'),
+                                  : 'Please link your Institute PRN to request access from your institute admin.'),
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                             fontSize: 13,
@@ -224,6 +292,99 @@ class _UnauthorizedScreenState extends State<UnauthorizedScreen>
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
+
+                        // PRN input field if not linked
+                        if ((widget.identity.studentId == null || widget.identity.studentId!.isEmpty) && !_requestSent) ...[
+                          TextFormField(
+                            controller: _prnController,
+                            decoration: InputDecoration(
+                              labelText: 'Institute PRN / Roll Number',
+                              hintText: 'e.g. PRN-2024-001',
+                              prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                              suffixIcon: _isResolvingPrn
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(12),
+                                      child: SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: isDark ? AppColors.darkSurface : Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                borderSide: BorderSide(
+                                  color: isDark ? AppColors.darkBorder : AppColors.borderLight,
+                                ),
+                              ),
+                            ),
+                            keyboardType: TextInputType.text,
+                            textInputAction: TextInputAction.done,
+                            enabled: !_loading,
+                          ),
+                          if (_resolvedStudentName != null) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF132F20) : const Color(0xFFE6F4EA),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF1E6B38) : const Color(0xFF34A853),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.verified_user_rounded, size: 18, color: AppColors.googleGreen),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Student: $_resolvedStudentName',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? const Color(0xFF81C995) : const Color(0xFF137333),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else if (_prnNotFound) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF3C1816) : const Color(0xFFFCE8E6),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF6E2824) : const Color(0xFFF28B82),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.error_outline_rounded, size: 18, color: AppColors.googleRed),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'No admitted student found with this PRN',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark ? const Color(0xFFF28B82) : const Color(0xFFC5221F),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: AppSpacing.lg),
+                        ],
 
                         // Send Authorization Request Button / Waiting badge
                         if (!_requestSent)

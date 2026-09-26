@@ -59,6 +59,7 @@ export default function Header() {
     const [profileOpen, setProfileOpen] = useState(false);
     const [themeOpen, setThemeOpen] = useState(false);
     const [helpOpen, setHelpOpen] = useState(false);
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [activeIndex, setActiveIndex] = useState(-1);
     const [students, setStudents] = useState([]);
@@ -200,6 +201,17 @@ export default function Header() {
               </div>
             </div>)}
         </div>
+        <button
+          type="button"
+          className={styles.mobileSearchBtn}
+          title={t('header.search')}
+          onClick={() => setMobileSearchOpen(true)}
+        >
+          <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+            <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="m12.5 12.5 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
         <div className={styles.themeWrap} ref={themeRef}>
           <button className={styles.iconButton} title="Toggle Theme" onClick={() => setThemeOpen((p) => !p)}>
             {resolved === 'dark' ? (<svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M15.25 9.5A6.25 6.25 0 0 1 7.75 2a6.25 6.25 0 1 0 7.5 7.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>) : (<svg width="17" height="17" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="3" stroke="currentColor" strokeWidth="1.4"/><path d="M9 2.5v1.5m0 10V15.5m6.5-6.5H14M4 9H2.5m11.3-4.8-1.06 1.06M4.76 12.24l-1.06 1.06m0-10.6 1.06 1.06m7.88 7.88 1.06 1.06" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>)}
@@ -262,5 +274,58 @@ export default function Header() {
       </div>
     </header>
     {helpOpen && <HelpModal onClose={() => setHelpOpen(false)}/>}
+    {mobileSearchOpen && (
+      <div className={styles.mobileSearchOverlay}>
+        <div className={styles.mobileSearchBar}>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="m12.5 12.5 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <input
+            autoFocus
+            className={styles.mobileSearchInput}
+            placeholder={t('header.search')}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <button
+            type="button"
+            className={styles.mobileSearchCloseBtn}
+            onClick={() => { setMobileSearchOpen(false); setQuery(''); }}
+            aria-label="Close search"
+          >
+            ✕
+          </button>
+        </div>
+        <div className={styles.mobileSearchResults}>
+          {results.length === 0 ? (
+            <div className={styles.searchEmpty}>{t('header.noResults')}</div>
+          ) : (
+            <ul className={styles.searchList}>
+              {results.map((result) => (
+                <li key={result.id}>
+                  <button
+                    className={styles.searchItem}
+                    onClick={() => {
+                      selectResult(result);
+                      setMobileSearchOpen(false);
+                    }}
+                  >
+                    <span className={styles.searchItemIcon}>
+                      <ResultIcon icon={result.icon}/>
+                    </span>
+                    <span className={styles.searchItemText}>
+                      <span className={styles.searchItemLabel}>{result.icon === 'page' ? t(result.label) : result.label}</span>
+                      <span className={styles.searchItemSub}>{result.icon === 'page' ? t(result.subtitle) : result.subtitle}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    )}
     </>);
 }

@@ -130,7 +130,12 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
     app.use('/api/v1/teachers', createTeacherAdminRouter(teacherService, tokenVerifier));
     app.use('/api/v1/students', createStudentRouter(studentService, tokenVerifier));
     app.use('/api/v1/batches', createBatchRouter(batchService, tokenVerifier));
-    app.use('/api/v1/authorization-requests', createAuthorizationRequestRouter(authorizationRequestService, tokenVerifier, (authUserId, email) => studentIdentityService.resolve(authUserId, email)));
+    app.use('/api/v1/authorization-requests', createAuthorizationRequestRouter(
+        authorizationRequestService,
+        tokenVerifier,
+        (authUserId, email) => studentIdentityService.resolve?.(authUserId, email),
+        (prn) => studentIdentityService.findByStudentId?.(prn)
+    ));
     app.use('/api/v1/dashboard', createDashboardRouter(dashboardService, tokenVerifier));
     const requireActiveStudent = (authUserId, email) => studentIdentityService.requireActive(authUserId, email);
     app.use('/api/v1/student', createStudentAccessRouter(studentIdentityService, tokenVerifier));

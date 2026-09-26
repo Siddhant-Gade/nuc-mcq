@@ -7,6 +7,7 @@ class AppConfig {
     required this.backendBaseUrl,
     required this.supabaseUrl,
     required this.supabasePublicKey,
+    this.googleWebClientId = '',
   });
 
   /// Base URL of the Express backend, e.g. http://localhost:3000
@@ -20,6 +21,9 @@ class AppConfig {
   /// the legacy anon key. Both are safe for client apps; never the service-role key.
   final String supabasePublicKey;
 
+  /// Web Client ID for Google Sign-In (optional for native sign-in with idToken)
+  final String googleWebClientId;
+
   static const _backendBaseUrl = String.fromEnvironment(
     'BACKEND_BASE_URL',
     defaultValue: String.fromEnvironment('API_BASE_URL', defaultValue: 'https://nuc-mcq-server.onrender.com'),
@@ -32,11 +36,16 @@ class AppConfig {
     'SUPABASE_PUBLIC_KEY',
     defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3Z256aHJvbWRhdmxudHRvemFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODgwNzEsImV4cCI6MjEwMzE2NDA3MX0.XKlEU0AVMtDq5ZLOfiilp_oyKK0tiRoy7A2jDYdFdRA',
   );
+  static const _googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '',
+  );
 
   factory AppConfig.fromEnvironment() => const AppConfig(
         backendBaseUrl: _backendBaseUrl,
         supabaseUrl: _supabaseUrl,
         supabasePublicKey: _supabasePublicKey,
+        googleWebClientId: _googleWebClientId,
       );
 
   /// Returns human-readable configuration problems; empty means usable.

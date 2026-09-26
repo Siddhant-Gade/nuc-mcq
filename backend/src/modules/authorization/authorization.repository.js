@@ -56,6 +56,21 @@ export class DrizzleAuthorizationRequestRepository {
             .limit(1);
         return record;
     }
+    async findPendingByStudentProfileId(studentProfileId) {
+        const [record] = await this.database
+            .select()
+            .from(authorizationRequests)
+            .where(and(eq(authorizationRequests.studentProfileId, studentProfileId), eq(authorizationRequests.status, 'PENDING')))
+            .orderBy(desc(authorizationRequests.requestedAt))
+            .limit(1);
+        return record;
+    }
+    async updateAuthUserId(id, authUserId) {
+        await this.database
+            .update(authorizationRequests)
+            .set({ authUserId })
+            .where(eq(authorizationRequests.id, id));
+    }
     /** Targeted view query by ID — avoids fetching all rows. */
     async findViewById(id) {
         const [row] = await this.database

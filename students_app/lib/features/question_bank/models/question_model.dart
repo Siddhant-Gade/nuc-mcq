@@ -77,31 +77,32 @@ class QuestionModel {
   String get correctOptionLetter => String.fromCharCode(65 + correctOptionIndex);
 
   String localizedQuestionText(String lang) {
-    if (lang == 'mr' && questionTextMr != null && questionTextMr!.isNotEmpty) {
-      return questionTextMr!;
+    if (lang == 'mr' && questionTextMr != null && questionTextMr!.trim().isNotEmpty) {
+      return questionTextMr!.trim();
     }
-    if (lang == 'hi' && questionTextHi != null && questionTextHi!.isNotEmpty) {
-      return questionTextHi!;
+    if (lang == 'hi' && questionTextHi != null && questionTextHi!.trim().isNotEmpty) {
+      return questionTextHi!.trim();
     }
     return questionText;
   }
 
   List<String> localizedOptions(String lang) {
-    if (lang == 'mr' && optionsMr != null && optionsMr!.length == options.length) {
-      return optionsMr!;
-    }
-    if (lang == 'hi' && optionsHi != null && optionsHi!.length == options.length) {
-      return optionsHi!;
+    final localized = lang == 'mr' ? optionsMr : (lang == 'hi' ? optionsHi : null);
+    if (localized != null && localized.length == options.length && localized.any((o) => o.trim().isNotEmpty)) {
+      return List<String>.generate(options.length, (i) {
+        final opt = localized[i].trim();
+        return opt.isNotEmpty ? opt : options[i];
+      });
     }
     return options;
   }
 
   String localizedExplanation(String lang) {
-    if (lang == 'mr' && explanationMr != null && explanationMr!.isNotEmpty) {
-      return explanationMr!;
+    if (lang == 'mr' && explanationMr != null && explanationMr!.trim().isNotEmpty) {
+      return explanationMr!.trim();
     }
-    if (lang == 'hi' && explanationHi != null && explanationHi!.isNotEmpty) {
-      return explanationHi!;
+    if (lang == 'hi' && explanationHi != null && explanationHi!.trim().isNotEmpty) {
+      return explanationHi!.trim();
     }
     return explanation;
   }

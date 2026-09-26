@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/api/api_exception.dart';
@@ -46,10 +47,23 @@ class AuthUnauthorized extends AuthState {
 }
 
 class AuthCubit extends Cubit<AuthState> {
-  AuthCubit(this._repository) : super(const AuthUnauthenticated());
+  AuthCubit(this._repository) : super(const AuthUnauthenticated()) {
+    _authSub = _repository.onAuthSessionChange.listen((_) {
+      if (_repository.hasSession && state is! AuthAuthenticated) {
+        _verifySession();
+      }
+    });
+  }
 
   final AuthRepository _repository;
+  StreamSubscription<void>? _authSub;
   AuthRepository get repository => _repository;
+
+  @override
+  Future<void> close() {
+    _authSub?.cancel();
+    return super.close();
+  }
 
   /// Restores a persisted Supabase session, if any, and verifies it.
   Future<void> restoreSession() async {
@@ -113,9 +127,9 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthUnauthenticated());
   }
 
-  Future<bool> requestAccess() async {
+  Future<bool> requestAccess({String? prn}) async {
     try {
-      await _repository.sendAuthorizationRequest();
+      await _repository.sendAuthorizationRequest(prn: prn);
       return true;
     } catch (_) {
       return false;

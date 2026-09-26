@@ -214,6 +214,9 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
         return previous.currentIndex != current.currentIndex ||
             previous.answers[current.currentQuestion.id] != current.answers[current.currentQuestion.id] ||
             previous.flaggedQuestionIds != current.flaggedQuestionIds ||
+            previous.eliminatedOptionIndices != current.eliminatedOptionIndices ||
+            previous.lifelinesRemaining != current.lifelinesRemaining ||
+            previous.currentStreak != current.currentStreak ||
             previous.status != current.status;
       },
       builder: (context, state) {
@@ -446,7 +449,7 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
                                               const Icon(Icons.local_fire_department_rounded, size: 15, color: Color(0xFFFFA724)),
                                               const SizedBox(width: 4),
                                               Text(
-                                                'x STREAK (x XP)',
+                                                '${state.currentStreak}x STREAK (${state.streakMultiplier}x XP)',
                                                 style: GoogleFonts.inter(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.w800,
@@ -521,7 +524,7 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
                                                   ),
                                                   const SizedBox(width: 3),
                                                   Text(
-                                                    '50:50 ()',
+                                                    '50:50 (${state.lifelinesRemaining})',
                                                     style: GoogleFonts.inter(
                                                       fontSize: 11,
                                                       fontWeight: FontWeight.w700,
@@ -787,6 +790,28 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
                                                     ),
                                                   ),
                                                 ),
+                                                if (isEliminated)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    margin: const EdgeInsets.only(left: 8),
+                                                    decoration: BoxDecoration(
+                                                      color: isDark ? const Color(0xFF2D1B1B) : const Color(0xFFFEE2E2),
+                                                      borderRadius: BorderRadius.circular(4),
+                                                      border: Border.all(
+                                                        color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
+                                                        width: 0.8,
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      'ELIMINATED',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.w700,
+                                                        letterSpacing: 0.5,
+                                                        color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
+                                                      ),
+                                                    ),
+                                                  ),
                                                 if (isPracticeMode && isAnswered && isCorrectOption)
                                                   const Icon(Icons.check_circle_rounded, size: 22, color: AppColors.googleGreen),
                                                 if (isPracticeMode && isAnswered && isSelected && !isCorrectOption)

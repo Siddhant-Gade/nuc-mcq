@@ -143,20 +143,26 @@ class QuestionBankRepository {
       correctOptionIndex: correctIdx,
       explanation: item['explanation_en'] ?? item['explanation'] ?? '',
       questionTextMr: item['question_mr'] ?? item['questionTextMr'],
-      optionsMr: [
-        item['opt_a_mr'] ?? '',
-        item['opt_b_mr'] ?? '',
-        item['opt_c_mr'] ?? '',
-        item['opt_d_mr'] ?? '',
-      ],
+      optionsMr: () {
+        final list = [
+          (item['opt_a_mr'] ?? '').toString().trim(),
+          (item['opt_b_mr'] ?? '').toString().trim(),
+          (item['opt_c_mr'] ?? '').toString().trim(),
+          (item['opt_d_mr'] ?? '').toString().trim(),
+        ];
+        return list.any((s) => s.isNotEmpty) ? list : null;
+      }(),
       explanationMr: item['explanation_mr'] ?? item['explanationMr'],
       questionTextHi: item['question_hi'] ?? item['questionTextHi'],
-      optionsHi: [
-        item['opt_a_hi'] ?? '',
-        item['opt_b_hi'] ?? '',
-        item['opt_c_hi'] ?? '',
-        item['opt_d_hi'] ?? '',
-      ],
+      optionsHi: () {
+        final list = [
+          (item['opt_a_hi'] ?? '').toString().trim(),
+          (item['opt_b_hi'] ?? '').toString().trim(),
+          (item['opt_c_hi'] ?? '').toString().trim(),
+          (item['opt_d_hi'] ?? '').toString().trim(),
+        ];
+        return list.any((s) => s.isNotEmpty) ? list : null;
+      }(),
       explanationHi: item['explanation_hi'] ?? item['explanationHi'],
     );
   }

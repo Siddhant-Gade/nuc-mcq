@@ -100,6 +100,15 @@ export class AuthorizationRequestService {
         if (existingPending !== undefined) {
             throw new ApiError(409, 'CONFLICT', 'An authorization request is already pending review.');
         }
+        if (typeof this.repository.findPendingByStudentProfileId === 'function') {
+            const existingByProfile = await this.repository.findPendingByStudentProfileId(input.studentProfileId);
+            if (existingByProfile !== undefined) {
+                if (existingByProfile.authUserId !== input.authUserId && typeof this.repository.updateAuthUserId === 'function') {
+                    await this.repository.updateAuthUserId(existingByProfile.id, input.authUserId);
+                }
+                return this.getById(existingByProfile.id);
+            }
+        }
         const record = await this.repository.create(input.studentProfileId, input.authUserId);
         const created = await this.getById(record.id);
         if (created === undefined) {

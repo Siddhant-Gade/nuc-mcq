@@ -20,6 +20,9 @@ export async function createStudent(data) {
         ...(data.courseInfo ? { courseInfo: data.courseInfo } : {}),
     });
 }
+export async function updateStudent(id, data) {
+    return request('patch', `/students/${id}`, data);
+}
 export async function updateStudentAccessStatus(studentProfileId, newStatus) {
     return request('patch', `/students/${studentProfileId}/access-status`, { status: newStatus });
 }

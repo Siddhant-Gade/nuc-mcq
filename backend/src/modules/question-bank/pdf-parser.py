@@ -91,6 +91,107 @@ def find_companion_json(pdf_path, orig_name=None):
                         pass
     return None
 
+def parse_gcc_tbc_page_stream_order(page):
+    """
+    Extract GCC-TBC tabular MCQ rows by tracking characters in PDF content-stream order.
+    Eliminates cell interleaving/letter jumbling when centered option text overflows column borders.
+    """
+    h_lines = sorted(list(set(round(line['top'], 1) for line in page.lines if line['height'] == 0 or line['top'] == line['bottom'])))
+    v_lines = sorted(list(set(round(line['x0'], 1) for line in page.lines if line['width'] == 0 or line['x0'] == line['x1'])))
+    
+    if len(v_lines) < 6 or len(h_lines) < 2:
+        return []
+        
+    page_questions = []
+    for r_idx in range(len(h_lines) - 1):
+        top_y = h_lines[r_idx]
+        bot_y = h_lines[r_idx + 1]
+        
+        row_chars = [c for c in page.chars if top_y - 1 <= c['top'] <= bot_y + 1]
+        if not row_chars:
+            continue
+            
+        runs = []
+        cur_run = []
+        for c in row_chars:
+            if not cur_run:
+                cur_run.append(c)
+                continue
+            prev = cur_run[-1]
+            line_changed = abs(c['top'] - prev['top']) > 4
+            backward_jump = c['x0'] < prev['x1'] - 0.5
+            large_gap = (c['x0'] - prev['x1']) > 7
+            crosses_v_line = any(prev['x1'] <= v <= c['x0'] for v in v_lines)
+            
+            if line_changed or backward_jump or large_gap or crosses_v_line:
+                runs.append(cur_run)
+                cur_run = [c]
+            else:
+                cur_run.append(c)
+        if cur_run:
+            runs.append(cur_run)
+            
+        col_cells = {i: [] for i in range(len(v_lines))}
+        for run in runs:
+            mid_x = (run[0]['x0'] + run[-1]['x1']) / 2
+            col_idx = len(v_lines) - 1
+            for i in range(len(v_lines) - 1):
+                if v_lines[i] <= mid_x < v_lines[i+1]:
+                    col_idx = i
+                    break
+            text = ''.join(c['text'] for c in run).strip()
+            if text:
+                col_cells[col_idx].append(text)
+                
+        cell_values = [sanitize_text(' '.join(col_cells[i])) for i in range(len(v_lines))]
+        sr_val_str = cell_values[0].strip()
+        if not sr_val_str.isdigit():
+            continue
+            
+        sr_val = int(sr_val_str)
+        q_text = cell_values[1] if len(cell_values) > 1 else ''
+        if not q_text:
+            continue
+            
+        opt_a = cell_values[2] if len(cell_values) > 2 else ''
+        opt_b = cell_values[3] if len(cell_values) > 3 else ''
+        opt_c = cell_values[4] if len(cell_values) > 4 else ''
+        opt_d = cell_values[5] if len(cell_values) > 5 else ''
+        
+        ans_col = ''
+        if len(cell_values) > 7 and cell_values[7]:
+            ans_col = cell_values[7].upper()
+        elif len(cell_values) > 6 and cell_values[6]:
+            ans_col = cell_values[6].upper()
+            
+        correct_opt = 'A'
+        for candidate in ['A', 'B', 'C', 'D']:
+            if candidate in ans_col:
+                correct_opt = candidate
+                break
+                
+        idx_map = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+        correct_idx = idx_map.get(correct_opt, 0)
+        opts = [opt_a or 'Option A', opt_b or 'Option B', opt_c or 'Option C', opt_d or 'Option D']
+        correct_ans = opts[correct_idx] if opts[correct_idx] else (opt_a or 'Option A')
+        section = infer_section(sr_val, q_text)
+        
+        page_questions.append({
+            'sr': sr_val,
+            'section': section,
+            'question_en': q_text,
+            'opt_a_en': opts[0],
+            'opt_b_en': opts[1],
+            'opt_c_en': opts[2],
+            'opt_d_en': opts[3],
+            'correct_option': correct_opt,
+            'correct_index': correct_idx,
+            'correct_answer': correct_ans,
+            'explanation_en': f"Official GCC-TBC standard answer is Option {correct_opt}: {correct_ans}."
+        })
+        
+    return page_questions
+
 def parse_single_pdf(pdf_path, orig_name=None):
     questions = []
     total_text_len = 0
@@ -103,6 +204,13 @@ def parse_single_pdf(pdf_path, orig_name=None):
                 page_text = page.extract_text() or ''
                 total_text_len += len(page_text.strip())
 
+                # Primary: Stream-order extraction to prevent letter jumbling
+                stream_questions = parse_gcc_tbc_page_stream_order(page)
+                if stream_questions:
+                    questions.extend(stream_questions)
+                    continue
+
+                # Secondary fallback: standard extract_table
                 table = page.extract_table()
                 if not table:
                     continue

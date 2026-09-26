@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getStudents, getBatches, deleteStudent } from '../services';
 import { getErrorMessage } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
+import EditStudentModal from '../components/EditStudentModal';
 import pageStyles from '../shared/styles/Page.module.css';
 import styles from './StudentList.module.css';
 const PAGE_SIZE = 4;
@@ -36,6 +37,7 @@ export default function StudentList() {
     const [batchFilter, setBatchFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [page, setPage] = useState(1);
+    const [editingStudent, setEditingStudent] = useState(null);
     const [loadError, setLoadError] = useState(null);
     const navigate = useNavigate();
     const { t } = useLanguage();
@@ -149,6 +151,12 @@ export default function StudentList() {
                   <button className={styles.iconBtn} title="View Details" onClick={() => navigate(`/students/${s.id}`)}>
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" stroke="currentColor" strokeWidth="1.5"/><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/></svg>
                   </button>
+                  <button className={styles.iconBtn} title="Edit Student" onClick={() => setEditingStudent(s)}>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
                   <button className={styles.iconBtn} style={{ color: 'var(--color-error)' }} title="Delete Student" onClick={() => handleDelete(s)}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -178,5 +186,16 @@ export default function StudentList() {
           </button>
         </div>
       </div>
+
+      {editingStudent && (
+        <EditStudentModal
+          student={editingStudent}
+          batches={batches}
+          onSave={(updated) => {
+            setStudents((prev) => prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));
+          }}
+          onClose={() => setEditingStudent(null)}
+        />
+      )}
     </div>);
 }

@@ -13,64 +13,6 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [turnstileToken, setTurnstileToken] = useState(null);
-    const turnstileContainerRef = useRef(null);
-    const turnstileWidgetId = useRef(null);
-
-    // Sync auth error from context (e.g. from Google OAuth reject)
-    useEffect(() => {
-        if (authError) {
-            setError(authError);
-        }
-    }, [authError]);
-
-    // Initialize Cloudflare Turnstile widget
-    useEffect(() => {
-        // Do not render turnstile if checking or authenticated
-        if (status !== 'unauthenticated') return;
-
-        const renderTurnstile = () => {
-            if (window.turnstile && turnstileContainerRef.current && turnstileWidgetId.current === null) {
-                try {
-                    turnstileWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
-                        sitekey: config.turnstileSiteKey,
-                        theme: 'auto',
-                        size: 'normal',
-                        callback: (token) => {
-                            setTurnstileToken(token);
-                        },
-                        'expired-callback': () => {
-                            setTurnstileToken(null);
-                        },
-                        'error-callback': () => {
-                            console.warn('[Turnstile] Widget error or blocked domain.');
-                        },
-                    });
-                } catch (e) {
-                    console.error('[Turnstile] Render failed', e);
-                }
-            }
-        };
-
-        const timer = setInterval(() => {
-            if (window.turnstile) {
-                renderTurnstile();
-                clearInterval(timer);
-            }
-        }, 100);
-
-        return () => {
-            clearInterval(timer);
-            if (window.turnstile && turnstileWidgetId.current !== null) {
-                try {
-                    window.turnstile.remove(turnstileWidgetId.current);
-                } catch (_) {}
-                turnstileWidgetId.current = null;
-            }
-        };
-    }, [status]);
-
     // Email/Password login
     async function handleEmailPasswordLogin(e) {
         e.preventDefault();
@@ -89,11 +31,6 @@ export default function LoginPage() {
             await signIn(email.trim(), password);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Invalid login credentials.');
-            // Reset turnstile if needed
-            if (window.turnstile && turnstileWidgetId.current !== null) {
-                try { window.turnstile.reset(turnstileWidgetId.current); } catch (_) {}
-                setTurnstileToken(null);
-            }
         } finally {
             setLoading(false);
         }
@@ -219,11 +156,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Cloudflare Turnstile Human Verification Container */}
-            <div className={styles.turnstileWrap}>
-              <div ref={turnstileContainerRef} />
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -271,7 +203,7 @@ export default function LoginPage() {
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 1L2 3.5v3.5c0 3.5 2.5 5.5 5 6.5 2.5-1 5-3 5-6.5V3.5L7 1z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span>Protected by Cloudflare Turnstile &bull; Authorized Staff Only</span>
+              <span>Authorized Staff & Faculty Only</span>
             </p>
           </div>
         </main>

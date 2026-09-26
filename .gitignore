@@ -42,3 +42,8 @@ Thumbs.db
 
 # Backup folders
 *.bak
+
+# Python & Build artifacts
+__pycache__/
+*.py[cod]
+*.apk

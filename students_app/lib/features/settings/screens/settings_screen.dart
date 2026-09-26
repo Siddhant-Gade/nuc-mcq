@@ -14,10 +14,7 @@ import '../../broadcasts/cubit/broadcast_cubit.dart';
 import '../../broadcasts/repository/broadcast_repository.dart';
 import '../../broadcasts/screens/broadcasts_screen.dart';
 import '../../question_bank/repository/question_bank_repository.dart';
-import '../../results/cubit/results_cubit.dart';
-import '../../sync/cubit/sync_cubit.dart';
 import '../../test_engine/services/test_generator.dart';
-import '../../../core/services/app_badge_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
@@ -380,91 +377,6 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // Cloud Sync & Data Manager
-            Text(
-              'Cloud Synchronization',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            FrostedCard(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              elevation: 1,
-              child: Column(
-                children: [
-                  BlocBuilder<ResultsCubit, ResultsState>(
-                    builder: (context, state) {
-                      final stats = state is ResultsLoaded ? state.stats : null;
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Pending Sync Tests',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            '${stats?.pendingSyncCount ?? 0} record(s)',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  BlocBuilder<SyncCubit, SyncState>(
-                    builder: (context, syncState) {
-                      final isSyncing = syncState is SyncInProgress;
-                      return Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkSurfaceVariant : const Color(0xFFE8F0FE),
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: Row(
-                          children: [
-                            isSyncing
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : Icon(
-                                    Icons.cloud_done_rounded,
-                                    size: 18,
-                                    color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
-                                  ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                isSyncing
-                                    ? 'Synchronizing records with institute server...'
-                                    : 'Automatic sync is active whenever internet is connected.',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
 
             // About Application
             Text(
@@ -491,55 +403,6 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // Notification Badge Test
-            Text(
-              'Notification Badge Test',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            FrostedCard(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              elevation: 1,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: RoyalButton(
-                      text: 'Set Badge (5)',
-                      icon: Icons.notifications_active_outlined,
-                      onPressed: () async {
-                        await AppBadgeService.instance.updateBadge(5);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Badge counter set to 5! Check your home screen.')),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: RoyalButton(
-                      text: 'Clear Badge',
-                      icon: Icons.notifications_off_outlined,
-                      isSecondary: true,
-                      onPressed: () async {
-                        await AppBadgeService.instance.removeBadge();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Badge counter cleared!')),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
 
             // Sign Out
             RoyalButton(

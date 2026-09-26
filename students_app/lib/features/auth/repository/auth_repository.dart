@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/config/app_config.dart';
 import '../models/student_identity.dart';
 
 /// Bridges Supabase authentication with the Express API.
@@ -19,6 +20,16 @@ class AuthRepository {
 
   Session? get currentSession => _supabase?.auth.currentSession;
   bool get hasSession => currentSession != null;
+
+  /// Stream that emits whenever Supabase auth signs in or refreshes a session.
+  Stream<void> get onAuthSessionChange {
+    return _supabase?.auth.onAuthStateChange
+            .where((data) =>
+                data.event == AuthChangeEvent.signedIn ||
+                data.event == AuthChangeEvent.tokenRefreshed)
+            .map((_) {}) ??
+        const Stream.empty();
+  }
 
   static String prnToAuthEmail(String identifier) {
     final trimmed = identifier.trim();
@@ -161,9 +172,8 @@ class AuthRepository {
     }
   }
 
-  /// Google OAuth sign-in: native Google Sign-In → Supabase ID token auth.
-  /// The serverClientId must match the Web Client ID configured in Supabase
-  /// Dashboard → Authentication → Providers → Google.
+  /// Google OAuth sign-in: native Google Sign-In with serverClientId if configured,
+  /// with automatic fallback to Supabase browser OAuth with deep-link redirection.
   Future<void> signInWithGoogle({String? webClientId}) async {
     if (_supabase == null) {
       throw const ApiException(
@@ -172,32 +182,53 @@ class AuthRepository {
       );
     }
 
-    final googleSignIn = GoogleSignIn(
-      serverClientId: webClientId,
-      scopes: ['email'],
-    );
+    final effectiveClientId = (webClientId != null && webClientId.isNotEmpty)
+        ? webClientId
+        : AppConfig.fromEnvironment().googleWebClientId;
 
-    final account = await googleSignIn.signIn();
-    if (account == null) {
-      throw const ApiException('CANCELLED', 'Google sign-in was cancelled.');
+    // Attempt 1: Native Google Sign-In when client ID is provided
+    if (effectiveClientId.isNotEmpty) {
+      try {
+        final googleSignIn = GoogleSignIn(
+          serverClientId: effectiveClientId,
+          scopes: ['email', 'profile'],
+        );
+
+        final account = await googleSignIn.signIn();
+        if (account == null) {
+          throw const ApiException('CANCELLED', 'Google sign-in was cancelled.');
+        }
+
+        final googleAuth = await account.authentication;
+        final idToken = googleAuth.idToken;
+        final accessToken = googleAuth.accessToken;
+
+        if (idToken != null) {
+          await _supabase.auth.signInWithIdToken(
+            provider: OAuthProvider.google,
+            idToken: idToken,
+            accessToken: accessToken,
+          );
+          return;
+        }
+      } on ApiException {
+        rethrow;
+      } catch (_) {
+        // Fall through to browser OAuth flow
+      }
     }
 
-    final googleAuth = await account.authentication;
-    final idToken = googleAuth.idToken;
-    final accessToken = googleAuth.accessToken;
-
-    if (idToken == null) {
-      throw const ApiException(
-        'GOOGLE_AUTH_FAILED',
-        'Could not retrieve Google ID token. Please try again.',
+    // Attempt 2 (Fallback / Direct): Supabase OAuth with deep-link redirection
+    try {
+      await _supabase.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'com.mscit.student_app://login-callback',
       );
+    } on AuthException catch (e) {
+      throw ApiException('AUTH_FAILED', e.message);
+    } catch (e) {
+      throw ApiException('SIGN_IN_ERROR', 'Google sign-in failed: ${e.toString()}');
     }
-
-    await _supabase.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: accessToken,
-    );
   }
 
   Future<void> signOut() async {
@@ -250,9 +281,13 @@ class AuthRepository {
     }
   }
 
-  Future<void> sendAuthorizationRequest() async {
+  Future<void> sendAuthorizationRequest({String? prn}) async {
+    final payload = (prn != null && prn.trim().isNotEmpty) ? {'prn': prn.trim()} : null;
     try {
-      final response = await _dio.post<Object?>('/api/v1/authorization-requests/mine');
+      final response = await _dio.post<Object?>(
+        '/api/v1/authorization-requests/mine',
+        data: payload,
+      );
       requireSuccessData(response.data);
     } on DioException catch (firstErr) {
       final appEx = exceptionFromDio(firstErr);
@@ -261,7 +296,10 @@ class AuthRepository {
       // Otherwise retry once after a short delay (handles rare identity-link timing gap)
       await Future<void>.delayed(const Duration(milliseconds: 1200));
       try {
-        final retry = await _dio.post<Object?>('/api/v1/authorization-requests/mine');
+        final retry = await _dio.post<Object?>(
+          '/api/v1/authorization-requests/mine',
+          data: payload,
+        );
         requireSuccessData(retry.data);
       } on DioException catch (retryErr) {
         final retryEx = exceptionFromDio(retryErr);

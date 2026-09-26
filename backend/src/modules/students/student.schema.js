@@ -16,7 +16,6 @@ export const createStudentSchema = z.object({
     courseInfo: optionalText(200),
 });
 export const updateStudentSchema = createStudentSchema
-    .omit({ studentId: true })
     .partial()
     .refine((input) => Object.keys(input).length > 0, 'At least one student field must be provided.');
 export const updateStudentStatusSchema = z.object({
