@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/frosted_card.dart';
 import '../../../core/widgets/royal_button.dart';
 import '../cubit/auth_cubit.dart';
 import '../models/student_identity.dart';
@@ -228,248 +227,397 @@ class _UnauthorizedScreenState extends State<UnauthorizedScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final email = widget.identity.email;
+    final name = widget.identity.name;
+    final hasPrnLinked =
+        widget.identity.studentId != null && widget.identity.studentId!.isNotEmpty;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBg : const Color(0xFFF1F5F9),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.logout_rounded, size: 16),
+            label: const Text('Sign Out'),
+            style: TextButton.styleFrom(
+              foregroundColor:
+                  isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            ),
+            onPressed: () => context.read<AuthCubit>().signOut(),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: Stack(
         children: [
-          // ── Waiting page ────────────────────────────────────────────────
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
-                  child: FrostedCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                    borderRadius: AppRadius.lg,
-                    elevation: 1,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(18),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // ── Icon ─────────────────────────────────────────────
+                      Center(
+                        child: Container(
+                          width: 80,
+                          height: 80,
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF3C1816)
-                                : AppColors.googleRedSurface,
+                                ? const Color(0xFF2C1F06)
+                                : const Color(0xFFFFF8E1),
                             shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFFFC107).withOpacity(0.4),
+                              width: 2,
+                            ),
                           ),
                           child: const Icon(
-                            Icons.lock_person_outlined,
-                            size: 44,
-                            color: AppColors.googleRed,
+                            Icons.pending_actions_rounded,
+                            size: 40,
+                            color: Color(0xFFF9A825),
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.xl),
-                        Text(
-                          'Access Pending Verification',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -0.2,
-                            color: isDark
-                                ? AppColors.darkTextPrimary
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          widget.identity.name != null
-                              ? 'Student ${widget.identity.name} is pending administrator verification.'
-                              : (widget.identity.studentId != null && widget.identity.studentId!.isNotEmpty
-                                  ? 'PRN ${widget.identity.studentId} is pending administrator verification.'
-                                  : 'Please link your Institute PRN to request access from your institute admin.'),
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.textSecondary,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
+                      ),
+                      const SizedBox(height: 20),
 
-                        // PRN input field if not linked
-                        if ((widget.identity.studentId == null || widget.identity.studentId!.isEmpty) && !_requestSent) ...[
-                          TextFormField(
-                            controller: _prnController,
-                            decoration: InputDecoration(
-                              labelText: 'Institute PRN / Roll Number',
-                              hintText: 'e.g. PRN-2024-001',
-                              prefixIcon: const Icon(Icons.badge_outlined, size: 20),
-                              suffixIcon: _isResolvingPrn
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(12),
-                                      child: SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      ),
-                                    )
-                                  : null,
-                              filled: true,
-                              fillColor: isDark ? AppColors.darkSurface : Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                borderSide: BorderSide(
-                                  color: isDark ? AppColors.darkBorder : AppColors.borderLight,
-                                ),
-                              ),
-                            ),
-                            keyboardType: TextInputType.text,
-                            textInputAction: TextInputAction.done,
-                            enabled: !_loading,
-                          ),
-                          if (_resolvedStudentName != null) ...[
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF132F20) : const Color(0xFFE6F4EA),
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF1E6B38) : const Color(0xFF34A853),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.verified_user_rounded, size: 18, color: AppColors.googleGreen),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Student: $_resolvedStudentName',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? const Color(0xFF81C995) : const Color(0xFF137333),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ] else if (_prnNotFound) ...[
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF3C1816) : const Color(0xFFFCE8E6),
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF6E2824) : const Color(0xFFF28B82),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.error_outline_rounded, size: 18, color: AppColors.googleRed),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'No admitted student found with this PRN',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark ? const Color(0xFFF28B82) : const Color(0xFFC5221F),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: AppSpacing.lg),
-                        ],
+                      // ── Title & subtitle ──────────────────────────────────
+                      Text(
+                        name != null
+                            ? 'Hi, ${name.split(' ').first}!'
+                            : 'Access Pending',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.4,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        hasPrnLinked
+                            ? 'Your account is awaiting administrator approval.'
+                            : 'Link your Institute PRN and request access below.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          height: 1.5,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
-                        // Send Authorization Request Button / Waiting badge
-                        if (!_requestSent)
-                          RoyalButton(
-                            text: _loading
-                                ? 'Sending Request...'
-                                : 'Send Access Request to Admin',
-                            icon: Icons.send_rounded,
-                            isLoading: _loading,
-                            onPressed: _loading ? null : _handleRequestAccess,
-                          )
-                        else
-                          Container(
+                      // ── Email chip ────────────────────────────────────────
+                      if (email != null)
+                        Center(
+                          child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
+                                horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: AppColors.googleGreenSurface,
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.md),
+                              color: isDark
+                                  ? AppColors.darkSurface
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(40),
                               border: Border.all(
-                                  color:
-                                      AppColors.googleGreen.withOpacity(0.3)),
+                                color: isDark
+                                    ? AppColors.darkBorder
+                                    : const Color(0xFFCBD5E1),
+                              ),
                             ),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.check_circle_rounded,
-                                    color: AppColors.googleGreen, size: 20),
+                                const Icon(Icons.mail_outline_rounded,
+                                    size: 15, color: Color(0xFF4285F4)),
                                 const SizedBox(width: 8),
                                 Flexible(
                                   child: Text(
-                                    'Request sent! Waiting for admin approval…',
+                                    email,
+                                    overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.googleGreen,
+                                      color: isDark
+                                          ? AppColors.darkTextPrimary
+                                          : const Color(0xFF1E293B),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        const SizedBox(height: AppSpacing.md),
-
-                        // Refresh button
-                        RoyalButton(
-                          text: 'Check Verification Status',
-                          icon: Icons.refresh_rounded,
-                          isSecondary: true,
-                          isLoading: _loading,
-                          onPressed: _loading ? null : _handleRefresh,
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: 24),
 
-                        // Sign out
-                        TextButton.icon(
-                          icon: const Icon(Icons.logout_rounded, size: 16),
-                          label: const Text('Sign Out'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.textSecondary,
+                      // ── Action card ───────────────────────────────────────
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : const Color(0xFFE2E8F0),
                           ),
-                          onPressed: () =>
-                              context.read<AuthCubit>().signOut(),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black
+                                  .withOpacity(isDark ? 0.25 : 0.06),
+                              blurRadius: 20,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // PRN input (only when not linked and not yet sent)
+                            if (!hasPrnLinked && !_requestSent) ...[
+                              Text(
+                                'Link your Institute PRN',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _prnController,
+                                decoration: InputDecoration(
+                                  labelText: 'Institute PRN / Roll Number',
+                                  hintText: 'e.g. PRN-2024-001',
+                                  prefixIcon:
+                                      const Icon(Icons.badge_outlined, size: 20),
+                                  suffixIcon: _isResolvingPrn
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2),
+                                          ),
+                                        )
+                                      : null,
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? AppColors.darkSurface
+                                      : Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.md),
+                                    borderSide: BorderSide(
+                                      color: isDark
+                                          ? AppColors.darkBorder
+                                          : AppColors.borderLight,
+                                    ),
+                                  ),
+                                ),
+                                keyboardType: TextInputType.text,
+                                textInputAction: TextInputAction.done,
+                                enabled: !_loading,
+                              ),
+                              if (_resolvedStudentName != null) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF132F20)
+                                        : const Color(0xFFE6F4EA),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.sm),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? const Color(0xFF1E6B38)
+                                          : const Color(0xFF34A853),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.verified_user_rounded,
+                                          size: 18,
+                                          color: AppColors.googleGreen),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Student: $_resolvedStudentName',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? const Color(0xFF81C995)
+                                                : const Color(0xFF137333),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ] else if (_prnNotFound) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF3C1816)
+                                        : const Color(0xFFFCE8E6),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.sm),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? const Color(0xFF6E2824)
+                                          : const Color(0xFFF28B82),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.error_outline_rounded,
+                                          size: 18,
+                                          color: AppColors.googleRed),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'No admitted student found with this PRN',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDark
+                                                ? const Color(0xFFF28B82)
+                                                : const Color(0xFFC5221F),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 16),
+                            ],
+
+                            // ── Primary action ────────────────────────────
+                            if (!_requestSent)
+                              RoyalButton(
+                                text: _loading
+                                    ? 'Sending Request…'
+                                    : 'Request Access',
+                                icon: Icons.send_rounded,
+                                isLoading: _loading,
+                                onPressed:
+                                    _loading ? null : _handleRequestAccess,
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0xFF0D2615)
+                                      : AppColors.googleGreenSurface,
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.md),
+                                  border: Border.all(
+                                      color: AppColors.googleGreen
+                                          .withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded,
+                                        color: AppColors.googleGreen, size: 18),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'Request sent! Waiting for admin approval…',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.googleGreen,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(height: 10),
+
+                            // ── Secondary action ──────────────────────────
+                            RoyalButton(
+                              text: 'Check Approval Status',
+                              icon: Icons.refresh_rounded,
+                              isSecondary: true,
+                              isLoading: _loading,
+                              onPressed: _loading ? null : _handleRefresh,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Auto-polling note ─────────────────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF9A825),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 7),
+                          Text(
+                            'Checking for approval automatically every few seconds…',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
 
-            // ── Celebration overlay (shown when admin approves) ──────────────
-            if (_isApproved)
-              _CelebrationOverlay(
-                studentName: widget.identity.name,
-                scaleAnim: _scaleAnim,
-                fadeAnim: _fadeAnim,
-                isDark: isDark,
-              ),
-          ],
-        ),
-      );
+          // ── Celebration overlay ─────────────────────────────────────────
+          if (_isApproved)
+            _CelebrationOverlay(
+              studentName: widget.identity.name,
+              scaleAnim: _scaleAnim,
+              fadeAnim: _fadeAnim,
+              isDark: isDark,
+            ),
+        ],
+      ),
+    );
   }
 }
 

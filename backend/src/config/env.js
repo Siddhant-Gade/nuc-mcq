@@ -25,6 +25,9 @@ const environmentSchema = z.object({
     SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(1).optional(),
     FIREBASE_SERVICE_ACCOUNT_PATH: z.string().trim().optional(),
     FIREBASE_SERVICE_ACCOUNT_KEY: z.string().trim().optional(),
+    /** The Supabase email that is always granted ADMIN + SUPER_ADMIN roles.
+     *  Defaults to the bootstrapped admin account; override in production env. */
+    SUPER_ADMIN_EMAIL: z.string().trim().email().default('newuniquesupabase@gmail.com'),
 });
 const parsedEnvironment = environmentSchema.safeParse(process.env);
 if (!parsedEnvironment.success) {

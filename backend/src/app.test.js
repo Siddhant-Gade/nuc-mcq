@@ -198,24 +198,30 @@ test('google-student-auth: returns 404 for unenrolled student email', async () =
     }
 });
 
-test('google-student-auth: returns 403 for non-active student access status', async () => {
+test('google-student-auth: returns 200 with authToken for non-active (PENDING) student so they can request access', async () => {
+    let registeredEmail = null;
     const studentIdentityService = {
         findByEmail: async (email) => ({
             profile: { studentId: 'student-123', email, name: 'Admitted Student' },
             access: { status: 'PENDING' },
         }),
     };
-    const fixture = await startFixture(verifiedTokenVerifier, { studentIdentityService });
+    const studentService = {
+        registerStudentAuth: async (email, _token) => { registeredEmail = email; },
+    };
+    const fixture = await startFixture(verifiedTokenVerifier, { studentIdentityService, studentService });
     try {
         const response = await fetch(`${fixture.url}/api/v1/auth/google-student-auth`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ email: 'pending@example.com' }),
         });
-        assert.equal(response.status, 403);
+        assert.equal(response.status, 200);
         const data = await response.json();
-        assert.equal(data.success, false);
-        assert.equal(data.error.code, 'ACCESS_NOT_ACTIVE');
+        assert.equal(data.success, true);
+        assert.ok(data.data.authToken, 'authToken should be present for pending student');
+        assert.equal(data.data.status, 'PENDING');
+        assert.equal(registeredEmail, 'pending@example.com');
     }
     finally {
         await fixture.close();

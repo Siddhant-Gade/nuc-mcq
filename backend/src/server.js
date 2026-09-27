@@ -46,9 +46,8 @@ const tokenVerifier = {
         const identity = await baseTokenVerifier.verify(accessToken);
         const baseRoles = identity.roles.filter((r) => r !== 'STUDENT');
 
-        // Designate institute Super Admin email
-        const SUPER_ADMIN_EMAIL = 'newuniquesupabase@gmail.com';
-        if (identity.email && identity.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+        // Designate institute Super Admin — configured via SUPER_ADMIN_EMAIL env var.
+        if (identity.email && identity.email.toLowerCase() === env.SUPER_ADMIN_EMAIL.toLowerCase()) {
             if (!baseRoles.includes('ADMIN')) baseRoles.push('ADMIN');
             if (!baseRoles.includes('SUPER_ADMIN')) baseRoles.push('SUPER_ADMIN');
         }
@@ -103,8 +102,13 @@ const app = createApp({
     broadcastService,
     notificationService,
     studyMaterialService,
+    superAdminEmail: env.SUPER_ADMIN_EMAIL,
 });
 const server = createServer(app);
+// Close connections that have been idle or hung for more than 35 s (slightly above
+// the 30 s middleware timeout so the JSON error response reaches the client first).
+server.timeout = 35_000;
+server.keepAliveTimeout = 65_000; // Must exceed ALB/Render's 60 s idle timeout.
 let isShuttingDown = false;
 server.listen(env.PORT, '0.0.0.0', () => {
     console.info(`Backend listening on 0.0.0.0:${env.PORT} (${env.NODE_ENV}).`);

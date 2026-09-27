@@ -112,7 +112,9 @@ class AuthCubit extends Cubit<AuthState> {
         emit(const AuthUnauthenticated());
         return;
       }
-      if (error.code == 'STUDENT_NOT_ENROLLED' || error.code == 'ACCESS_NOT_ACTIVE') {
+      // STUDENT_NOT_ENROLLED: email not in the system at all → no session possible.
+      // Show unauthorized screen with only the email extracted from the error message.
+      if (error.code == 'STUDENT_NOT_ENROLLED') {
         String? extractedEmail;
         final words = error.message.split(' ');
         for (final w in words) {

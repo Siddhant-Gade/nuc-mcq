@@ -47,6 +47,7 @@ export default function AuthorizationRequests() {
     const [students, setStudents] = useState(new Map());
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('ALL');
     const navigate = useNavigate();
     const { t, language } = useLanguage();
@@ -57,11 +58,16 @@ export default function AuthorizationRequests() {
         try {
             const reqs = await getAuthorizationRequests();
             setRequests(reqs);
+            setError(null);
             const ids = [...new Set(reqs.map((r) => r.studentProfileId))];
-            const profiles = await Promise.all(ids.map((id) => getStudentById(id)));
+            const profiles = await Promise.all(
+                ids.map((id) => getStudentById(id).catch(() => null))
+            );
             const map = new Map();
             profiles.forEach((p) => { if (p) map.set(p.id, p); });
             setStudents(map);
+        } catch (err) {
+            if (!silent) setError(err?.message || 'Failed to load authorization requests.');
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -88,6 +94,14 @@ export default function AuthorizationRequests() {
     }, [requests, activeTab]);
     if (loading) {
         return <div className={pageStyles.subtext}>{t('common.loading')}</div>;
+    }
+    if (error) {
+        return (
+          <div style={{ padding: '40px 24px', textAlign: 'center' }}>
+            <p style={{ color: '#C5221F', marginBottom: 12, fontWeight: 500 }}>{error}</p>
+            <button className={styles.refreshBtn} onClick={() => load()}>Retry</button>
+          </div>
+        );
     }
     return (<div>
       <div className={pageStyles.breadcrumb}>

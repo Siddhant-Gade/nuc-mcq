@@ -8,7 +8,7 @@ import { createCorsMiddleware } from './middleware/cors.middleware.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { notFoundMiddleware } from './middleware/not-found.middleware.js';
 import { ApiError } from './utils/api-error.js';
-import { successResponse } from './utils/api-response.js';
+import { errorResponse, successResponse } from './utils/api-response.js';
 import { createStudentRouter } from './modules/students/student.routes.js';
 import { createBatchRouter } from './modules/batches/batch.routes.js';
 import { createAuthorizationRequestRouter } from './modules/authorization/authorization.routes.js';
@@ -20,12 +20,25 @@ import { createNotificationRouter } from './modules/notifications/notification.r
 import { createStudyMaterialAdminRouter, createStudentStudyMaterialRouter, } from './modules/study-materials/study-material.routes.js';
 import { createAdminQuestionBankRouter, createStudentQuestionBankRouter, } from './modules/question-bank/question-bank.routes.js';
 import { QuestionBankService } from './modules/question-bank/question-bank.service.js';
-export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService, authorizationRequestService, dashboardService, studentIdentityService, resultService, broadcastService, notificationService, studyMaterialService }) => {
+export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService, authorizationRequestService, dashboardService, studentIdentityService, resultService, broadcastService, notificationService, studyMaterialService, superAdminEmail = 'newuniquesupabase@gmail.com' }) => {
     const app = express();
     app.use(helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
     }));
     app.use(createCorsMiddleware(allowedCorsOrigins));
+
+    // Request timeout protection (30 seconds)
+    app.use((request, response, next) => {
+        const timer = setTimeout(() => {
+            if (!response.headersSent) {
+                response.status(504).json(errorResponse('REQUEST_TIMEOUT', 'The server took too long to respond.'));
+            }
+        }, 30_000);
+        response.on('finish', () => clearTimeout(timer));
+        response.on('close', () => clearTimeout(timer));
+        next();
+    });
+
     app.use(express.json({ limit: '10mb' }));
     app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -115,9 +128,10 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
                 throw new ApiError(404, 'STUDENT_NOT_ENROLLED', `No admitted student record found with Google email: ${email}. Please contact the institute administrator to enroll.`);
             }
 
-            if (student.access.status !== 'ACTIVE') {
-                throw new ApiError(403, 'ACCESS_NOT_ACTIVE', `Your student admission for ${student.profile.name} is currently ${student.access.status}. Please contact the administrator for authorization.`);
-            }
+            // Issue auth token for ALL enrolled students regardless of access status.
+            // Students with PENDING/INACTIVE access will land on the UnauthorizedScreen
+            // (enforced at /auth/me via role resolution), where they can send an access
+            // request — which requires a valid Supabase session.
 
             // Deterministic secure token for Google-authenticated student session
             const authSecret = process.env.SUPABASE_JWT_ISSUER || 'nuc_default_student_auth_seed';
@@ -144,8 +158,7 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
         }
         const roles = [...request.auth.roles];
         // Designated institute Super Admin email
-        const SUPER_ADMIN_EMAIL = 'newuniquesupabase@gmail.com';
-        if (request.auth.email && request.auth.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+        if (request.auth.email && request.auth.email.toLowerCase() === superAdminEmail.toLowerCase()) {
             if (!roles.includes('SUPER_ADMIN')) roles.push('SUPER_ADMIN');
             if (!roles.includes('ADMIN')) roles.push('ADMIN');
         }

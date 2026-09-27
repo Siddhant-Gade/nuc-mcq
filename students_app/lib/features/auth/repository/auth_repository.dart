@@ -191,6 +191,9 @@ class AuthRepository {
       scopes: ['email', 'profile'],
     );
 
+    // Always clear the previously selected account so the picker is shown every time.
+    try { await googleSignIn.signOut(); } catch (_) {}
+
     final account = await googleSignIn.signIn();
     if (account == null) {
       throw const ApiException('CANCELLED', 'Google sign-in was cancelled.');
@@ -226,6 +229,8 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
+    // Clear the cached Google account so the picker shows next time.
+    try { await GoogleSignIn().signOut(); } catch (_) {}
     if (_supabase != null) {
       try {
         await _supabase.auth.signOut();

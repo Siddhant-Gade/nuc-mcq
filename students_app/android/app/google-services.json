@@ -12,7 +12,20 @@
           "package_name": "com.mscit.student_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "950049251059-05c8aiqebpm4vt11hilskb8l16tlvjo0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mscit.student_app",
+            "certificate_hash": "e1c4d9e81eb00358e569d4f01dd5d3dcaf10eb4b"
+          }
+        },
+        {
+          "client_id": "950049251059-dm2kqg2lgb0ldfr21vqkgo1vge8qecuf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBcq4mBwAtaHLH4uPzE41zi1ZftWnRUHNc"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "950049251059-dm2kqg2lgb0ldfr21vqkgo1vge8qecuf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
