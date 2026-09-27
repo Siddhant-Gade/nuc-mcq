@@ -342,6 +342,12 @@ const translations = {
     'import.skipped': { en: 'Skipped', mr: 'वगळले', hi: 'छोड़ा गया' },
     'import.importAnother': { en: 'Import Another File', mr: 'आणखी फाइल आयात करा', hi: 'एक और फ़ाइल आयात करें' },
     'import.goToList': { en: 'Go to Student List', mr: 'विद्यार्थी यादीवर जा', hi: 'छात्र सूची में जाएं' },
+    'import.searchPlaceholder': { en: 'Search by student name, ID/PRN, email, or batch...', mr: 'नाव, ID/PRN, ईमेल किंवा बॅचने शोधा...', hi: 'नाम, ID/PRN, ईमेल या बैच से खोजें...' },
+    'import.allRows': { en: 'All Rows', mr: 'सर्व पंक्ती', hi: 'सभी पंक्तियाँ' },
+    'import.validOnly': { en: 'Valid', mr: 'वैध', hi: 'मान्य' },
+    'import.issuesOnly': { en: 'Issues', mr: 'त्रुटी/समस्या', hi: 'त्रुटि/समस्याएं' },
+    'import.duplicatesOnly': { en: 'Duplicates', mr: 'डुप्लिकेट', hi: 'डुप्लिकेट' },
+    'import.noMatchingRows': { en: 'No matching rows found.', mr: 'कोणत्याही जुळणाऱ्या पंक्ती सापडल्या नाहीत.', hi: 'कोई मेल खाने वाली पंक्ति नहीं मिली।' },
     // ── Create Batch Modal ──
     'createBatch.title': { en: 'Create New Batch', mr: 'नवीन बॅच तयार करा', hi: 'नया बैच बनाएं' },
     'createBatch.batchId': { en: 'Batch ID', mr: 'बॅच ID', hi: 'बैच ID' },
