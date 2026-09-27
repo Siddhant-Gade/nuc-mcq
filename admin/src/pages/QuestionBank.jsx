@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     getQuestionBankSummary,
     getQuestionList,
@@ -25,11 +25,7 @@ export default function QuestionBank() {
     const [selectedSection, setSelectedSection] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        loadData();
-    }, [selectedSection, searchQuery]);
-
-    async function loadData() {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
             const [sum, qList] = await Promise.all([
@@ -49,7 +45,11 @@ export default function QuestionBank() {
         finally {
             setLoading(false);
         }
-    }
+    }, [selectedSection, searchQuery]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     async function handleFileSelect(file) {
         try {

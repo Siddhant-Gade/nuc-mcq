@@ -211,6 +211,9 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
         }
       },
       buildWhen: (previous, current) {
+        if (current.test.questions.isEmpty || previous.test.questions.isEmpty) {
+          return true;
+        }
         return previous.currentIndex != current.currentIndex ||
             previous.answers[current.currentQuestion.id] != current.answers[current.currentQuestion.id] ||
             previous.flaggedQuestionIds != current.flaggedQuestionIds ||

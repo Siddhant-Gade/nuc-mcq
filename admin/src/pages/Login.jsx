@@ -1,18 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signInWithGoogle } from '../services/authService';
 import { useLanguage } from '../contexts/LanguageContext';
-import config from '../config';
 import styles from './Login.module.css';
 
 export default function LoginPage() {
-    const { status, authError, clearAuthError, signIn } = useAuth();
+    const { status, clearAuthError, signIn } = useAuth();
     const { t } = useLanguage();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     // Email/Password login
     async function handleEmailPasswordLogin(e) {
         e.preventDefault();

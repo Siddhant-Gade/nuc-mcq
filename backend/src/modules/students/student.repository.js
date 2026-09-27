@@ -177,7 +177,7 @@ export class DrizzleStudentRepository {
                 try {
                     await this.database
                         .update(authorizationRequests)
-                        .set({ status: 'APPROVED', reviewedAt: now, reviewedBy: 'ADMIN' })
+                        .set({ status: 'APPROVED', reviewedAt: now, reviewedBy: null })
                         .where(eq(authorizationRequests.studentProfileId, id));
                 }
                 catch { }
@@ -225,7 +225,7 @@ export class DrizzleStudentRepository {
             try {
                 await this.database
                     .update(authorizationRequests)
-                    .set({ status: 'REJECTED', reviewedAt: now, reviewedBy: 'ADMIN' })
+                    .set({ status: 'REJECTED', reviewedAt: now, reviewedBy: null })
                     .where(eq(authorizationRequests.studentProfileId, id));
             } catch { }
             if (access?.authUserId) {

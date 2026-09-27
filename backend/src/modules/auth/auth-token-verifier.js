@@ -4,8 +4,18 @@ const getVerifiedRoles = (appMetadata) => {
     if (appMetadata === null || typeof appMetadata !== 'object') {
         return [];
     }
-    const role = appMetadata.role;
-    return applicationRoles.includes(role) ? [role] : [];
+    const roles = [];
+    if (typeof appMetadata.role === 'string' && applicationRoles.includes(appMetadata.role)) {
+        roles.push(appMetadata.role);
+    }
+    if (Array.isArray(appMetadata.roles)) {
+        for (const r of appMetadata.roles) {
+            if (applicationRoles.includes(r) && !roles.includes(r)) {
+                roles.push(r);
+            }
+        }
+    }
+    return roles;
 };
 export class SupabaseJwtVerifier {
     jwks;

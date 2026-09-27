@@ -43,7 +43,20 @@ class TestEngineState {
   final int earnedXp;
   final bool? lastAnswerWasCorrect;
 
-  QuestionModel get currentQuestion => test.questions[currentIndex];
+  QuestionModel get currentQuestion {
+    if (test.questions.isEmpty) {
+      return const QuestionModel(
+        id: 'EMPTY',
+        topic: QuestionTopic.computerFundamentals,
+        questionText: 'No questions available',
+        options: ['A', 'B', 'C', 'D'],
+        correctOptionIndex: 0,
+        explanation: '',
+      );
+    }
+    final safeIndex = (currentIndex >= 0 && currentIndex < test.questions.length) ? currentIndex : 0;
+    return test.questions[safeIndex];
+  }
   int get totalQuestions => test.questions.length;
   int get answeredCount => answers.length;
   int get unansweredCount => totalQuestions - answeredCount;

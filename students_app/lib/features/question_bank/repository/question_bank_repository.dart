@@ -128,10 +128,14 @@ class QuestionBankRepository {
     final secStr = item['section'] ?? '';
     final topic = _topicFromString(secStr);
     final correctIdx = item['correct_index'] is int ? item['correct_index'] as int : 0;
-    final sr = item['sr'] ?? DateTime.now().millisecondsSinceEpoch;
+    final questionId = (item['id'] != null && item['id'].toString().isNotEmpty)
+        ? item['id'].toString()
+        : (item['sr'] != null
+            ? 'Q_${topic.name}_${item['sr']}'
+            : 'Q_${topic.name}_${(item['question_en'] ?? item['questionText'] ?? '').hashCode.abs()}');
 
     return QuestionModel(
-      id: 'Q_${topic.name}_$sr',
+      id: questionId,
       topic: topic,
       questionText: item['question_en'] ?? item['questionText'] ?? '',
       options: [

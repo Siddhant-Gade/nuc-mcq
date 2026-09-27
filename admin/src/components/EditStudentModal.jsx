@@ -169,8 +169,8 @@ export default function EditStudentModal({ student, batches = [], onSave, onClos
               >
                 <option value="">Select Batch</option>
                 {batches.map((b) => (
-                  <option key={b.id || b.batchId} value={b.id || b.batchId}>
-                    {b.name || b.batchId}
+                  <option key={b.batchId || b.id} value={b.batchId || b.id}>
+                    {b.batchName || b.name || b.batchId}
                   </option>
                 ))}
               </select>
