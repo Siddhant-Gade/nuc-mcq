@@ -15,7 +15,7 @@ const verifiedTokenVerifier = {
         return { authUserId: 'verified-user-id', email: 'verified@example.com', roles: ['STUDENT'] };
     },
 };
-const startFixture = async (tokenVerifier = verifiedTokenVerifier) => {
+const startFixture = async (tokenVerifier = verifiedTokenVerifier, serviceOverrides = {}) => {
     const app = createApp({
         allowedCorsOrigins: ['http://localhost:5173'],
         tokenVerifier,
@@ -28,6 +28,7 @@ const startFixture = async (tokenVerifier = verifiedTokenVerifier) => {
         broadcastService: {},
         notificationService: {},
         studyMaterialService: {},
+        ...serviceOverrides,
     });
     const server = createServer(app);
     server.listen(0, '127.0.0.1');
@@ -152,6 +153,107 @@ test('admin access is authenticated and role protected', async () => {
             success: true,
             data: { message: 'Admin access confirmed.' },
         });
+    }
+    finally {
+        await fixture.close();
+    }
+});
+
+test('google-student-auth: rejects invalid or missing email', async () => {
+    const fixture = await startFixture();
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/google-student-auth`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: 'not-an-email' }),
+        });
+        assert.equal(response.status, 400);
+        const data = await response.json();
+        assert.equal(data.success, false);
+        assert.equal(data.error.code, 'VALIDATION_ERROR');
+    }
+    finally {
+        await fixture.close();
+    }
+});
+
+test('google-student-auth: returns 404 for unenrolled student email', async () => {
+    const studentIdentityService = {
+        findByEmail: async () => null,
+    };
+    const fixture = await startFixture(verifiedTokenVerifier, { studentIdentityService });
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/google-student-auth`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: 'unknown@example.com' }),
+        });
+        assert.equal(response.status, 404);
+        const data = await response.json();
+        assert.equal(data.success, false);
+        assert.equal(data.error.code, 'STUDENT_NOT_ENROLLED');
+    }
+    finally {
+        await fixture.close();
+    }
+});
+
+test('google-student-auth: returns 403 for non-active student access status', async () => {
+    const studentIdentityService = {
+        findByEmail: async (email) => ({
+            profile: { studentId: 'student-123', email, name: 'Admitted Student' },
+            access: { status: 'PENDING' },
+        }),
+    };
+    const fixture = await startFixture(verifiedTokenVerifier, { studentIdentityService });
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/google-student-auth`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: 'pending@example.com' }),
+        });
+        assert.equal(response.status, 403);
+        const data = await response.json();
+        assert.equal(data.success, false);
+        assert.equal(data.error.code, 'ACCESS_NOT_ACTIVE');
+    }
+    finally {
+        await fixture.close();
+    }
+});
+
+test('google-student-auth: registers auth token and returns student identity for active student', async () => {
+    let registeredEmail = null;
+    let registeredToken = null;
+    const studentIdentityService = {
+        findByEmail: async (email) => ({
+            profile: { studentId: 'student-456', email, name: 'Active Student' },
+            access: { status: 'ACTIVE' },
+        }),
+    };
+    const studentService = {
+        registerStudentAuth: async (email, token) => {
+            registeredEmail = email;
+            registeredToken = token;
+        },
+    };
+    const fixture = await startFixture(verifiedTokenVerifier, { studentIdentityService, studentService });
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/google-student-auth`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: 'active@example.com' }),
+        });
+        assert.equal(response.status, 200);
+        const data = await response.json();
+        assert.equal(data.success, true);
+        assert.equal(data.data.studentId, 'student-456');
+        assert.equal(data.data.email, 'active@example.com');
+        assert.equal(data.data.name, 'Active Student');
+        assert.equal(data.data.status, 'ACTIVE');
+        assert.ok(typeof data.data.authToken === 'string' && data.data.authToken.length > 0);
+        assert.equal(registeredEmail, 'active@example.com');
+        assert.equal(registeredToken, data.data.authToken);
     }
     finally {
         await fixture.close();

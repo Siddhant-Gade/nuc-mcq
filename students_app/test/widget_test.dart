@@ -47,6 +47,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('New Unique Computers'), findsOneWidget);
-    expect(find.text('Sign In'), findsAtLeastNWidgets(1));
+    expect(find.text('Sign in with Google'), findsOneWidget);
   });
 }

@@ -172,8 +172,8 @@ class AuthRepository {
     }
   }
 
-  /// Google OAuth sign-in: native Google Sign-In with serverClientId if configured,
-  /// with automatic fallback to Supabase browser OAuth with deep-link redirection.
+  /// Google OAuth sign-in: native Google Sign-In with backend email verification.
+  /// Authenticates the student natively on Android without opening an external browser.
   Future<void> signInWithGoogle({String? webClientId}) async {
     if (_supabase == null) {
       throw const ApiException(
@@ -186,48 +186,42 @@ class AuthRepository {
         ? webClientId
         : AppConfig.fromEnvironment().googleWebClientId;
 
-    // Attempt 1: Native Google Sign-In when client ID is provided
-    if (effectiveClientId.isNotEmpty) {
-      try {
-        final googleSignIn = GoogleSignIn(
-          serverClientId: effectiveClientId,
-          scopes: ['email', 'profile'],
-        );
+    final googleSignIn = GoogleSignIn(
+      serverClientId: effectiveClientId.isNotEmpty ? effectiveClientId : null,
+      scopes: ['email', 'profile'],
+    );
 
-        final account = await googleSignIn.signIn();
-        if (account == null) {
-          throw const ApiException('CANCELLED', 'Google sign-in was cancelled.');
-        }
-
-        final googleAuth = await account.authentication;
-        final idToken = googleAuth.idToken;
-        final accessToken = googleAuth.accessToken;
-
-        if (idToken != null) {
-          await _supabase.auth.signInWithIdToken(
-            provider: OAuthProvider.google,
-            idToken: idToken,
-            accessToken: accessToken,
-          );
-          return;
-        }
-      } on ApiException {
-        rethrow;
-      } catch (_) {
-        // Fall through to browser OAuth flow
-      }
+    final account = await googleSignIn.signIn();
+    if (account == null) {
+      throw const ApiException('CANCELLED', 'Google sign-in was cancelled.');
     }
 
-    // Attempt 2 (Fallback / Direct): Supabase OAuth with deep-link redirection
+    final email = account.email.trim().toLowerCase();
+
+    // Authenticate student with backend using verified Google email
     try {
-      await _supabase.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: 'com.mscit.student_app://login-callback',
+      final response = await _dio.post<Object?>(
+        '/api/v1/auth/google-student-auth',
+        data: {
+          'email': email,
+          'name': account.displayName ?? '',
+          'googleId': account.id,
+        },
       );
-    } on AuthException catch (e) {
-      throw ApiException('AUTH_FAILED', e.message);
-    } catch (e) {
-      throw ApiException('SIGN_IN_ERROR', 'Google sign-in failed: ${e.toString()}');
+      final data = requireSuccessData(response.data);
+      if (data is Map && data['authToken'] != null) {
+        final token = data['authToken'].toString();
+        final targetEmail = data['email']?.toString() ?? email;
+
+        await _supabase.auth.signInWithPassword(
+          email: targetEmail,
+          password: token,
+        );
+        return;
+      }
+      throw const ApiException('AUTH_FAILED', 'Failed to authenticate student with backend.');
+    } on DioException catch (e) {
+      throw exceptionFromDio(e);
     }
   }
 

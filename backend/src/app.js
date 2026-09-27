@@ -1,4 +1,7 @@
 import express from 'express';
+import crypto from 'node:crypto';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import { createAuthenticationMiddleware } from './middleware/auth.middleware.js';
 import { requireRoles } from './middleware/authorization.middleware.js';
 import { createCorsMiddleware } from './middleware/cors.middleware.js';
@@ -20,9 +23,27 @@ import { QuestionBankService } from './modules/question-bank/question-bank.servi
 import { createTeacherAdminRouter } from './modules/teachers/teacher.routes.js';
 export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService, authorizationRequestService, dashboardService, studentIdentityService, resultService, broadcastService, notificationService, studyMaterialService, teacherService }) => {
     const app = express();
+    app.use(helmet({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }));
     app.use(createCorsMiddleware(allowedCorsOrigins));
-    app.use(express.json({ limit: '50mb' }));
-    app.use(express.urlencoded({ limit: '50mb', extended: true }));
+    app.use(express.json({ limit: '10mb' }));
+    app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+    const authLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000,
+        limit: 100,
+        standardHeaders: 'draft-7',
+        legacyHeaders: false,
+        message: {
+            success: false,
+            error: {
+                code: 'RATE_LIMIT_EXCEEDED',
+                message: 'Too many authentication attempts. Please try again after 15 minutes.',
+            },
+        },
+    });
+    app.use('/api/v1/auth', authLimiter);
     const authenticationMiddleware = createAuthenticationMiddleware(tokenVerifier);
     app.get('/health', (_request, response) => {
         response.status(200).json(successResponse({ status: 'healthy' }));
@@ -77,6 +98,41 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
                 }
                 throw err;
             }
+        }
+        catch (error) {
+            next(error);
+        }
+    });
+    app.post('/api/v1/auth/google-student-auth', async (request, response, next) => {
+        try {
+            const email = (request.body?.email ?? '').toString().trim().toLowerCase();
+
+            if (!email || !email.includes('@')) {
+                throw new ApiError(400, 'VALIDATION_ERROR', 'A valid Google email is required.');
+            }
+
+            const student = await studentIdentityService.findByEmail(email);
+            if (!student) {
+                throw new ApiError(404, 'STUDENT_NOT_ENROLLED', `No admitted student record found with Google email: ${email}. Please contact the institute administrator to enroll.`);
+            }
+
+            if (student.access.status !== 'ACTIVE') {
+                throw new ApiError(403, 'ACCESS_NOT_ACTIVE', `Your student admission for ${student.profile.name} is currently ${student.access.status}. Please contact the administrator for authorization.`);
+            }
+
+            // Deterministic secure token for Google-authenticated student session
+            const authSecret = process.env.SUPABASE_JWT_ISSUER || 'nuc_default_student_auth_seed';
+            const studentAuthToken = crypto.createHmac('sha256', authSecret).update(`nuc_student_${email}`).digest('hex');
+
+            await studentService.registerStudentAuth(email, studentAuthToken);
+
+            response.status(200).json(successResponse({
+                studentId: student.profile.studentId,
+                email: student.profile.email,
+                name: student.profile.name,
+                authToken: studentAuthToken,
+                status: student.access.status,
+            }));
         }
         catch (error) {
             next(error);

@@ -112,6 +112,23 @@ class AuthCubit extends Cubit<AuthState> {
         emit(const AuthUnauthenticated());
         return;
       }
+      if (error.code == 'STUDENT_NOT_ENROLLED' || error.code == 'ACCESS_NOT_ACTIVE') {
+        String? extractedEmail;
+        final words = error.message.split(' ');
+        for (final w in words) {
+          if (w.contains('@')) {
+            extractedEmail = w.replaceAll(RegExp(r'[^a-zA-Z0-9@._+-]'), '').replaceAll(RegExp(r'[.,;:]+$'), '');
+            break;
+          }
+        }
+        final pendingIdentity = StudentIdentity(
+          authUserId: '',
+          roles: const [],
+          email: extractedEmail,
+        );
+        emit(AuthUnauthorized(pendingIdentity));
+        return;
+      }
       emit(AuthUnauthenticated(error: error.message));
       return;
     } catch (_) {

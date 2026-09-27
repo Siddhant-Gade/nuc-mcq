@@ -68,6 +68,10 @@ const tokenVerifier = {
             } else {
                 identity.roles = baseRoles;
             }
+            if (identityCache.size >= 5000) {
+                const oldestKey = identityCache.keys().next().value;
+                if (oldestKey) identityCache.delete(oldestKey);
+            }
             identityCache.set(identity.authUserId, { roles: identity.roles, ts: Date.now() });
         }
         catch {

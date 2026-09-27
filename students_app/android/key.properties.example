@@ -1,0 +1,15 @@
+# Production Keystore Configuration Template
+# Copy this file to 'key.properties' in this directory and fill in your actual production credentials.
+# NEVER commit 'key.properties' or '*.keystore' / '*.jks' files to version control!
+
+# Path to your .keystore or .jks file (relative to android/app or absolute)
+storeFile=../upload-keystore.jks
+
+# Password used when generating the keystore
+storePassword=your_keystore_password_here
+
+# Alias given to the key (e.g. upload, release, nuc-release)
+keyAlias=your_key_alias_here
+
+# Password for the key
+keyPassword=your_key_password_here
