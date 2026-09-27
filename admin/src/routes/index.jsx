@@ -17,8 +17,6 @@ import Settings from '../pages/Settings';
 import LoginPage from '../pages/Login';
 import NotFound from '../pages/NotFound';
 import ErrorPage from '../pages/ErrorPage';
-import Teachers from '../pages/Teachers';
-import TeacherAnalytics from '../pages/TeacherAnalytics';
 const router = createBrowserRouter([
     {
         path: '/login',
@@ -38,8 +36,6 @@ const router = createBrowserRouter([
             { path: 'authorization-requests', element: <AuthorizationRequests /> },
             { path: 'authorization-requests/:id', element: <AuthorizationRequestDetail /> },
             { path: 'batches', element: <Batches /> },
-            { path: 'teachers', element: <Teachers /> },
-            { path: 'teacher-analytics', element: <TeacherAnalytics /> },
             { path: 'broadcasts', element: <Broadcasts /> },
             { path: 'study-materials', element: <StudyMaterials /> },
             { path: 'question-bank', element: <QuestionBank /> },

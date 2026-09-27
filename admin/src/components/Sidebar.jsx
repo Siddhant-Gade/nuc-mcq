@@ -47,15 +47,6 @@ function NavIcon({ icon }) {
         questions: (<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm0-4.5h.01M10 11a1.5 1.5 0 0 1 1.5-1.5c1 0 1.5-1 1.5-1.5a2 2 0 1 0-3.5-1.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>),
-        teacher: (<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-  <path d="M10 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="currentColor"/>
-  <path d="M4 17a6 6 0 0 1 12 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-  <path d="M16 5h2M17 4v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-</svg>),
-        teacherAnalytics: (<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-  <path d="M3 16.5h14M4 13.5l3.5-5 3.5 3 5-6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  <circle cx="15" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.25"/>
-</svg>),
     };
     return icons[icon] ?? null;
 }
@@ -85,8 +76,6 @@ export default function Sidebar() {
         { to: '/students/import', label: t('nav.import'), icon: 'import' },
         { to: '/authorization-requests', label: t('nav.auth'), icon: 'auth', badge: pendingCount },
         { to: '/batches', label: t('nav.batches'), icon: 'batches' },
-        { to: '/teachers', label: 'Teachers', icon: 'teacher' },
-        { to: '/teacher-analytics', label: 'Teacher Analytics', icon: 'teacherAnalytics' },
         { to: '/broadcasts', label: t('nav.broadcasts'), icon: 'broadcast' },
         { to: '/study-materials', label: t('nav.materials'), icon: 'materials' },
         { to: '/question-bank', label: t('nav.questions') || 'Question Bank', icon: 'questions' },

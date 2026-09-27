@@ -16,5 +16,4 @@ export const createBatchSchema = z.object({
 });
 export const updateBatchSchema = z.object({
     timing: z.string().trim().max(100).nullable().optional(),
-    teacherId: z.string().uuid().nullable().optional()
 });

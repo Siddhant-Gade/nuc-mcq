@@ -14,7 +14,6 @@ export const deriveEffectiveStatus = (storedStatus, enrolledCount, capacity) => 
 };
 export class BatchService {
     repository;
-    teacherService = null;
     constructor(repository) {
         this.repository = repository;
     }
@@ -25,8 +24,6 @@ export class BatchService {
             instituteId: record.instituteId,
             capacity: record.capacity,
             timing: record.timing ?? null,
-            teacherId: record.teacherId ?? null,
-            teacherName: record.teacherName ?? null,
             enrolledCount,
             status: deriveEffectiveStatus(record.status, enrolledCount, record.capacity),
             createdAt: record.createdAt,
@@ -79,14 +76,5 @@ export class BatchService {
         if (removed === undefined) {
             throw new ApiError(404, 'NOT_FOUND', 'Batch not found.');
         }
-    }
-    async assignTeacher(batchId, teacherId) {
-        const stored = await this.repository.findById(batchId);
-        if (stored === undefined) throw new ApiError(404, 'NOT_FOUND', 'Batch not found.');
-        if (teacherId !== null) {
-            if (this.teacherService) await this.teacherService.getById(teacherId);
-        }
-        await this.repository.updateTeacher(batchId, teacherId);
-        return this.getById(batchId);
     }
 }

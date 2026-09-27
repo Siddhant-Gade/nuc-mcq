@@ -15,13 +15,5 @@ export const createBatchRouter = (service, tokenVerifier) => {
     router.get('/active', controller.listActive);
     router.post('/', validateRequest({ body: createBatchSchema }), controller.create);
     router.delete('/:batchId', validateRequest({ params: batchIdParamsSchema }), controller.remove);
-    router.patch('/:batchId/teacher', async (request, response, next) => {
-        try {
-            const { batchId } = request.params;
-            const { teacherId } = request.body;
-            const result = await service.assignTeacher(batchId, teacherId ?? null);
-            response.status(200).json(successResponse(result));
-        } catch (error) { next(error); }
-    });
     return router;
 };

@@ -43,7 +43,10 @@ android {
             if (keystorePropertiesFile.exists()) {
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
-                storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+                storeFile = keystoreProperties.getProperty("storeFile")?.let { path ->
+                    val rootResolved = rootProject.file(path)
+                    if (rootResolved.exists()) rootResolved else file(path)
+                }
                 storePassword = keystoreProperties.getProperty("storePassword")
             }
         }

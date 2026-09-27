@@ -1,7 +1,6 @@
 export { default as apiClient } from './api';
 export { getStudents, getStudentById, getStudentAccess, getStudentPerformance, createStudent, updateStudent, updateStudentAccessStatus, deleteStudent } from './studentService';
 export { getBatches, getBatchById, getActiveBatches, createBatch, deleteBatch } from './batchService';
-export { getTeachers, createTeacher, updateTeacher, deleteTeacher, assignTeacherToBatch, unassignTeacherFromBatch } from './teacherService';
 export { getAuthorizationRequests, getAuthorizationRequestById, getPendingAuthorizationRequests, approveAuthorizationRequest, rejectAuthorizationRequest } from './authRequestService';
 export { getDashboardStats, getStudentAnalytics } from './dashboardService';
 export { getAdmins, createAdmin } from './adminService';

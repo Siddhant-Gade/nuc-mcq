@@ -1,1 +1,0 @@
-/** @typedef {{ id: string, name: string, email: string, mobile: string|null, subject: string|null, instituteId: string, assignedBatchId: string|null, assignedBatchName: string|null, createdAt: Date, updatedAt: Date }} TeacherRecord */

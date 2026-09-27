@@ -20,8 +20,7 @@ import { createNotificationRouter } from './modules/notifications/notification.r
 import { createStudyMaterialAdminRouter, createStudentStudyMaterialRouter, } from './modules/study-materials/study-material.routes.js';
 import { createAdminQuestionBankRouter, createStudentQuestionBankRouter, } from './modules/question-bank/question-bank.routes.js';
 import { QuestionBankService } from './modules/question-bank/question-bank.service.js';
-import { createTeacherAdminRouter } from './modules/teachers/teacher.routes.js';
-export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService, authorizationRequestService, dashboardService, studentIdentityService, resultService, broadcastService, notificationService, studyMaterialService, teacherService }) => {
+export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService, authorizationRequestService, dashboardService, studentIdentityService, resultService, broadcastService, notificationService, studyMaterialService }) => {
     const app = express();
     app.use(helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -183,7 +182,6 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
     app.get('/api/v1/admin/access-check', authenticationMiddleware, requireRoles('ADMIN'), (_request, response) => {
         response.status(200).json(successResponse({ message: 'Admin access confirmed.' }));
     });
-    app.use('/api/v1/teachers', createTeacherAdminRouter(teacherService, tokenVerifier));
     app.use('/api/v1/students', createStudentRouter(studentService, tokenVerifier));
     app.use('/api/v1/batches', createBatchRouter(batchService, tokenVerifier));
     app.use('/api/v1/authorization-requests', createAuthorizationRequestRouter(

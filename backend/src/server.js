@@ -22,8 +22,6 @@ import { DrizzleResultRepository } from './modules/results/result.repository.js'
 import { ResultService } from './modules/results/result.service.js';
 import { DrizzleDeviceTokenRepository } from './database/device-token.repository.js';
 import { PushNotificationService } from './modules/notifications/push-notification.service.js';
-import { DrizzleTeacherRepository } from './modules/teachers/teacher.repository.js';
-import { TeacherService } from './modules/teachers/teacher.service.js';
 import { getFirebaseAdmin } from './config/firebase.js';
 
 // Initialize Firebase Admin SDK eagerly on startup
@@ -84,8 +82,6 @@ const deviceTokenRepository = new DrizzleDeviceTokenRepository(database);
 const pushNotificationService = new PushNotificationService(deviceTokenRepository);
 const resultService = new ResultService(new DrizzleResultRepository(database));
 const broadcastService = new BroadcastService(new DrizzleBroadcastRepository(database));
-const teacherService = new TeacherService(new DrizzleTeacherRepository(database));
-batchService.teacherService = teacherService;
 const notificationService = new NotificationService(new DrizzleNotificationRepository(database));
 notificationService.pushService = pushNotificationService;
 studentIdentityService.deviceTokenRepository = deviceTokenRepository;
@@ -107,7 +103,6 @@ const app = createApp({
     broadcastService,
     notificationService,
     studyMaterialService,
-    teacherService,
 });
 const server = createServer(app);
 let isShuttingDown = false;

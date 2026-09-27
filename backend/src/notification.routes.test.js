@@ -159,7 +159,7 @@ test('a non-UUID notification id fails validation before reaching the service', 
     }
 });
 test('mark-all-read returns the updated count and forwards the verified identity', async () => {
-    const fixture = await startFixture(['TEACHER'], new StubNotificationService([record(), record({ id: 'n2' })]));
+    const fixture = await startFixture(['ADMIN'], new StubNotificationService([record(), record({ id: 'n2' })]));
     try {
         const response = await fetch(`${fixture.url}/api/v1/notifications/read-all`, {
             method: 'POST',
