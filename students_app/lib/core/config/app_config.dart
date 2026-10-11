@@ -26,7 +26,10 @@ class AppConfig {
 
   static const _backendBaseUrl = String.fromEnvironment(
     'BACKEND_BASE_URL',
-    defaultValue: String.fromEnvironment('API_BASE_URL', defaultValue: 'https://nuc-mcq-server.onrender.com'),
+    defaultValue: String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'https://nuc-mcq-server.onrender.com',
+    ),
   );
   static const _supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
@@ -34,19 +37,21 @@ class AppConfig {
   );
   static const _supabasePublicKey = String.fromEnvironment(
     'SUPABASE_PUBLIC_KEY',
-    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3Z256aHJvbWRhdmxudHRvemFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODgwNzEsImV4cCI6MjEwMzE2NDA3MX0.XKlEU0AVMtDq5ZLOfiilp_oyKK0tiRoy7A2jDYdFdRA',
+    defaultValue:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3Z256aHJvbWRhdmxudHRvemFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODgwNzEsImV4cCI6MjEwMzE2NDA3MX0.XKlEU0AVMtDq5ZLOfiilp_oyKK0tiRoy7A2jDYdFdRA',
   );
   static const _googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
-    defaultValue: '',
+    defaultValue:
+        '950049251059-dm2kqg2lgb0ldfr21vqkgo1vge8qecuf.apps.googleusercontent.com',
   );
 
   factory AppConfig.fromEnvironment() => const AppConfig(
-        backendBaseUrl: _backendBaseUrl,
-        supabaseUrl: _supabaseUrl,
-        supabasePublicKey: _supabasePublicKey,
-        googleWebClientId: _googleWebClientId,
-      );
+    backendBaseUrl: _backendBaseUrl,
+    supabaseUrl: _supabaseUrl,
+    supabasePublicKey: _supabasePublicKey,
+    googleWebClientId: _googleWebClientId,
+  );
 
   /// Returns human-readable configuration problems; empty means usable.
   static List<String> validationProblems({
@@ -68,8 +73,8 @@ class AppConfig {
   }
 
   List<String> validationProblemsForEnvironment() => validationProblems(
-        supabaseUrl: supabaseUrl,
-        supabasePublicKey: supabasePublicKey,
-        backendBaseUrl: backendBaseUrl,
-      );
+    supabaseUrl: supabaseUrl,
+    supabasePublicKey: supabasePublicKey,
+    backendBaseUrl: backendBaseUrl,
+  );
 }

@@ -1,15 +1,20 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/api/api_client.dart';
 import '../models/test_result_model.dart';
 
-/// Local Durable Test Results Repository.
-/// Persists test results locally first (Section 5.2 & Section 11 of system_design.md).
+/// Local Durable Test Results Repository with Cloud Synchronization.
+/// Persists test results locally first (Section 5.2 & Section 11 of system_design.md)
+/// and seamlessly syncs historical test records from the backend API.
 /// Durable across browser refreshes and application restarts.
 class ResultsRepository {
-  ResultsRepository() {
+  ResultsRepository({Dio? dio}) : _dio = dio {
     _loadFromLocalCache();
   }
 
+  final Dio? _dio;
   static const _storageKey = 'student_app_test_results_v1';
   final List<TestResultModel> _results = [];
   bool _isLoaded = false;
@@ -76,6 +81,114 @@ class ResultsRepository {
       );
       await _persistToLocalCache();
     }
+  }
+
+  /// Merges results fetched from backend API into local cache without losing pending local tests.
+  Future<void> mergeCloudResults(List<TestResultModel> cloudResults) async {
+    await _loadFromLocalCache();
+
+    // Preserve local tests not yet confirmed by the cloud: pending, syncing,
+    // failed, AND previously synced locals absent from this payload (e.g.
+    // offline-first records written before the history endpoint existed).
+    // Cloud records win on clientEventId conflicts.
+    final localMap = <String, TestResultModel>{
+      for (final r in _results) r.clientEventId: r,
+    };
+
+    final merged = <String, TestResultModel>{};
+
+    // 1. Keep every local record as the base (no data loss on empty cloud).
+    merged.addAll(localMap);
+
+    // 2. Overlay cloud results (ensuring status is synced).
+    for (final cr in cloudResults) {
+      final syncedModel = cr.copyWith(syncStatus: SyncStatus.synced);
+      merged[cr.clientEventId] = syncedModel;
+    }
+
+    // 3. Sort by completedAt descending (newest first)
+    _results.clear();
+    _results.addAll(merged.values);
+    _results.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+
+    await _persistToLocalCache();
+  }
+
+  /// Syncs down historical test results from the backend API and merges them with local cache.
+  ///
+  /// Error handling strategy:
+  ///  • 404 → the history endpoint is not yet deployed on this server; skip silently and
+  ///    fall back to the local cache.  Do NOT treat this as a network outage.
+  ///  • 401/403 → auth/authorization issue; log clearly without printing tokens.
+  ///  • Connection error / timeout → server unreachable; log as offline.
+  ///  • Other HTTP errors → log the status code for diagnosis.
+  Future<List<TestResultModel>> syncFromBackend() async {
+    if (_dio == null) {
+      return getAllResults();
+    }
+
+    try {
+      final response = await _dio.get<Object?>('/api/v1/results');
+      final data = requireSuccessData(response.data);
+      if (data is List) {
+        final cloudResults = <TestResultModel>[];
+        for (final item in data) {
+          if (item is Map<String, dynamic>) {
+            cloudResults.add(TestResultModel.fromMap(item));
+          } else if (item is Map) {
+            cloudResults.add(TestResultModel.fromMap(Map<String, dynamic>.from(item)));
+          }
+        }
+        debugPrint('[ResultsRepository] Synced ${cloudResults.length} record(s) from backend.');
+        await mergeCloudResults(cloudResults);
+      }
+    } on DioException catch (dioErr) {
+      final statusCode = dioErr.response?.statusCode;
+      if (statusCode == 404) {
+        // The GET /api/v1/results endpoint is not yet deployed on this backend server.
+        // The POST /api/v1/results/sync endpoint (for uploading) may still work.
+        // Degrade gracefully: show only local results until the server is updated.
+        debugPrint(
+          '[ResultsRepository] History endpoint GET /api/v1/results returned 404 — '
+          'route not yet deployed on the connected server. '
+          'Falling back to local cache. Deploy the updated backend to enable cloud history sync.',
+        );
+      } else if (statusCode == 401) {
+        debugPrint(
+          '[ResultsRepository] History sync failed: unauthenticated (401). '
+          'The student session may have expired.',
+        );
+      } else if (statusCode == 403) {
+        debugPrint(
+          '[ResultsRepository] History sync failed: access denied (403). '
+          'The authenticated user may not have STUDENT role on the server.',
+        );
+      } else if (dioErr.type == DioExceptionType.connectionError ||
+          dioErr.type == DioExceptionType.connectionTimeout) {
+        debugPrint(
+          '[ResultsRepository] History sync failed: server unreachable (${dioErr.type}). '
+          'Showing local cache.',
+        );
+      } else {
+        debugPrint(
+          '[ResultsRepository] History sync failed: HTTP $statusCode — ${dioErr.message}',
+        );
+      }
+    } catch (e) {
+      debugPrint('[ResultsRepository] History sync unexpected error: $e');
+    }
+
+    return getAllResults();
+  }
+
+  /// Clears in-memory and local durable cache (e.g. when student logs out).
+  Future<void> clear() async {
+    _results.clear();
+    _isLoaded = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
   }
 
   /// Get detailed student stats

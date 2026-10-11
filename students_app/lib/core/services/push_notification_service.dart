@@ -16,7 +16,9 @@ import 'app_badge_service.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  debugPrint('[FCM Background] Message received: ${message.messageId}, data: ${message.data}');
+  debugPrint(
+    '[FCM Background] Message received: ${message.messageId}, data: ${message.data}',
+  );
   await AppBadgeService.instance.incrementBadge();
 }
 
@@ -32,7 +34,8 @@ class PushNotificationService {
     return _messagingInstance ??= FirebaseMessaging.instance;
   }
 
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   Dio? _dio;
   bool _initialized = false;
@@ -40,10 +43,14 @@ class PushNotificationService {
 
   static const String _channelId = 'nuc_priority_channel';
   static const String _channelName = 'NUC Student Notifications';
-  static const String _channelDesc = 'This channel is used for important student notifications.';
+  static const String _channelDesc =
+      'This channel is used for important student notifications.';
 
   /// Initialize Firebase Messaging, permissions, local channels, and foreground listeners.
-  Future<void> init({Dio? dio, NotificationPayloadHandler? onNotificationTap}) async {
+  Future<void> init({
+    Dio? dio,
+    NotificationPayloadHandler? onNotificationTap,
+  }) async {
     if (_initialized) {
       if (dio != null) _dio = dio;
       if (onNotificationTap != null) this.onNotificationTap = onNotificationTap;
@@ -54,14 +61,18 @@ class PushNotificationService {
     this.onNotificationTap = onNotificationTap;
 
     if (Firebase.apps.isEmpty) {
-      debugPrint('[FCM] Firebase not initialized (e.g. in test environment). Skipping native FCM setup.');
+      debugPrint(
+        '[FCM] Firebase not initialized (e.g. in test environment). Skipping native FCM setup.',
+      );
       _initialized = true;
       return;
     }
     // 1. Request notification permissions (Android 13+ POST_NOTIFICATIONS / iOS)
     if (Platform.isAndroid) {
       final androidImplementation = _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       await androidImplementation?.requestNotificationsPermission();
     }
     final settings = await _messaging?.requestPermission(
@@ -90,7 +101,9 @@ class PushNotificationService {
     );
 
     await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(androidChannel);
 
     // 3. Initialize flutter_local_notifications for foreground display & tap handling
@@ -115,9 +128,13 @@ class PushNotificationService {
 
     // 4. Foreground message listener -> show heads-up local notification banner
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('[FCM Foreground] Message received: ${message.notification?.title}');
-      final title = message.notification?.title ?? message.data['title']?.toString();
-      final body = message.notification?.body ?? message.data['body']?.toString();
+      debugPrint(
+        '[FCM Foreground] Message received: ${message.notification?.title}',
+      );
+      final title =
+          message.notification?.title ?? message.data['title']?.toString();
+      final body =
+          message.notification?.body ?? message.data['body']?.toString();
 
       if (title != null && !kIsWeb) {
         AppBadgeService.instance.incrementBadge();
@@ -131,7 +148,9 @@ class PushNotificationService {
               _channelName,
               channelDescription: _channelDesc,
               icon: '@drawable/ic_nuc_notification',
-              largeIcon: const DrawableResourceAndroidBitmap('@drawable/ic_nuc_large_icon'),
+              largeIcon: const DrawableResourceAndroidBitmap(
+                '@drawable/ic_nuc_large_icon',
+              ),
               styleInformation: BigTextStyleInformation(
                 body ?? '',
                 contentTitle: title,
@@ -188,14 +207,26 @@ class PushNotificationService {
       await prefs.setString('cached_fcm_token', fcmToken);
 
       if (_dio != null) {
-        await _dio!.post(
-          '/api/v1/student/fcm-token',
-          data: {
-            'token': fcmToken,
-            'platform': Platform.isAndroid ? 'android' : 'ios',
-          },
-        );
-        debugPrint('[FCM] Synced token with backend successfully.');
+        try {
+          await _dio!.post(
+            '/api/v1/student/fcm-token',
+            data: {
+              'token': fcmToken,
+              'platform': Platform.isAndroid ? 'android' : 'ios',
+            },
+          );
+          debugPrint('[FCM] Synced token with backend successfully.');
+        } on DioException catch (dioErr) {
+          if (dioErr.response?.statusCode == 401) {
+            // Expected on startup when student is not logged in yet.
+            // Token is cached in SharedPreferences and will be synced upon login.
+            debugPrint(
+              '[FCM] Student not signed in yet (HTTP 401). Token cached locally, will sync upon login.',
+            );
+            return;
+          }
+          rethrow;
+        }
       }
     } catch (e) {
       debugPrint('[FCM] Could not sync token with backend: $e');

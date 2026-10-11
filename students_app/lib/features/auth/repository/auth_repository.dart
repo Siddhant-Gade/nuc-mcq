@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -12,8 +13,8 @@ import '../models/student_identity.dart';
 /// Bridges Supabase authentication with the Express API.
 class AuthRepository {
   AuthRepository({SupabaseClient? supabase, required Dio dio})
-      : _supabase = supabase,
-        _dio = dio;
+    : _supabase = supabase,
+      _dio = dio;
 
   final SupabaseClient? _supabase;
   final Dio _dio;
@@ -24,9 +25,11 @@ class AuthRepository {
   /// Stream that emits whenever Supabase auth signs in or refreshes a session.
   Stream<void> get onAuthSessionChange {
     return _supabase?.auth.onAuthStateChange
-            .where((data) =>
-                data.event == AuthChangeEvent.signedIn ||
-                data.event == AuthChangeEvent.tokenRefreshed)
+            .where(
+              (data) =>
+                  data.event == AuthChangeEvent.signedIn ||
+                  data.event == AuthChangeEvent.tokenRefreshed,
+            )
             .map((_) {}) ??
         const Stream.empty();
   }
@@ -58,14 +61,20 @@ class AuthRepository {
 
   Future<void> signIn({required String prn, required String password}) async {
     if (_supabase == null) {
-      throw const ApiException('SUPABASE_NOT_INITIALIZED', 'Supabase authentication is not configured.');
+      throw const ApiException(
+        'SUPABASE_NOT_INITIALIZED',
+        'Supabase authentication is not configured.',
+      );
     }
     final trimmed = prn.trim();
     final authEmail = prnToAuthEmail(trimmed);
 
     // Attempt 1: Sign in with PRN alias
     try {
-      await _supabase.auth.signInWithPassword(email: authEmail, password: password);
+      await _supabase.auth.signInWithPassword(
+        email: authEmail,
+        password: password,
+      );
       return;
     } catch (_) {}
 
@@ -76,11 +85,16 @@ class AuthRepository {
         data: {'identifier': trimmed},
       );
       final data = requireSuccessData(res.data);
-      if (data is Map && data['email'] != null && data['email'].toString().isNotEmpty) {
+      if (data is Map &&
+          data['email'] != null &&
+          data['email'].toString().isNotEmpty) {
         final profileEmail = data['email'].toString().trim().toLowerCase();
         if (profileEmail != authEmail) {
           try {
-            await _supabase.auth.signInWithPassword(email: profileEmail, password: password);
+            await _supabase.auth.signInWithPassword(
+              email: profileEmail,
+              password: password,
+            );
             return;
           } catch (_) {}
         }
@@ -98,12 +112,18 @@ class AuthRepository {
       final data = requireSuccessData(response.data);
       if (data is Map) {
         try {
-          await _supabase.auth.signInWithPassword(email: authEmail, password: password);
+          await _supabase.auth.signInWithPassword(
+            email: authEmail,
+            password: password,
+          );
           return;
         } catch (_) {
           final profileEmail = data['email']?.toString().trim().toLowerCase();
           if (profileEmail != null && profileEmail.isNotEmpty) {
-            await _supabase.auth.signInWithPassword(email: profileEmail, password: password);
+            await _supabase.auth.signInWithPassword(
+              email: profileEmail,
+              password: password,
+            );
             return;
           }
         }
@@ -127,7 +147,10 @@ class AuthRepository {
 
   Future<void> signUp({required String prn, required String password}) async {
     if (_supabase == null) {
-      throw const ApiException('SUPABASE_NOT_INITIALIZED', 'Supabase authentication is not configured.');
+      throw const ApiException(
+        'SUPABASE_NOT_INITIALIZED',
+        'Supabase authentication is not configured.',
+      );
     }
 
     final trimmedPrn = prn.trim();
@@ -150,13 +173,24 @@ class AuthRepository {
 
     // Step 2: Instantly sign in with the configured password
     try {
-      await _supabase.auth.signInWithPassword(email: authEmail, password: password);
+      await _supabase.auth.signInWithPassword(
+        email: authEmail,
+        password: password,
+      );
       return;
     } catch (_) {
-      final profileEmail = registerData?['email']?.toString().trim().toLowerCase();
-      if (profileEmail != null && profileEmail.isNotEmpty && profileEmail != authEmail) {
+      final profileEmail = registerData?['email']
+          ?.toString()
+          .trim()
+          .toLowerCase();
+      if (profileEmail != null &&
+          profileEmail.isNotEmpty &&
+          profileEmail != authEmail) {
         try {
-          await _supabase.auth.signInWithPassword(email: profileEmail, password: password);
+          await _supabase.auth.signInWithPassword(
+            email: profileEmail,
+            password: password,
+          );
           return;
         } catch (_) {}
       }
@@ -164,7 +198,10 @@ class AuthRepository {
 
     // Final attempt: re-throw error if sign-in fails
     try {
-      await _supabase.auth.signInWithPassword(email: authEmail, password: password);
+      await _supabase.auth.signInWithPassword(
+        email: authEmail,
+        password: password,
+      );
     } on AuthException catch (e) {
       throw ApiException('AUTH_FAILED', e.message);
     } catch (e) {
@@ -172,8 +209,8 @@ class AuthRepository {
     }
   }
 
-  /// Google OAuth sign-in: native Google Sign-In with backend email verification.
-  /// Authenticates the student natively on Android without opening an external browser.
+  /// Google OAuth sign-in: native Google Sign-In with Google ID token retrieval,
+  /// Supabase ID token session authentication, and backend verification bridge fallback.
   Future<void> signInWithGoogle({String? webClientId}) async {
     if (_supabase == null) {
       throw const ApiException(
@@ -186,22 +223,92 @@ class AuthRepository {
         ? webClientId
         : AppConfig.fromEnvironment().googleWebClientId;
 
-    final googleSignIn = GoogleSignIn(
+    debugPrint(
+      '[Auth] Stage 1: Initiating Google Sign-In (configuredClientId: ${effectiveClientId.isNotEmpty})',
+    );
+
+    GoogleSignIn googleSignIn = GoogleSignIn(
       serverClientId: effectiveClientId.isNotEmpty ? effectiveClientId : null,
       scopes: ['email', 'profile'],
     );
 
-    // Always clear the previously selected account so the picker is shown every time.
-    try { await googleSignIn.signOut(); } catch (_) {}
+    GoogleSignInAccount? account;
+    try {
+      // Clear previously selected account so account picker opens fresh
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {}
+      account = await googleSignIn.signIn();
+    } catch (signInErr) {
+      debugPrint(
+        '[Auth] Warning: GoogleSignIn with serverClientId encountered error ($signInErr). Retrying with basic client fallback...',
+      );
+      googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {}
+      account = await googleSignIn.signIn();
+    }
 
-    final account = await googleSignIn.signIn();
     if (account == null) {
+      debugPrint('[Auth] Stage 1: User cancelled Google account selection.');
       throw const ApiException('CANCELLED', 'Google sign-in was cancelled.');
     }
 
     final email = account.email.trim().toLowerCase();
+    debugPrint(
+      '[Auth] Stage 1: Google account selected (${_maskEmail(email)}). Retrieving authentication tokens...',
+    );
 
-    // Authenticate student with backend using verified Google email
+    GoogleSignInAuthentication? googleAuth;
+    try {
+      googleAuth = await account.authentication;
+    } catch (authErr) {
+      debugPrint(
+        '[Auth] Warning: Could not retrieve Google authentication tokens: $authErr',
+      );
+    }
+
+    final idToken = googleAuth?.idToken;
+    final accessToken = googleAuth?.accessToken;
+    final hasIdToken = idToken != null && idToken.isNotEmpty;
+    debugPrint(
+      '[Auth] Stage 2: Token retrieval complete (idToken: $hasIdToken, accessToken: ${accessToken != null})',
+    );
+
+    // Flow 1 (Primary): Supabase Native Google ID Token authentication
+    if (hasIdToken) {
+      try {
+        debugPrint(
+          '[Auth] Stage 3A: Authenticating with Supabase via signInWithIdToken...',
+        );
+        final authResponse = await _supabase.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+          accessToken: accessToken,
+        );
+
+        if (authResponse.session != null) {
+          debugPrint(
+            '[Auth] Stage 4: Supabase native Google sign-in succeeded. Session established.',
+          );
+          return;
+        }
+      } on AuthException catch (supabaseErr) {
+        debugPrint(
+          '[Auth] Supabase signInWithIdToken returned AuthException: ${supabaseErr.message} (code: ${supabaseErr.statusCode}). Falling back to backend bridge...',
+        );
+      } catch (err) {
+        debugPrint(
+          '[Auth] Supabase signInWithIdToken unexpected error: $err. Falling back to backend bridge...',
+        );
+      }
+    }
+
+    // Flow 2 (Bridge Fallback): Authenticate student with backend using verified Google email
+    debugPrint(
+      '[Auth] Stage 3B: Authenticating student via backend bridge (/api/v1/auth/google-student-auth)...',
+    );
     try {
       final response = await _dio.post<Object?>(
         '/api/v1/auth/google-student-auth',
@@ -216,21 +323,48 @@ class AuthRepository {
         final token = data['authToken'].toString();
         final targetEmail = data['email']?.toString() ?? email;
 
+        debugPrint(
+          '[Auth] Stage 4: Establishing Supabase session via student password token...',
+        );
         await _supabase.auth.signInWithPassword(
           email: targetEmail,
           password: token,
         );
+        debugPrint(
+          '[Auth] Stage 4: Supabase session established successfully.',
+        );
         return;
       }
-      throw const ApiException('AUTH_FAILED', 'Failed to authenticate student with backend.');
+      throw const ApiException(
+        'AUTH_FAILED',
+        'Failed to authenticate student with backend.',
+      );
     } on DioException catch (e) {
-      throw exceptionFromDio(e);
+      final appEx = exceptionFromDio(e);
+      debugPrint(
+        '[Auth] Backend bridge failed: [${appEx.code}] ${appEx.message}',
+      );
+      throw appEx;
+    } on AuthException catch (e) {
+      debugPrint('[Auth] Supabase password sign-in failed: ${e.message}');
+      throw ApiException('AUTH_FAILED', e.message);
     }
+  }
+
+  static String _maskEmail(String email) {
+    final parts = email.split('@');
+    if (parts.length != 2) return '***';
+    final name = parts[0];
+    final domain = parts[1];
+    if (name.length <= 2) return '${name[0]}***@$domain';
+    return '${name.substring(0, 2)}***${name[name.length - 1]}@$domain';
   }
 
   Future<void> signOut() async {
     // Clear the cached Google account so the picker shows next time.
-    try { await GoogleSignIn().signOut(); } catch (_) {}
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
     if (_supabase != null) {
       try {
         await _supabase.auth.signOut();
@@ -251,10 +385,15 @@ class AuthRepository {
       final response = await _dio.get<Object?>('/api/v1/auth/me');
       final data = requireSuccessData(response.data);
       if (data is! Map || data['identity'] is! Map) {
-        throw const ApiException('MALFORMED_RESPONSE', 'The server returned an unexpected identity.');
+        throw const ApiException(
+          'MALFORMED_RESPONSE',
+          'The server returned an unexpected identity.',
+        );
       }
-      final identity = StudentIdentity.fromMap(Map<String, dynamic>.from(data['identity'] as Map));
-      
+      final identity = StudentIdentity.fromMap(
+        Map<String, dynamic>.from(data['identity'] as Map),
+      );
+
       // Cache verified identity locally for offline sessions
       try {
         final prefs = await SharedPreferences.getInstance();
@@ -270,7 +409,8 @@ class AuthRepository {
         if (raw != null && raw.isNotEmpty) {
           final decoded = jsonDecode(raw) as Map<String, dynamic>;
           final cachedIdentity = StudentIdentity.fromMap(decoded);
-          if (cachedIdentity.authUserId == session.user.id && cachedIdentity.isStudent) {
+          if (cachedIdentity.authUserId == session.user.id &&
+              cachedIdentity.isStudent) {
             return cachedIdentity;
           }
         }
@@ -281,7 +421,9 @@ class AuthRepository {
   }
 
   Future<void> sendAuthorizationRequest({String? prn}) async {
-    final payload = (prn != null && prn.trim().isNotEmpty) ? {'prn': prn.trim()} : null;
+    final payload = (prn != null && prn.trim().isNotEmpty)
+        ? {'prn': prn.trim()}
+        : null;
     try {
       final response = await _dio.post<Object?>(
         '/api/v1/authorization-requests/mine',
@@ -302,7 +444,9 @@ class AuthRepository {
         requireSuccessData(retry.data);
       } on DioException catch (retryErr) {
         final retryEx = exceptionFromDio(retryErr);
-        if (retryEx.code == 'CONFLICT') return; // already pending after retry — fine
+        if (retryEx.code == 'CONFLICT') {
+          return; // already pending after retry — fine
+        }
         throw retryEx;
       }
     }

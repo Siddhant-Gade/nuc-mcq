@@ -14,7 +14,37 @@ import '../../test_engine/cubit/test_engine_cubit.dart';
 import '../../test_engine/screens/test_screen.dart';
 import '../../test_engine/services/test_generator.dart';
 
-class DashboardTab extends StatelessWidget {
+/// Design tokens specifically tailored for the modern EdTech Student Dashboard.
+class _DashboardPalette {
+  _DashboardPalette._();
+
+  static const Color primaryBlue = Color(0xFF087FAE);
+  static const Color primaryBlueDark = Color(0xFF066287);
+  static const Color primaryBlueLight = Color(0xFFEBF6FA);
+  static const Color deepNavy = Color(0xFF172B4D);
+  static const Color pageBg = Color(0xFFF4F7FB);
+  static const Color cardWhite = Colors.white;
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color successGreen = Color(0xFF18845B);
+  static const Color successGreenSurface = Color(0xFFEDF8F2);
+  static const Color accentAmber = Color(0xFFE8A23A);
+  static const Color accentAmberSurface = Color(0xFFFEF7EB);
+  static const Color borderLight = Color(0xFFE2E8F0);
+
+  // Dark Mode Tokens
+  static const Color darkPageBg = Color(0xFF0B111D);
+  static const Color darkCard = Color(0xFF131C2E);
+  static const Color darkBorder = Color(0xFF1F2F4C);
+  static const Color darkTextPrimary = Color(0xFFF1F5F9);
+  static const Color darkTextSecondary = Color(0xFF94A3B8);
+}
+
+/// Redesigned Student Home Dashboard.
+///
+/// Built for MS-CIT learners with a clean, high-contrast EdTech UI,
+/// responsive layout (mobile, tablet, desktop), compact learning statistics,
+/// and clear primary learning actions.
+class DashboardTab extends StatefulWidget {
   const DashboardTab({
     super.key,
     required this.identity,
@@ -30,6 +60,13 @@ class DashboardTab extends StatelessWidget {
   final ResultsRepository resultsRepository;
   final ValueChanged<int> onNavigateToTab;
 
+  @override
+  State<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<DashboardTab> {
+  bool _isLaunchingExam = false;
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good morning';
@@ -38,15 +75,35 @@ class DashboardTab extends StatelessWidget {
   }
 
   String _getFirstName() {
-    final name = identity.name;
+    final name = widget.identity.name;
     if (name != null && name.trim().isNotEmpty) {
       return name.trim().split(' ').first;
     }
-    final email = identity.email;
+    final email = widget.identity.email;
     if (email == null || email.isEmpty) return 'Student';
     final fallback = email.split('@').first;
-    if (fallback.isEmpty || fallback.toLowerCase().startsWith('prn')) return 'Student';
+    if (fallback.isEmpty || fallback.toLowerCase().startsWith('prn')) {
+      return 'Student';
+    }
     return fallback[0].toUpperCase() + fallback.substring(1);
+  }
+
+  Future<void> _handleStartMockExam() async {
+    if (_isLaunchingExam) return;
+    setState(() => _isLaunchingExam = true);
+
+    try {
+      final test = widget.testGenerator.generateExamTest();
+      final cubit = TestEngineCubit(
+        test: test,
+        resultsRepository: widget.resultsRepository,
+      );
+      await Navigator.push(context, TestScreen.route(cubit));
+    } finally {
+      if (mounted) {
+        setState(() => _isLaunchingExam = false);
+      }
+    }
   }
 
   @override
@@ -54,44 +111,387 @@ class DashboardTab extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final firstName = _getFirstName();
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await context.read<ResultsCubit>().loadResults();
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Scaffold(
+      backgroundColor: isDark
+          ? _DashboardPalette.darkPageBg
+          : _DashboardPalette.pageBg,
+      body: RefreshIndicator(
+        color: _DashboardPalette.primaryBlue,
+        onRefresh: () async {
+          await context.read<ResultsCubit>().loadResults();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1040),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.lg,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Section A: Greeting & Welcome
+                    _buildGreetingHeader(context, firstName, isDark),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Section B: Latest Institute Announcement (omitted if empty)
+                    _buildAnnouncementSection(isDark),
+
+                    // Section C: Learning Progress & Gamification
+                    _buildProgressSection(isDark),
+                    const SizedBox(height: AppSpacing.xl),
+
+                    // Section D: Primary Learning Actions
+                    _buildPrimaryActionsSection(context, isDark),
+                    const SizedBox(height: AppSpacing.xl),
+
+                    // Section E: Quick Shortcuts
+                    _buildQuickShortcutsSection(context, isDark),
+                    const SizedBox(height: AppSpacing.xxl),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // SECTION A: Greeting & Welcome
+  // ==========================================
+  Widget _buildGreetingHeader(
+    BuildContext context,
+    String firstName,
+    bool isDark,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 600;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Greeting & Timeline Header
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            Text(
+              '${_getGreeting()}${firstName.isNotEmpty ? ', $firstName' : ''}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: isCompact ? 22 : 26,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
+                color: isDark
+                    ? _DashboardPalette.darkTextPrimary
+                    : _DashboardPalette.deepNavy,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Continue your MS-CIT preparation and build your skills.',
+              style: GoogleFonts.inter(
+                fontSize: isCompact ? 13 : 14,
+                fontWeight: FontWeight.w400,
+                color: isDark
+                    ? _DashboardPalette.darkTextSecondary
+                    : _DashboardPalette.textSecondary,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ==========================================
+  // SECTION B: Latest Institute Announcement
+  // ==========================================
+  Widget _buildAnnouncementSection(bool isDark) {
+    return BlocBuilder<BroadcastCubit, BroadcastState>(
+      builder: (context, state) {
+        if (state is! BroadcastsLoaded || state.broadcasts.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final latest = state.broadcasts.first;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: ScalePress(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BroadcastsScreen()),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF261D12)
+                    : const Color(0xFFFFF9ED),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF5A3E16)
+                      : const Color(0xFFFCE1B6),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF3D2A14)
+                          : const Color(0xFFFDE8C4),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.campaign_rounded,
+                      color: Color(0xFFD97706),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '${_getGreeting()}${firstName.isNotEmpty ? ', $firstName' : ''}',
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.3,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD97706),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'INSTITUTE NOTICE',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                latest.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? _DashboardPalette.darkTextPrimary
+                                      : const Color(0xFF1E293B),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
-                          'MS-CIT Practice & Mock Exams',
+                          latest.message,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                            color: isDark
+                                ? _DashboardPalette.darkTextSecondary
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: isDark
+                        ? const Color(0xFFFBBF24)
+                        : const Color(0xFFD97706),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ==========================================
+  // SECTION C: Learning Progress & Gamification
+  // ==========================================
+  Widget _buildProgressSection(bool isDark) {
+    return BlocBuilder<ResultsCubit, ResultsState>(
+      builder: (context, state) {
+        if (state is ResultsLoading) {
+          return _buildLoadingProgressPlaceholder(isDark);
+        }
+
+        final stats = state is ResultsLoaded ? state.stats : null;
+        final totalTests = stats?.totalTests ?? 0;
+        final level = stats?.level ?? 1;
+        final levelTitle = stats?.levelTitle ?? 'Novice Learner';
+        final totalXp = stats?.totalXp ?? 0;
+        final currentStreak = stats?.currentStreak ?? 0;
+        final currentLevelXp = stats?.currentLevelXp ?? 0;
+        final levelProgress = stats?.levelProgress ?? 0.0;
+        final passRate = stats?.passRate ?? 0.0;
+        final unlockedBadges = stats?.unlockedBadges ?? const <String>[];
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: isDark
+                ? _DashboardPalette.darkCard
+                : _DashboardPalette.cardWhite,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? _DashboardPalette.darkBorder
+                  : _DashboardPalette.borderLight,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.25 : 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Top Level & XP Header Row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Level Badge
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withOpacity(0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        'L$level',
+                        style: GoogleFonts.inter(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Level Title & XP Chip
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                levelTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? _DashboardPalette.darkTextPrimary
+                                      : _DashboardPalette.deepNavy,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF38290E)
+                                    : _DashboardPalette.accentAmberSurface,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF6B4810)
+                                      : const Color(0xFFF6D8A6),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.bolt_rounded,
+                                    size: 13,
+                                    color: Color(0xFFD97706),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    '$totalXp XP',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? const Color(0xFFFBBF24)
+                                          : const Color(0xFFB45309),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          totalTests > 0
+                              ? 'Level $level • Next unlock at ${stats?.xpForNextLevel ?? 150} XP'
+                              : 'Take your first test to earn XP and level up!',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: isDark
+                                ? _DashboardPalette.darkTextSecondary
+                                : _DashboardPalette.textSecondary,
                           ),
                         ),
                       ],
@@ -99,657 +499,736 @@ class DashboardTab extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 14),
 
-            // Broadcast Announcements Banner
-            BlocBuilder<BroadcastCubit, BroadcastState>(
-              builder: (context, state) {
-                if (state is! BroadcastsLoaded || state.broadcasts.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                final latest = state.broadcasts.first;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: ScalePress(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const BroadcastsScreen()),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF3C1816) : const Color(0xFFFEF7E0),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: isDark ? AppColors.googleRed.withOpacity(0.4) : const Color(0xFFF9AB00),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: isDark ? AppColors.googleRedSurface : const Color(0xFFFEEFC3),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.campaign_rounded,
-                              color: Color(0xFFE37400),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        latest.title,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark ? AppColors.darkTextPrimary : const Color(0xFF202124),
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE37400),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        'NOTICE',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  latest.message,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: isDark ? AppColors.darkTextSecondary : const Color(0xFF5F6368),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(
-                            Icons.chevron_right_rounded,
-                            size: 18,
-                            color: Color(0xFFE37400),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-
-            // Gamified Level, XP & Streak Dashboard (Amazon Prime Video Arena)
-            BlocBuilder<ResultsCubit, ResultsState>(
-              builder: (context, state) {
-                final stats = state is ResultsLoaded ? state.stats : null;
-                final totalTests = stats?.totalTests ?? 0;
-                final level = stats?.level ?? 1;
-                final levelTitle = stats?.levelTitle ?? 'Novice Learner';
-                final totalXp = stats?.totalXp ?? 0;
-                final currentStreak = stats?.currentStreak ?? 0;
-                final currentLevelXp = stats?.currentLevelXp ?? 0;
-                final levelProgress = stats?.levelProgress ?? 0.0;
-                final unlockedBadges = stats?.unlockedBadges ?? const <String>[];
-
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF131C2E) : Colors.white,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: isDark ? AppColors.primeBlue.withOpacity(0.35) : const Color(0xFFCBD5E1),
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark
-                            ? AppColors.primeBlue.withOpacity(0.12)
-                            : Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+              // Level Progress Bar
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Top Row: Level Avatar, Title, XP & Streak Pill
-                      Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFFFA724), Color(0xFFE65100)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'L$level',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      levelTitle,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: isDark ? AppColors.primeGold.withOpacity(0.18) : const Color(0xFFFEF3C7),
-                                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                                        border: Border.all(
-                                          color: isDark ? AppColors.primeGold.withOpacity(0.5) : const Color(0xFFF59E0B),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        '$totalXp XP',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: isDark ? const Color(0xFFFFC043) : const Color(0xFFB45309),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  totalTests > 0
-                                      ? '$totalTests tests completed • ${(stats?.passRate ?? 0).toStringAsFixed(0)}% accuracy'
-                                      : 'Complete tests to climb rank & unlock badges!',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Streak Counter Box
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: currentStreak > 0
-                                  ? (isDark ? const Color(0xFF2E2008) : const Color(0xFFFEF3C7))
-                                  : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              border: Border.all(
-                                color: currentStreak > 0
-                                    ? const Color(0xFFF59E0B)
-                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.local_fire_department_rounded,
-                                  size: 16,
-                                  color: currentStreak > 0
-                                      ? const Color(0xFFD97706)
-                                      : (isDark ? const Color(0xFF64748B) : const Color(0xFF475569)),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '$currentStreak day${currentStreak == 1 ? '' : 's'}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: currentStreak > 0
-                                        ? (isDark ? const Color(0xFFFFD54F) : const Color(0xFFB45309))
-                                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Level Progress Bar
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Level $level Progress',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
-                                ),
-                              ),
-                              Text(
-                                '$currentLevelXp / 150 XP',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? AppColors.primeBlueLight : AppColors.primeBlueDark,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: LinearProgressIndicator(
-                              value: levelProgress,
-                              minHeight: 8,
-                              backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-                              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primeBlue),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Unlocked Achievement Badges Carousel
-                      if (unlockedBadges.isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: unlockedBadges.map((badge) {
-                              return Container(
-                                margin: const EdgeInsets.only(right: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                                decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFEF3C7),
-                                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                                  border: Border.all(
-                                    color: const Color(0xFFF59E0B),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  badge,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? const Color(0xFFFFD54F) : const Color(0xFF92400E),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
+                      Text(
+                        'Level $level Progress',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? _DashboardPalette.darkTextSecondary
+                              : const Color(0xFF475569),
                         ),
-                      ],
+                      ),
+                      Text(
+                        '$currentLevelXp / 150 XP',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? const Color(0xFF38BDF8)
+                              : _DashboardPalette.primaryBlue,
+                        ),
+                      ),
                     ],
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg),
-
-            // Big Action Card 1: Practice by Topic (Amazon Prime Video UI Card)
-            ScalePress(
-              onTap: () => onNavigateToTab(1),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.primeCard : Colors.white,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: isDark ? AppColors.primeBorder : const Color(0xFFCBD5E1),
-                    width: 1.2,
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: levelProgress,
+                      minHeight: 7,
+                      backgroundColor: isDark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFEEF2F6),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        _DashboardPalette.primaryBlue,
+                      ),
+                    ),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Compact Statistics Cards
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatItem(
+                          label: 'Tests Taken',
+                          value: '$totalTests',
+                          icon: Icons.assignment_turned_in_outlined,
+                          iconColor: _DashboardPalette.primaryBlue,
+                          bgColor: isDark
+                              ? const Color(0xFF0C243B)
+                              : _DashboardPalette.primaryBlueLight,
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildStatItem(
+                          label: 'Pass Rate',
+                          value: totalTests > 0
+                              ? '${passRate.toStringAsFixed(0)}%'
+                              : '—',
+                          icon: Icons.verified_outlined,
+                          iconColor: _DashboardPalette.successGreen,
+                          bgColor: isDark
+                              ? const Color(0xFF0B2E1E)
+                              : _DashboardPalette.successGreenSurface,
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildStatItem(
+                          label: 'Day Streak',
+                          value: '$currentStreak',
+                          icon: Icons.local_fire_department_rounded,
+                          iconColor: currentStreak > 0
+                              ? _DashboardPalette.accentAmber
+                              : const Color(0xFF94A3B8),
+                          bgColor: currentStreak > 0
+                              ? (isDark
+                                    ? const Color(0xFF38290E)
+                                    : _DashboardPalette.accentAmberSurface)
+                              : (isDark
+                                    ? const Color(0xFF1E293B)
+                                    : const Color(0xFFF1F5F9)),
+                          isDark: isDark,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              // Earned Achievement Badges (wrapping layout to prevent horizontal overflow)
+              if (unlockedBadges.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF1F5F9),
                 ),
-                child: Row(
+                const SizedBox(height: 12),
+                Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.primeBlue.withOpacity(0.14),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.primeBlue.withOpacity(0.3), width: 1),
-                      ),
-                      child: const Icon(
-                        Icons.auto_stories_rounded,
-                        color: AppColors.primeBlue,
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Practice Questions',
-                                style: GoogleFonts.inter(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primeGold.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: AppColors.primeGold.withOpacity(0.5), width: 0.8),
-                                ),
-                                child: Text(
-                                  'X-RAY HINTS',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primeGold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Practice with Prime X-Ray hints & instant 50:50 lifelines',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 15,
-                      color: AppColors.primeBlue,
+                      Icons.military_tech_rounded,
+                      size: 16,
+                      color: Color(0xFFD97706),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Earned Achievements',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? _DashboardPalette.darkTextSecondary
+                            : const Color(0xFF475569),
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: unlockedBadges.map((badge) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFFEF9EE),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF475569)
+                              : const Color(0xFFFCD34D),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        badge,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? const Color(0xFFFBBF24)
+                              : const Color(0xFF92400E),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-            // Big Action Card 2: Take Full Exam (Amazon Prime Cyan Hero Banner)
-            ScalePress(
-              onTap: () {
-                final test = testGenerator.generateExamTest();
-                final cubit = TestEngineCubit(
-                  test: test,
-                  resultsRepository: resultsRepository,
-                );
-                Navigator.push(context, TestScreen.route(cubit));
-              },
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+  Widget _buildLoadingProgressPlaceholder(bool isDark) {
+    return Container(
+      height: 180,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark
+            ? _DashboardPalette.darkCard
+            : _DashboardPalette.cardWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? _DashboardPalette.darkBorder
+              : _DashboardPalette.borderLight,
+        ),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            color: _DashboardPalette.primaryBlue,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF18243C) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF273854) : const Color(0xFFEEF2F6),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF00A8E1), Color(0xFF0073BB)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00A8E1).withOpacity(0.35),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: const Icon(
-                        Icons.timer_rounded,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Take Mock Exam',
-                            style: GoogleFonts.inter(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '25 Questions • 30 Mins • Offline Ready',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: Colors.white.withOpacity(0.9),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Start',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF0073BB),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.play_arrow_rounded,
-                            size: 18,
-                            color: Color(0xFF0073BB),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                child: Icon(icon, size: 14, color: iconColor),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? _DashboardPalette.darkTextSecondary
+                        : _DashboardPalette.textSecondary,
+                  ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? _DashboardPalette.darkTextPrimary
+                  : _DashboardPalette.deepNavy,
             ),
-            const SizedBox(height: AppSpacing.lg),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Quick Shortcuts Row (Question Bank & Notes)
+  // ==========================================
+  // SECTION D: Primary Learning Actions
+  // ==========================================
+  Widget _buildPrimaryActionsSection(BuildContext context, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Start Learning',
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: isDark
+                ? _DashboardPalette.darkTextPrimary
+                : _DashboardPalette.deepNavy,
+          ),
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 640;
+
+            final practiceCard = _buildPracticeQuestionsCard(context, isDark);
+            final mockExamCard = _buildMockExamCard(context, isDark);
+
+            if (isWide) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: practiceCard),
+                  const SizedBox(width: 16),
+                  Expanded(child: mockExamCard),
+                ],
+              );
+            }
+
+            return Column(
+              children: [
+                practiceCard,
+                const SizedBox(height: 12),
+                mockExamCard,
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPracticeQuestionsCard(BuildContext context, bool isDark) {
+    return ScalePress(
+      onTap: () => widget.onNavigateToTab(1),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: isDark
+              ? _DashboardPalette.darkCard
+              : _DashboardPalette.cardWhite,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? _DashboardPalette.darkBorder
+                : _DashboardPalette.borderLight,
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               children: [
-                Expanded(
-                  child: ScalePress(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const AllQuestionsScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                            ),
-                            child: const Icon(
-                              Icons.bookmark_added_rounded,
-                              color: Color(0xFF7C3AED),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Question Bank',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                                Text(
-                                  '969 Questions',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF0C243B)
+                        : _DashboardPalette.primaryBlueLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.auto_stories_rounded,
+                    color: _DashboardPalette.primaryBlue,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: ScalePress(
-                    onTap: () => onNavigateToTab(2),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                            ),
-                            child: const Icon(
-                              Icons.menu_book_rounded,
-                              color: Color(0xFFD97706),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Study Notes',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                                Text(
-                                  'Shortcuts & Tips',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'PRACTICE',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF475569),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: 14),
+            Text(
+              'Practice Questions',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? _DashboardPalette.darkTextPrimary
+                    : _DashboardPalette.deepNavy,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Practice topics and improve your knowledge with instant feedback.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: isDark
+                    ? _DashboardPalette.darkTextSecondary
+                    : _DashboardPalette.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Text(
+                  'Start Practice',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _DashboardPalette.primaryBlue,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                  color: _DashboardPalette.primaryBlue,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMockExamCard(BuildContext context, bool isDark) {
+    return ScalePress(
+      onTap: _isLaunchingExam ? null : _handleStartMockExam,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              _DashboardPalette.primaryBlue,
+              _DashboardPalette.primaryBlueDark,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: _DashboardPalette.primaryBlue.withOpacity(0.35),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.timer_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'EXAM MODE',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Take Mock Exam',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '25 Questions • 30 Mins • Real MS-CIT GCC-TBC Pattern',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: Colors.white.withOpacity(0.9),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isLaunchingExam)
+                      const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _DashboardPalette.primaryBlue,
+                        ),
+                      )
+                    else ...[
+                      Text(
+                        'Start Mock Exam',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _DashboardPalette.primaryBlueDark,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.play_arrow_rounded,
+                        size: 18,
+                        color: _DashboardPalette.primaryBlueDark,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // SECTION E: Quick Shortcuts
+  // ==========================================
+  Widget _buildQuickShortcutsSection(BuildContext context, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Shortcuts',
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: isDark
+                ? _DashboardPalette.darkTextPrimary
+                : _DashboardPalette.deepNavy,
+          ),
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 500;
+            final count = widget.questionBank.totalCount;
+
+            final qbCard = _buildShortcutCard(
+              context: context,
+              title: 'Question Bank',
+              subtitle: count > 0
+                  ? '$count Practice Questions'
+                  : 'Browse practice questions',
+              icon: Icons.quiz_outlined,
+              iconColor: const Color(0xFF7C3AED),
+              iconBgColor: isDark
+                  ? const Color(0xFF2E1065).withOpacity(0.5)
+                  : const Color(0xFFF3E8FF),
+              isDark: isDark,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AllQuestionsScreen()),
+                );
+              },
+            );
+
+            final notesCard = _buildShortcutCard(
+              context: context,
+              title: 'Study Notes',
+              subtitle: 'Shortcuts, Guides & Tips',
+              icon: Icons.menu_book_rounded,
+              iconColor: const Color(0xFFD97706),
+              iconBgColor: isDark
+                  ? const Color(0xFF38290E)
+                  : const Color(0xFFFEF3C7),
+              isDark: isDark,
+              onTap: () => widget.onNavigateToTab(2),
+            );
+
+            if (isWide) {
+              return Row(
+                children: [
+                  Expanded(child: qbCard),
+                  const SizedBox(width: 14),
+                  Expanded(child: notesCard),
+                ],
+              );
+            }
+
+            return Column(
+              children: [qbCard, const SizedBox(height: 10), notesCard],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShortcutCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return ScalePress(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark
+              ? _DashboardPalette.darkCard
+              : _DashboardPalette.cardWhite,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark
+                ? _DashboardPalette.darkBorder
+                : _DashboardPalette.borderLight,
+            width: 1.1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? _DashboardPalette.darkTextPrimary
+                          : _DashboardPalette.deepNavy,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: isDark
+                          ? _DashboardPalette.darkTextSecondary
+                          : _DashboardPalette.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+            ),
           ],
         ),
       ),
