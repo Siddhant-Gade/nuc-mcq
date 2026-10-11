@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/api/api_exception.dart';
@@ -83,7 +84,9 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthUnauthenticated(error: error.message));
       return;
     } catch (_) {
-      emit(const AuthUnauthenticated(error: 'Sign-in failed. Please try again.'));
+      emit(
+        const AuthUnauthenticated(error: 'Sign-in failed. Please try again.'),
+      );
       return;
     }
     await _verifySession();
@@ -97,7 +100,11 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthUnauthenticated(error: error.message));
       return;
     } catch (_) {
-      emit(const AuthUnauthenticated(error: 'Registration failed. Please try again.'));
+      emit(
+        const AuthUnauthenticated(
+          error: 'Registration failed. Please try again.',
+        ),
+      );
       return;
     }
     await _verifySession();
@@ -113,13 +120,16 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
       // STUDENT_NOT_ENROLLED: email not in the system at all → no session possible.
+      // ACCESS_NOT_ACTIVE: admission is pending or inactive.
       // Show unauthorized screen with only the email extracted from the error message.
-      if (error.code == 'STUDENT_NOT_ENROLLED') {
+      if (error.code == 'STUDENT_NOT_ENROLLED' || error.code == 'ACCESS_NOT_ACTIVE') {
         String? extractedEmail;
         final words = error.message.split(' ');
         for (final w in words) {
           if (w.contains('@')) {
-            extractedEmail = w.replaceAll(RegExp(r'[^a-zA-Z0-9@._+-]'), '').replaceAll(RegExp(r'[.,;:]+$'), '');
+            extractedEmail = w
+                .replaceAll(RegExp(r'[^a-zA-Z0-9@._+-]'), '')
+                .replaceAll(RegExp(r'[.,;:]+$'), '');
             break;
           }
         }
@@ -131,10 +141,20 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthUnauthorized(pendingIdentity));
         return;
       }
+      debugPrint(
+        '[AuthCubit] Google sign-in rejected: [${error.code}] ${error.message}',
+      );
       emit(AuthUnauthenticated(error: error.message));
       return;
-    } catch (_) {
-      emit(const AuthUnauthenticated(error: 'Google sign-in failed. Please try again.'));
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[AuthCubit] Google sign-in unexpected error: $e\n$stackTrace',
+      );
+      emit(
+        const AuthUnauthenticated(
+          error: 'Google sign-in failed. Please try again.',
+        ),
+      );
       return;
     }
     await _verifySession();
@@ -187,7 +207,8 @@ class AuthCubit extends Cubit<AuthState> {
         } else {
           emit(
             const AuthUnauthenticated(
-              error: 'Could not verify your session. Check the backend URL and try again.',
+              error:
+                  'Could not verify your session. Check the backend URL and try again.',
             ),
           );
         }
@@ -212,7 +233,8 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (_) {
       emit(
         const AuthUnauthenticated(
-          error: 'Could not verify your session. Check the backend URL and try again.',
+          error:
+              'Could not verify your session. Check the backend URL and try again.',
         ),
       );
     }
