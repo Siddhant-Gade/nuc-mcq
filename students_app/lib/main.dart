@@ -72,7 +72,7 @@ Future<void> main() async {
   final broadcastRepository = BroadcastRepository(dio);
   final bookmarksRepository = BookmarksRepository();
   final testGenerator = TestGenerator(questionBankRepository);
-  final resultsRepository = ResultsRepository();
+  final resultsRepository = ResultsRepository(dio: dio);
   final studyMaterialsRepository = StudyMaterialsRepository(dio: dio);
   final syncRepository = SyncRepository(resultsRepository: resultsRepository, dio: dio);
 

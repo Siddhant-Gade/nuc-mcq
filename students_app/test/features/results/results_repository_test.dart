@@ -65,5 +65,93 @@ void main() {
       expect(pending.length, 1);
       expect(pending.first.clientEventId, 'EVT_002');
     });
+
+    test('mergeCloudResults deduplicates and preserves pending offline tests', () async {
+      final localPending = TestResultModel(
+        clientEventId: 'LOCAL_PENDING',
+        testId: 'PRAC_001',
+        testMode: TestMode.practice,
+        questionBankVersion: '1.0.0',
+        blueprintVersion: '1.0.0',
+        totalQuestions: 10,
+        correctCount: 8,
+        wrongCount: 2,
+        score: 8,
+        wrongQuestionIds: const ['Q1', 'Q2'],
+        completedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+        timeTakenSeconds: 300,
+        syncStatus: SyncStatus.pending,
+      );
+
+      await repository.saveResult(localPending);
+
+      final cloudItem1 = TestResultModel(
+        clientEventId: 'CLOUD_001',
+        testId: 'EXAM_001',
+        testMode: TestMode.exam,
+        questionBankVersion: '1.0.0',
+        blueprintVersion: '1.0.0',
+        totalQuestions: 25,
+        correctCount: 22,
+        wrongCount: 3,
+        score: 22,
+        wrongQuestionIds: const ['Q3', 'Q4', 'Q5'],
+        completedAt: DateTime.now().subtract(const Duration(days: 1)),
+        timeTakenSeconds: 850,
+        syncStatus: SyncStatus.synced,
+      );
+
+      final cloudItem2 = TestResultModel(
+        clientEventId: 'LOCAL_PENDING', // Server has processed this clientEventId
+        testId: 'PRAC_001',
+        testMode: TestMode.practice,
+        questionBankVersion: '1.0.0',
+        blueprintVersion: '1.0.0',
+        totalQuestions: 10,
+        correctCount: 8,
+        wrongCount: 2,
+        score: 8,
+        wrongQuestionIds: const ['Q1', 'Q2'],
+        completedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+        timeTakenSeconds: 300,
+        syncStatus: SyncStatus.synced,
+      );
+
+      await repository.mergeCloudResults([cloudItem1, cloudItem2]);
+
+      final all = await repository.getAllResults();
+      expect(all.length, 2);
+      expect(all.any((r) => r.clientEventId == 'CLOUD_001'), isTrue);
+      expect(all.firstWhere((r) => r.clientEventId == 'LOCAL_PENDING').syncStatus, SyncStatus.synced);
+      
+      final pending = await repository.getPendingResults();
+      expect(pending.isEmpty, isTrue);
+    });
+
+    test('clear wipes in-memory and local durable cache', () async {
+      final result = TestResultModel(
+        clientEventId: 'EVT_TO_CLEAR',
+        testId: 'EXAM_CLEAR',
+        testMode: TestMode.exam,
+        questionBankVersion: '1.0.0',
+        blueprintVersion: '1.0.0',
+        totalQuestions: 25,
+        correctCount: 20,
+        wrongCount: 5,
+        score: 20,
+        wrongQuestionIds: const [],
+        completedAt: DateTime.now(),
+        timeTakenSeconds: 600,
+        syncStatus: SyncStatus.synced,
+      );
+
+      await repository.saveResult(result);
+      expect((await repository.getAllResults()).length, 1);
+
+      await repository.clear();
+      expect((await repository.getAllResults()).isEmpty, isTrue);
+      final stats = await repository.getStudentStats();
+      expect(stats.totalTests, 0);
+    });
   });
 }
