@@ -42,19 +42,51 @@ class ResultsCubit extends Cubit<ResultsState> {
   final ResultsRepository _repository;
   String _currentFilter = 'ALL';
 
-  Future<void> loadResults() async {
-    emit(const ResultsLoading());
+  Future<void> loadResults({bool refreshFromCloud = true}) async {
+    // 1. Immediately emit cached results if available for zero-latency UI
+    List<TestResultModel> cachedResults = [];
+    StudentStats? cachedStats;
     try {
-      final results = await _repository.getAllResults();
-      final stats = await _repository.getStudentStats();
-      emit(ResultsLoaded(
-        results: results,
-        stats: stats,
-        filterMode: _currentFilter,
-      ));
-    } catch (e) {
-      emit(ResultsError('Failed to load results: $e'));
+      cachedResults = await _repository.getAllResults();
+      cachedStats = await _repository.getStudentStats();
+      if (cachedResults.isNotEmpty) {
+        emit(ResultsLoaded(
+          results: cachedResults,
+          stats: cachedStats,
+          filterMode: _currentFilter,
+        ));
+      } else {
+        emit(const ResultsLoading());
+      }
+    } catch (_) {
+      emit(const ResultsLoading());
     }
+
+    // 2. Fetch fresh / historical results from backend
+    if (refreshFromCloud) {
+      try {
+        final updatedResults = await _repository.syncFromBackend();
+        final updatedStats = await _repository.getStudentStats();
+        emit(ResultsLoaded(
+          results: updatedResults,
+          stats: updatedStats,
+          filterMode: _currentFilter,
+        ));
+      } catch (e) {
+        // Graceful fallback to local cache
+        final currentResults = await _repository.getAllResults();
+        final currentStats = await _repository.getStudentStats();
+        emit(ResultsLoaded(
+          results: currentResults,
+          stats: currentStats,
+          filterMode: _currentFilter,
+        ));
+      }
+    }
+  }
+
+  void reset() {
+    emit(const ResultsInitial());
   }
 
   void setFilter(String filter) {

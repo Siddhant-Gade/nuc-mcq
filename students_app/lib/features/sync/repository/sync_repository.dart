@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../results/models/test_result_model.dart';
 import '../../results/repository/results_repository.dart';
 
@@ -86,14 +87,54 @@ class SyncRepository {
           failed++;
         }
       } on DioException catch (dioErr) {
-        // If the backend sync route is not mounted yet in development or network is offline,
-        // we mark as pending/failed gracefully without crashing.
-        await _resultsRepository.updateSyncStatus(
-          result.clientEventId,
-          SyncStatus.pending,
-          errorMessage: dioErr.message ?? 'Network offline',
-        );
-        failed++;
+        // Handle terminal HTTP failures distinctly — never mask 404/401/403
+        // as an offline/network issue and never retry them blindly.
+        final statusCode = dioErr.response?.statusCode;
+        if (statusCode == 404) {
+          // History/sync route not deployed on the connected server.
+          await _resultsRepository.updateSyncStatus(
+            result.clientEventId,
+            SyncStatus.failed,
+            errorMessage:
+                'Sync endpoint returned 404 on the connected server; deploy the updated backend, then retry.',
+          );
+          debugPrint(
+            '[SyncRepository] Upload ${result.clientEventId} failed: HTTP 404 — '
+            'route missing on the connected server, not a network outage.',
+          );
+          failed++;
+        } else if (statusCode == 401 || statusCode == 403) {
+          await _resultsRepository.updateSyncStatus(
+            result.clientEventId,
+            SyncStatus.failed,
+            errorMessage:
+                'Authorization failed (HTTP $statusCode); sign in again with an ACTIVE student account.',
+          );
+          debugPrint(
+            '[SyncRepository] Upload ${result.clientEventId} failed: HTTP $statusCode — '
+            'auth/authorization issue, not a network outage.',
+          );
+          failed++;
+        } else if (dioErr.type == DioExceptionType.connectionError ||
+            dioErr.type == DioExceptionType.connectionTimeout ||
+            dioErr.type == DioExceptionType.sendTimeout ||
+            dioErr.type == DioExceptionType.receiveTimeout) {
+          // Genuinely offline: keep pending so a later retry can succeed.
+          await _resultsRepository.updateSyncStatus(
+            result.clientEventId,
+            SyncStatus.pending,
+            errorMessage: dioErr.message ?? 'Network offline',
+          );
+          failed++;
+        } else {
+          await _resultsRepository.updateSyncStatus(
+            result.clientEventId,
+            SyncStatus.failed,
+            errorMessage:
+                'Server responded with status $statusCode: ${dioErr.message ?? 'request failed'}',
+          );
+          failed++;
+        }
       } catch (err) {
         await _resultsRepository.updateSyncStatus(
           result.clientEventId,
@@ -102,6 +143,12 @@ class SyncRepository {
         );
         failed++;
       }
+    }
+
+    if (synced > 0) {
+      try {
+        await _resultsRepository.syncFromBackend();
+      } catch (_) {}
     }
 
     return SyncResultSummary(

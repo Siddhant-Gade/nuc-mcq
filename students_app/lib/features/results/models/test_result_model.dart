@@ -76,28 +76,32 @@ class TestResultModel {
   }
 
   factory TestResultModel.fromMap(Map<String, dynamic> map) {
+    final modeStr = (map['mode'] ?? map['test_mode'] ?? 'PRACTICE').toString().toUpperCase();
+    final completedAtRaw = map['completedAt'] ?? map['completed_at'];
     return TestResultModel(
-      clientEventId: map['client_event_id'] as String,
-      testId: map['test_id'] as String,
-      testMode: map['test_mode'] == 'EXAM' ? TestMode.exam : TestMode.practice,
-      questionBankVersion: map['question_bank_version'] as String? ?? '1.0.0',
-      blueprintVersion: map['blueprint_version'] as String? ?? '1.0.0',
-      totalQuestions: map['total_questions'] as int,
-      correctCount: map['correct_count'] as int,
-      wrongCount: map['wrong_count'] as int,
-      score: map['score'] as int,
-      wrongQuestionIds: List<String>.from(map['wrong_question_ids'] as List? ?? []),
-      completedAt: DateTime.parse(map['completed_at'] as String),
-      timeTakenSeconds: map['time_taken_seconds'] as int? ?? 0,
-      studentAnswers: (map['student_answers'] as Map<String, dynamic>?)?.map(
-            (k, v) => MapEntry(k, v as int),
+      clientEventId: (map['clientEventId'] ?? map['client_event_id'] ?? map['id'] ?? '').toString(),
+      testId: (map['testId'] ?? map['test_id'] ?? '').toString(),
+      testMode: modeStr == 'EXAM' ? TestMode.exam : TestMode.practice,
+      questionBankVersion: (map['questionBankVersion'] ?? map['question_bank_version'] ?? '1.0.0').toString(),
+      blueprintVersion: (map['blueprintVersion'] ?? map['blueprint_version'] ?? '1.0.0').toString(),
+      totalQuestions: (map['totalQuestions'] ?? map['total_questions'] as num?)?.toInt() ?? 0,
+      correctCount: (map['correctCount'] ?? map['correct_count'] as num?)?.toInt() ?? 0,
+      wrongCount: (map['wrongCount'] ?? map['wrong_count'] as num?)?.toInt() ?? 0,
+      score: (map['score'] as num?)?.toInt() ?? 0,
+      wrongQuestionIds: List<String>.from((map['wrongQuestionIds'] ?? map['wrong_question_ids'] as List?) ?? []),
+      completedAt: completedAtRaw != null
+          ? DateTime.parse(completedAtRaw.toString())
+          : DateTime.now(),
+      timeTakenSeconds: (map['timeTakenSeconds'] ?? map['time_taken_seconds'] as num?)?.toInt() ?? 0,
+      studentAnswers: ((map['studentAnswers'] ?? map['student_answers']) as Map<String, dynamic>?)?.map(
+            (k, v) => MapEntry(k, (v as num).toInt()),
           ) ??
           {},
       syncStatus: SyncStatus.values.firstWhere(
-        (s) => s.code == map['sync_status'],
-        orElse: () => SyncStatus.pending,
+        (s) => s.code == (map['syncStatus'] ?? map['sync_status']),
+        orElse: () => SyncStatus.synced,
       ),
-      errorMessage: map['error_message'] as String?,
+      errorMessage: (map['errorMessage'] ?? map['error_message']) as String?,
     );
   }
 

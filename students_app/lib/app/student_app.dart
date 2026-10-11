@@ -157,29 +157,39 @@ class _AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, state) {
-        final Widget child = switch (state) {
-          AuthUnknown() || AuthChecking() => const _SplashScreen(key: ValueKey('splash')),
-          AuthSigningIn() || AuthUnauthenticated() => const LoginScreen(key: ValueKey('login')),
-          AuthUnauthorized(:final identity) => UnauthorizedScreen(key: const ValueKey('unauthorized'), identity: identity),
-          AuthAuthenticated(:final identity) => HomeShell(
-              key: const ValueKey('home'),
-              identity: identity,
-              broadcastRepository: broadcastRepository,
-            ),
-        };
-
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 350),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          child: child,
-        );
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          context.read<ResultsRepository>().clear();
+          context.read<ResultsCubit>().reset();
+        } else if (state is AuthAuthenticated) {
+          context.read<ResultsCubit>().loadResults(refreshFromCloud: true);
+        }
       },
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
+          final Widget child = switch (state) {
+            AuthUnknown() || AuthChecking() => const _SplashScreen(key: ValueKey('splash')),
+            AuthSigningIn() || AuthUnauthenticated() => const LoginScreen(key: ValueKey('login')),
+            AuthUnauthorized(:final identity) => UnauthorizedScreen(key: const ValueKey('unauthorized'), identity: identity),
+            AuthAuthenticated(:final identity) => HomeShell(
+                key: const ValueKey('home'),
+                identity: identity,
+                broadcastRepository: broadcastRepository,
+              ),
+          };
+
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 350),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            child: child,
+          );
+        },
+      ),
     );
   }
 }
