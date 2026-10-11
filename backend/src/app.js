@@ -206,7 +206,8 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
     app.use('/api/v1/dashboard', createDashboardRouter(dashboardService, tokenVerifier));
     const requireActiveStudent = (authUserId, email) => studentIdentityService.requireActive(authUserId, email);
     app.use('/api/v1/student', createStudentAccessRouter(studentIdentityService, tokenVerifier));
-    app.use('/api/v1/results', createResultRouter(resultService, tokenVerifier, (authUserId) => studentIdentityService.requireActive(authUserId)));
+    app.use('/api/v1/results', createResultRouter(resultService, tokenVerifier, requireActiveStudent));
+    app.use('/api/v1/student/results', createResultRouter(resultService, tokenVerifier, requireActiveStudent));
     app.use('/api/v1/broadcasts', createBroadcastAdminRouter(broadcastService, tokenVerifier));
     app.use('/api/v1/student/broadcasts', createStudentBroadcastRouter(broadcastService, tokenVerifier, requireActiveStudent));
     app.use('/api/v1/notifications', createNotificationRouter(notificationService, tokenVerifier));

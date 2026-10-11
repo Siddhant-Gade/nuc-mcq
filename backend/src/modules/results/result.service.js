@@ -46,4 +46,7 @@ export class ResultService {
             return { result: existing, alreadySynced: true };
         }
     }
+    async getHistory(studentProfileId) {
+        return this.repository.findByStudentProfileId(studentProfileId);
+    }
 }
