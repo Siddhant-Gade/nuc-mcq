@@ -10,5 +10,7 @@ export const createResultRouter = (service, tokenVerifier, requireActiveStudent)
     const authenticate = createAuthenticationMiddleware(tokenVerifier);
     const authorizeStudent = requireRoles('STUDENT');
     router.post('/sync', authenticate, authorizeStudent, validateRequest({ body: createResultSchema }), controller.sync);
+    router.get('/my', authenticate, authorizeStudent, controller.listMyResults);
+    router.get('/', authenticate, authorizeStudent, controller.listMyResults);
     return router;
 };

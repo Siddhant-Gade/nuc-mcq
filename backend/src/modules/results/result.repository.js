@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { testResults } from '../../database/schema/index.js';
 export class DrizzleResultRepository {
     database;
@@ -12,6 +12,14 @@ export class DrizzleResultRepository {
             .where(eq(testResults.clientEventId, clientEventId))
             .limit(1);
         return record;
+    }
+    async findByStudentProfileId(studentProfileId) {
+        const records = await this.database
+            .select()
+            .from(testResults)
+            .where(eq(testResults.studentProfileId, studentProfileId))
+            .orderBy(desc(testResults.completedAt));
+        return records;
     }
     async insert(record) {
         // A unique violation (23505) on client_event_id is deliberately allowed to

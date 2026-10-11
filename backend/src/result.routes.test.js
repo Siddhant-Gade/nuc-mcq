@@ -19,6 +19,9 @@ class FakeResultRepository {
     async findByClientEventId(clientEventId) {
         return this.rows.find((row) => row.clientEventId === clientEventId);
     }
+    async findByStudentProfileId(studentProfileId) {
+        return this.rows.filter((row) => row.studentProfileId === studentProfileId);
+    }
     async insert(record) {
         if (this.rows.some((row) => row.clientEventId === record.clientEventId)) {
             throw uniqueViolationError();
@@ -230,5 +233,61 @@ test('inactive student access cannot submit results', async () => {
     }
     finally {
         await fixture.close();
+    }
+});
+test('GET /api/v1/results returns the authenticated student history', async () => {
+    const repository = new FakeResultRepository();
+    const fixture = await startFixture({ repository });
+    try {
+        await postSync(fixture.url, validPayload);
+        const res = await fetch(`${fixture.url}/api/v1/results`, {
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal(res.status, 200);
+        const body = await res.json();
+        assert.equal(body.success, true);
+        assert.equal(body.data.length, 1);
+        assert.equal(body.data[0].clientEventId, validPayload.clientEventId);
+        assert.equal(body.data[0].studentProfileId, PROFILE_ID);
+
+        // Also test /api/v1/results/my
+        const myRes = await fetch(`${fixture.url}/api/v1/results/my`, {
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal(myRes.status, 200);
+        const myBody = await myRes.json();
+        assert.equal(myBody.data.length, 1);
+
+        // Also test /api/v1/student/results
+        const studentAliasRes = await fetch(`${fixture.url}/api/v1/student/results`, {
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal(studentAliasRes.status, 200);
+        const studentAliasBody = await studentAliasRes.json();
+        assert.equal(studentAliasBody.data.length, 1);
+    }
+    finally {
+        await fixture.close();
+    }
+});
+test('GET /api/v1/results requires authentication and rejects non-students', async () => {
+    const fixture = await startFixture();
+    try {
+        const unauth = await fetch(`${fixture.url}/api/v1/results`);
+        assert.equal(unauth.status, 401);
+    }
+    finally {
+        await fixture.close();
+    }
+
+    const adminFixture = await startFixture({ roles: ['ADMIN'] });
+    try {
+        const forbidden = await fetch(`${adminFixture.url}/api/v1/results`, {
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal(forbidden.status, 403);
+    }
+    finally {
+        await adminFixture.close();
     }
 });
