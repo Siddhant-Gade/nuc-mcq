@@ -172,60 +172,10 @@ class MainActivity : FlutterActivity() {
                         // 1. ShortcutBadger for OEM launchers
                         me.leolin.shortcutbadger.ShortcutBadger.applyCount(applicationContext, count)
 
-                        // 2. Xiaomi / MIUI notification badge mechanism
+                        // 2. Clear any legacy/stale notification 1001
                         try {
                             val notificationManager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
-                            if (notificationManager != null) {
-                                val channelId = "nuc_priority_channel"
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                    val channel = android.app.NotificationChannel(
-                                        channelId,
-                                        "NUC Student Notifications",
-                                        android.app.NotificationManager.IMPORTANCE_HIGH
-                                    ).apply {
-                                        setShowBadge(true)
-                                    }
-                                    notificationManager.createNotificationChannel(channel)
-                                }
-
-                                val notificationBuilder = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                    android.app.Notification.Builder(applicationContext, channelId)
-                                } else {
-                                    @Suppress("DEPRECATION")
-                                    android.app.Notification.Builder(applicationContext)
-                                }
-                                val largeBitmap = android.graphics.BitmapFactory.decodeResource(resources, R.drawable.ic_nuc_large_icon)
-
-                                val notification = notificationBuilder
-                                    .setContentTitle("NucMCQ • New Unique Computers")
-                                    .setContentText("You have $count unread notifications")
-                                    .setSmallIcon(R.drawable.ic_nuc_notification)
-                                    .setLargeIcon(largeBitmap)
-                                    .setColor(android.graphics.Color.parseColor("#1A73E8"))
-                                    .setStyle(
-                                        android.app.Notification.BigTextStyle()
-                                            .bigText("You have $count unread notifications. Tap to open and view the latest announcements.")
-                                            .setBigContentTitle("NucMCQ • New Unique Computers")
-                                            .setSummaryText("Announcements")
-                                    )
-                                    .setNumber(count)
-                                    .setAutoCancel(true)
-                                    .build()
-
-                                // Reflect on Xiaomi extraNotification
-                                try {
-                                    val extraNotificationField = notification.javaClass.getDeclaredField("extraNotification")
-                                    val extraNotification = extraNotificationField.get(notification)
-                                    val setMessageCountMethod = extraNotification.javaClass.getDeclaredMethod("setMessageCount", Int::class.javaPrimitiveType)
-                                    setMessageCountMethod.invoke(extraNotification, count)
-                                } catch (_: Throwable) {}
-
-                                if (count > 0) {
-                                    notificationManager.notify(1001, notification)
-                                } else {
-                                    notificationManager.cancel(1001)
-                                }
-                            }
+                            notificationManager?.cancel(1001)
                         } catch (_: Throwable) {}
 
                         result.success(null)

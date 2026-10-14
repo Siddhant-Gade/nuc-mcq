@@ -32,7 +32,7 @@ android {
 
     defaultConfig {
         applicationId = "com.mscit.student_app"
-        minSdk = flutter.minSdkVersion
+        minSdk = 30
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -64,6 +64,21 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
+            )
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/DEPENDENCIES",
+                "/META-INF/LICENSE",
+                "/META-INF/LICENSE.txt",
+                "/META-INF/license.txt",
+                "/META-INF/NOTICE",
+                "/META-INF/NOTICE.txt",
+                "/META-INF/notice.txt"
             )
         }
     }
