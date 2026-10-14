@@ -10,6 +10,7 @@ import '../../question_bank/repository/question_bank_repository.dart';
 import '../../question_bank/screens/all_questions_screen.dart';
 import '../../results/cubit/results_cubit.dart';
 import '../../results/repository/results_repository.dart';
+import '../../results/screens/performance_summary_screen.dart';
 import '../../test_engine/cubit/test_engine_cubit.dart';
 import '../../test_engine/screens/test_screen.dart';
 import '../../test_engine/services/test_generator.dart';
@@ -359,44 +360,48 @@ class _DashboardTabState extends State<DashboardTab> {
         final passRate = stats?.passRate ?? 0.0;
         final unlockedBadges = stats?.unlockedBadges ?? const <String>[];
 
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: isDark
-                ? _DashboardPalette.darkCard
-                : _DashboardPalette.cardWhite,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
+        return ScalePress(
+          onTap: () {
+            Navigator.of(context).push(PerformanceSummaryScreen.route());
+          },
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
               color: isDark
-                  ? _DashboardPalette.darkBorder
-                  : _DashboardPalette.borderLight,
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.25 : 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                  ? _DashboardPalette.darkCard
+                  : _DashboardPalette.cardWhite,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark
+                    ? _DashboardPalette.darkBorder
+                    : _DashboardPalette.borderLight,
+                width: 1,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top Level & XP Header Row
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Level Badge
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.25 : 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top Level & XP Header Row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Level Badge
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -497,6 +502,36 @@ class _DashboardTabState extends State<DashboardTab> {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E3A8A).withOpacity(0.4) : const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF2563EB).withOpacity(0.5) : const Color(0xFFBFDBFE),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Analytics',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 14,
+                          color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -563,6 +598,7 @@ class _DashboardTabState extends State<DashboardTab> {
                               ? const Color(0xFF0C243B)
                               : _DashboardPalette.primaryBlueLight,
                           isDark: isDark,
+                          onTap: () => Navigator.of(context).push(PerformanceSummaryScreen.route()),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -578,6 +614,7 @@ class _DashboardTabState extends State<DashboardTab> {
                               ? const Color(0xFF0B2E1E)
                               : _DashboardPalette.successGreenSurface,
                           isDark: isDark,
+                          onTap: () => Navigator.of(context).push(PerformanceSummaryScreen.route()),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -597,6 +634,7 @@ class _DashboardTabState extends State<DashboardTab> {
                                     ? const Color(0xFF1E293B)
                                     : const Color(0xFFF1F5F9)),
                           isDark: isDark,
+                          onTap: () => Navigator.of(context).push(PerformanceSummaryScreen.route()),
                         ),
                       ),
                     ],
@@ -669,11 +707,57 @@ class _DashboardTabState extends State<DashboardTab> {
                   }).toList(),
                 ),
               ],
+
+              // Interactive CTA banner to detailed analytics
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E3A8A).withOpacity(0.35)
+                      : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF2563EB).withOpacity(0.5)
+                        : const Color(0xFFBFDBFE),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.insights_rounded,
+                          size: 16,
+                          color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF1D4ED8),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'View Detailed Performance Analytics',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 12,
+                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 
   Widget _buildLoadingProgressPlaceholder(bool isDark) {
@@ -711,61 +795,65 @@ class _DashboardTabState extends State<DashboardTab> {
     required Color iconColor,
     required Color bgColor,
     required bool isDark,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF18243C) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? const Color(0xFF273854) : const Color(0xFFEEF2F6),
-          width: 1,
+    return ScalePress(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF18243C) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? const Color(0xFF273854) : const Color(0xFFEEF2F6),
+            width: 1,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(icon, size: 14, color: iconColor),
                 ),
-                child: Icon(icon, size: 14, color: iconColor),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? _DashboardPalette.darkTextSecondary
-                        : _DashboardPalette.textSecondary,
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: isDark
+                          ? _DashboardPalette.darkTextSecondary
+                          : _DashboardPalette.textSecondary,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: isDark
-                  ? _DashboardPalette.darkTextPrimary
-                  : _DashboardPalette.deepNavy,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? _DashboardPalette.darkTextPrimary
+                    : _DashboardPalette.deepNavy,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

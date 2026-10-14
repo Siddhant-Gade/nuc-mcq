@@ -48,5 +48,12 @@ void main() {
 
     expect(find.text('New Unique Computers'), findsOneWidget);
     expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Request Student Access'), findsOneWidget);
+
+    await tester.tap(find.text('Request Student Access'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('MS-CIT Institute Authorization Portal'), findsOneWidget);
+    expect(find.text('Submit Request'), findsOneWidget);
   });
 }

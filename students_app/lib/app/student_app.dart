@@ -24,6 +24,8 @@ import '../features/sync/cubit/sync_cubit.dart';
 import '../features/sync/repository/sync_repository.dart';
 import '../features/test_engine/services/test_generator.dart';
 
+import '../features/broadcasts/screens/broadcasts_screen.dart';
+
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Root Application widget providing theming, localization and routing.
@@ -54,6 +56,8 @@ class StudentApp extends StatefulWidget {
 }
 
 class _StudentAppState extends State<StudentApp> {
+  Map<String, dynamic>? _pendingNotificationPayload;
+
   @override
   void initState() {
     super.initState();
@@ -65,31 +69,72 @@ class _StudentAppState extends State<StudentApp> {
       _handleNotificationPayload(data);
     };
 
-    // Check if app was opened from terminated state
+    // Check if app was opened from terminated state (cold start)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final initialMessage = await PushNotificationService.instance.getInitialMessage();
-      if (initialMessage != null && initialMessage.data.isNotEmpty) {
-        _handleNotificationPayload(initialMessage.data);
+      final initialPayload = await PushNotificationService.instance.getInitialPayload();
+      if (initialPayload != null && initialPayload.isNotEmpty) {
+        _handleNotificationPayload(initialPayload);
       }
     });
   }
 
+  void _onAuthenticated() {
+    if (_pendingNotificationPayload != null) {
+      final payload = _pendingNotificationPayload!;
+      _pendingNotificationPayload = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleNotificationPayload(payload);
+      });
+    }
+  }
+
   Future<void> _handleNotificationPayload(Map<String, dynamic> data) async {
-    final type = data['type']?.toString();
+    final type = data['type']?.toString().toUpperCase();
+    final actionRoute = data['actionRoute']?.toString();
+    final destination = data['destination']?.toString();
+    final broadcastId = data['broadcastId']?.toString();
     final materialId = data['materialId']?.toString();
 
-    debugPrint('[StudentApp] Handling notification payload: type=$type, materialId=$materialId');
+    debugPrint(
+      '[StudentApp] Handling notification payload: type=$type, actionRoute=$actionRoute, broadcastId=$broadcastId, materialId=$materialId',
+    );
+
+    if (broadcastId != null && broadcastId.isNotEmpty) {
+      PushNotificationService.instance.dismissNotification(broadcastId);
+    }
 
     if (type == 'AUTHORIZATION') {
-      // Refresh auth status
       widget.authCubit.refreshStatus();
-    } else if (type == 'STUDY_MATERIAL' && materialId != null && materialId.isNotEmpty) {
-      // Fetch material and display the reader modal sheet
+      return;
+    }
+
+    final isAuthenticated = widget.authCubit.state is AuthAuthenticated;
+    if (!isAuthenticated) {
+      _pendingNotificationPayload = data;
+      return;
+    }
+
+    final navContext = rootNavigatorKey.currentContext;
+    if (navContext == null || !navContext.mounted) {
+      _pendingNotificationPayload = data;
+      return;
+    }
+
+    if (type == 'BROADCAST' ||
+        type == 'ANNOUNCEMENT' ||
+        actionRoute == '/broadcasts' ||
+        destination == 'broadcasts' ||
+        (broadcastId != null && broadcastId.isNotEmpty)) {
+      Navigator.of(navContext).push(
+        MaterialPageRoute(builder: (_) => const BroadcastsScreen()),
+      );
+    } else if ((type == 'STUDY_MATERIAL' || materialId != null) &&
+        materialId != null &&
+        materialId.isNotEmpty) {
       try {
         final materials = await widget.studyMaterialsRepository.getAllMaterials();
         final match = materials.where((m) => m.id == materialId).firstOrNull;
-        final navContext = rootNavigatorKey.currentContext;
-        if (match != null && navContext != null && navContext.mounted) {
+        if (match != null && navContext.mounted) {
           StudyMaterialsScreen.openReaderModal(navContext, match, widget.studyMaterialsRepository);
         }
       } catch (e) {
@@ -139,7 +184,10 @@ class _StudentAppState extends State<StudentApp> {
                     GlobalWidgetsLocalizations.delegate,
                     GlobalCupertinoLocalizations.delegate,
                   ],
-                  home: _AuthGate(broadcastRepository: widget.broadcastRepository),
+                  home: _AuthGate(
+                    broadcastRepository: widget.broadcastRepository,
+                    onAuthenticated: _onAuthenticated,
+                  ),
                 );
               },
             );
@@ -151,9 +199,13 @@ class _StudentAppState extends State<StudentApp> {
 }
 
 class _AuthGate extends StatelessWidget {
-  const _AuthGate({required this.broadcastRepository});
+  const _AuthGate({
+    required this.broadcastRepository,
+    this.onAuthenticated,
+  });
 
   final BroadcastRepository broadcastRepository;
+  final VoidCallback? onAuthenticated;
 
   @override
   Widget build(BuildContext context) {
@@ -162,8 +214,11 @@ class _AuthGate extends StatelessWidget {
         if (state is AuthUnauthenticated) {
           context.read<ResultsRepository>().clear();
           context.read<ResultsCubit>().reset();
+          context.read<BroadcastCubit>().reset();
         } else if (state is AuthAuthenticated) {
           context.read<ResultsCubit>().loadResults(refreshFromCloud: true);
+          context.read<BroadcastCubit>().load();
+          onAuthenticated?.call();
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(
