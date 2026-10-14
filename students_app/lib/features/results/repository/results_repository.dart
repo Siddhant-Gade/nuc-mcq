@@ -100,9 +100,18 @@ class ResultsRepository {
     // 1. Keep every local record as the base (no data loss on empty cloud).
     merged.addAll(localMap);
 
-    // 2. Overlay cloud results (ensuring status is synced).
+    // 2. Overlay cloud results (ensuring status is synced and preserving detailed local answers/duration).
     for (final cr in cloudResults) {
-      final syncedModel = cr.copyWith(syncStatus: SyncStatus.synced);
+      final existingLocal = localMap[cr.clientEventId];
+      final syncedModel = cr.copyWith(
+        syncStatus: SyncStatus.synced,
+        studentAnswers: (existingLocal != null && existingLocal.studentAnswers.isNotEmpty)
+            ? existingLocal.studentAnswers
+            : cr.studentAnswers,
+        timeTakenSeconds: (existingLocal != null && existingLocal.timeTakenSeconds > 0)
+            ? existingLocal.timeTakenSeconds
+            : cr.timeTakenSeconds,
+      );
       merged[cr.clientEventId] = syncedModel;
     }
 
@@ -117,8 +126,7 @@ class ResultsRepository {
   /// Syncs down historical test results from the backend API and merges them with local cache.
   ///
   /// Error handling strategy:
-  ///  • 404 → the history endpoint is not yet deployed on this server; skip silently and
-  ///    fall back to the local cache.  Do NOT treat this as a network outage.
+  ///  • 404 → try fallback student route `/api/v1/student/results`, otherwise degrade gracefully.
   ///  • 401/403 → auth/authorization issue; log clearly without printing tokens.
   ///  • Connection error / timeout → server unreachable; log as offline.
   ///  • Other HTTP errors → log the status code for diagnosis.
@@ -128,7 +136,18 @@ class ResultsRepository {
     }
 
     try {
-      final response = await _dio.get<Object?>('/api/v1/results');
+      Response<Object?> response;
+      try {
+        response = await _dio.get<Object?>('/api/v1/results');
+      } on DioException catch (primaryErr) {
+        if (primaryErr.response?.statusCode == 404) {
+          // Attempt fallback route on servers mounting results under /api/v1/student/results
+          response = await _dio.get<Object?>('/api/v1/student/results');
+        } else {
+          rethrow;
+        }
+      }
+
       final data = requireSuccessData(response.data);
       if (data is List) {
         final cloudResults = <TestResultModel>[];
@@ -145,13 +164,12 @@ class ResultsRepository {
     } on DioException catch (dioErr) {
       final statusCode = dioErr.response?.statusCode;
       if (statusCode == 404) {
-        // The GET /api/v1/results endpoint is not yet deployed on this backend server.
-        // The POST /api/v1/results/sync endpoint (for uploading) may still work.
+        // Neither /api/v1/results nor /api/v1/student/results is deployed on this backend server yet.
         // Degrade gracefully: show only local results until the server is updated.
         debugPrint(
           '[ResultsRepository] History endpoint GET /api/v1/results returned 404 — '
           'route not yet deployed on the connected server. '
-          'Falling back to local cache. Deploy the updated backend to enable cloud history sync.',
+          'Falling back to local cache.',
         );
       } else if (statusCode == 401) {
         debugPrint(

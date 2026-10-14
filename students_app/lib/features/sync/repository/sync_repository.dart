@@ -67,10 +67,23 @@ class SyncRepository {
           'completedAt': result.completedAt.toUtc().toIso8601String(),
         };
 
-        final response = await _dio.post(
-          '/api/v1/results/sync',
-          data: payload,
-        );
+        Response<dynamic> response;
+        try {
+          response = await _dio.post(
+            '/api/v1/results/sync',
+            data: payload,
+          );
+        } on DioException catch (postErr) {
+          if (postErr.response?.statusCode == 404) {
+            // Attempt fallback route on servers mounting student result routes under /api/v1/student/results/sync
+            response = await _dio.post(
+              '/api/v1/student/results/sync',
+              data: payload,
+            );
+          } else {
+            rethrow;
+          }
+        }
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           await _resultsRepository.updateSyncStatus(

@@ -9,10 +9,7 @@ import '../../../core/widgets/frosted_card.dart';
 import '../../../core/widgets/royal_button.dart';
 import '../../../core/widgets/scale_press.dart';
 import '../../bookmarks/cubit/bookmarks_cubit.dart';
-import '../../results/repository/results_repository.dart';
-import '../../test_engine/cubit/test_engine_cubit.dart';
-import '../../test_engine/screens/test_screen.dart';
-import '../../test_engine/services/test_generator.dart';
+import '../../study_materials/models/study_material_model.dart';
 import '../models/question_model.dart';
 import '../repository/question_bank_repository.dart';
 
@@ -28,24 +25,12 @@ class AllQuestionsScreen extends StatefulWidget {
   State<AllQuestionsScreen> createState() => _AllQuestionsScreenState();
 }
 
-class _AllQuestionsScreenState extends State<AllQuestionsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
   QuestionTopic? _selectedTopic;
   String _searchQuery = '';
   bool _isSyncing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: widget.initialTabIndex,
-    );
-  }
 
   Future<void> _syncQuestions() async {
     setState(() => _isSyncing = true);
@@ -85,7 +70,6 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen>
   @override
   void dispose() {
     _debounceTimer?.cancel();
-    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -125,26 +109,6 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen>
       }
       return true;
     }).toList();
-  }
-
-  void _startPracticeFromBookmarks(
-    BuildContext context,
-    List<QuestionModel> bookmarkedQuestions,
-  ) {
-    if (bookmarkedQuestions.isEmpty) return;
-
-    final testGenerator = context.read<TestGenerator>();
-    final resultsRepo = context.read<ResultsRepository>();
-    final test = testGenerator.generateCustomPracticeTest(
-      questions: bookmarkedQuestions,
-    );
-
-    final cubit = TestEngineCubit(
-      test: test,
-      resultsRepository: resultsRepo,
-    );
-
-    Navigator.push(context, TestScreen.route(cubit));
   }
 
   @override
@@ -220,9 +184,15 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen>
       );
     }
 
+    final filteredQuestions = _filterQuestions(allQuestions, langCode);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.text('all_questions_title')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         actions: [
           IconButton(
             icon: _isSyncing
@@ -232,52 +202,6 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen>
             onPressed: _isSyncing ? null : _syncQuestions,
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
-          labelColor: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
-          unselectedLabelColor:
-              isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-          labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
-          tabs: [
-            Tab(text: '${l10n.text('tab_all_questions')} (${allQuestions.length})'),
-            BlocBuilder<BookmarksCubit, BookmarksState>(
-              builder: (context, state) {
-                return Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(l10n.text('tab_bookmarks')),
-                      if (state.count > 0) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkBlueSurface
-                                : AppColors.googleBlueSurface,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '${state.count}',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppColors.darkBluePrimary
-                                  : AppColors.googleBlue,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
       ),
       body: Column(
         children: [
@@ -426,154 +350,42 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen>
             ),
           ),
 
-          // Tab Views
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
+          // Question Count Subheader
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: isDark ? AppColors.darkSurfaceVariant.withOpacity(0.5) : const Color(0xFFF8FAFC),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Tab 1: All Questions
-                _buildQuestionList(
-                  context,
-                  _filterQuestions(allQuestions, langCode),
-                  langCode,
-                  isBookmarksTab: false,
+                Text(
+                  filteredQuestions.length == allQuestions.length
+                      ? '${allQuestions.length} Questions'
+                      : '${filteredQuestions.length} of ${allQuestions.length} Questions',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkTextSecondary : const Color(0xFF64748B),
+                  ),
                 ),
-
-                // Tab 2: Bookmarks
-                BlocBuilder<BookmarksCubit, BookmarksState>(
-                  builder: (context, bookmarksState) {
-                    final bookmarkedList = allQuestions
-                        .where((q) => bookmarksState.isBookmarked(q.id))
-                        .toList();
-
-                    final filteredBookmarks =
-                        _filterQuestions(bookmarkedList, langCode);
-
-                    if (bookmarkedList.isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(32.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? AppColors.darkSurfaceVariant
-                                      : AppColors.googleYellowSurface,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.bookmark_border_rounded,
-                                  size: 48,
-                                  color: AppColors.googleYellow,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                l10n.text('no_bookmarks_title'),
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? AppColors.darkTextPrimary
-                                      : AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                l10n.text('no_bookmarks_desc'),
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: isDark
-                                      ? AppColors.darkTextSecondary
-                                      : AppColors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              RoyalButton(
-                                text: l10n.text('tab_all_questions'),
-                                icon: Icons.explore_outlined,
-                                isSecondary: true,
-                                onPressed: () => _tabController.animateTo(0),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      children: [
-                        // Sticky Action Bar for Bookmarks Practice
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
-                          color: isDark
-                              ? AppColors.darkBlueSurface
-                              : AppColors.googleBlueSurface,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${bookmarkedList.length} ${l10n.text('tab_bookmarks')}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark
-                                      ? AppColors.darkBluePrimary
-                                      : AppColors.googleBlue,
-                                ),
-                              ),
-                              ScalePress(
-                                onTap: () => _startPracticeFromBookmarks(
-                                    context, bookmarkedList),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? AppColors.darkBluePrimary
-                                        : AppColors.googleBlue,
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.sm),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.play_arrow_rounded,
-                                          size: 16, color: Colors.white),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        l10n.text('btn_practice_bookmarks'),
-                                        style: GoogleFonts.inter(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: _buildQuestionList(
-                            context,
-                            filteredBookmarks,
-                            langCode,
-                            isBookmarksTab: true,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+                if (_selectedTopic != null)
+                  Text(
+                    _selectedTopic!.localizedLabel(langCode),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                    ),
+                  ),
               ],
+            ),
+          ),
+
+          // Question List
+          Expanded(
+            child: _buildQuestionList(
+              context,
+              filteredQuestions,
+              langCode,
             ),
           ),
         ],
@@ -584,9 +396,8 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen>
   Widget _buildQuestionList(
     BuildContext context,
     List<QuestionModel> questions,
-    String langCode, {
-    required bool isBookmarksTab,
-  }) {
+    String langCode,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (questions.isEmpty) {
@@ -626,7 +437,7 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen>
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: RepaintBoundary(
-            child: _InteractiveQuestionExplorerCard(
+            child: InteractiveQuestionExplorerCard(
               question: q,
               langCode: langCode,
               index: index + 1,
@@ -638,8 +449,9 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen>
   }
 }
 
-class _InteractiveQuestionExplorerCard extends StatefulWidget {
-  const _InteractiveQuestionExplorerCard({
+class InteractiveQuestionExplorerCard extends StatefulWidget {
+  const InteractiveQuestionExplorerCard({
+    super.key,
     required this.question,
     required this.langCode,
     required this.index,
@@ -650,12 +462,12 @@ class _InteractiveQuestionExplorerCard extends StatefulWidget {
   final int index;
 
   @override
-  State<_InteractiveQuestionExplorerCard> createState() =>
+  State<InteractiveQuestionExplorerCard> createState() =>
       _InteractiveQuestionExplorerCardState();
 }
 
 class _InteractiveQuestionExplorerCardState
-    extends State<_InteractiveQuestionExplorerCard> {
+    extends State<InteractiveQuestionExplorerCard> {
   bool _isAnswerRevealed = false;
   int? _selectedPracticeOption;
 
@@ -971,6 +783,260 @@ class _InteractiveQuestionExplorerCardState
           ),
         );
       },
+    );
+  }
+}
+
+class BookmarkedMaterialCard extends StatelessWidget {
+  const BookmarkedMaterialCard({
+    super.key,
+    required this.material,
+    required this.langCode,
+    required this.l10n,
+    required this.onTap,
+    required this.onToggleBookmark,
+  });
+
+  final StudyMaterialModel material;
+  final String langCode;
+  final AppLocalizations l10n;
+  final VoidCallback onTap;
+  final VoidCallback onToggleBookmark;
+
+  bool _isPpt() {
+    final fn = (material.fileName ?? '').toLowerCase();
+    return material.type == StudyDocType.ppt || fn.endsWith('.ppt') || fn.endsWith('.pptx');
+  }
+
+  bool _isVideo() {
+    return material.kind == 'VIDEO' || (material.embedUrl != null && material.embedUrl!.trim().isNotEmpty);
+  }
+
+  bool _isPdf() {
+    final fn = (material.fileName ?? '').toLowerCase();
+    return material.type == StudyDocType.pdf || fn.endsWith('.pdf');
+  }
+
+  String _getPillTag() {
+    if (_isPpt()) return 'PPT';
+    if (_isPdf()) return 'PDF Document';
+    if (_isVideo()) return 'Video Lecture';
+    if (material.type == StudyDocType.doc) return 'Word Document';
+    return 'Study Guide';
+  }
+
+  Widget _buildLeadingIcon(bool isDark) {
+    if (_isPpt()) {
+      return Container(
+        width: 46,
+        height: 48,
+        decoration: BoxDecoration(
+          color: const Color(0xFF991B1B),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: const BoxDecoration(
+                  color: Color(0x40FFFFFF),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(7),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            Text(
+              'PPT',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_isPdf()) {
+      return Container(
+        width: 46,
+        height: 48,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1976D2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: const BoxDecoration(
+                  color: Color(0x40FFFFFF),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(7),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.picture_as_pdf_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_isVideo()) {
+      return Container(
+        width: 46,
+        height: 48,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFE55D5D), Color(0xFFAC3B82)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.play_arrow_rounded,
+              color: Color(0xFFAC3B82),
+              size: 16,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: 46,
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E40AF),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.article_rounded,
+        color: Colors.white,
+        size: 22,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
+    final cardBorder = isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
+    final titleColor = isDark ? AppColors.darkTextPrimary : const Color(0xFF0F172A);
+    final metaColor = isDark ? AppColors.darkTextSecondary : const Color(0xFF64748B);
+    final tagBg = isDark ? AppColors.darkSurfaceVariant : const Color(0xFFE8EEF5);
+    final tagTextColor = isDark ? AppColors.darkTextSecondary : const Color(0xFF475569);
+
+    final tagText = _getPillTag();
+    final category = material.localizedCategory(langCode);
+    final catName = category.isNotEmpty ? category : 'General';
+    final metaText = '$catName • ${material.readTimeMinutes} min read/watch';
+
+    return ScalePress(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.035),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLeadingIcon(isDark),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                    margin: const EdgeInsets.only(bottom: 5),
+                    decoration: BoxDecoration(
+                      color: tagBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      tagText,
+                      style: GoogleFonts.inter(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: tagTextColor,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    material.localizedTitle(langCode),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: titleColor,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    metaText,
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: metaColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.bookmark_rounded,
+                color: Color(0xFF0284C7),
+                size: 22,
+              ),
+              tooltip: 'Remove bookmark',
+              onPressed: onToggleBookmark,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
