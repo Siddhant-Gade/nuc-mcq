@@ -52,5 +52,30 @@ void main() {
       expect(cubit.state.isBookmarked('Q_PP_001'), isTrue);
       expect(cubit.state.count, 3);
     });
+
+    test('BookmarksCubit handles study material bookmarks and separates counts', () async {
+      final cubit = BookmarksCubit(repository);
+      await cubit.loadBookmarks();
+
+      // Initial state: 2 questions, 0 materials
+      expect(cubit.state.questionCount, 2);
+      expect(cubit.state.materialCount, 0);
+
+      // Bookmark a material using toggleMaterialBookmark
+      final added = await cubit.toggleMaterialBookmark('doc_123');
+      expect(added, isTrue);
+      expect(cubit.state.isMaterialBookmarked('doc_123'), isTrue);
+      expect(cubit.state.isMaterialBookmarked('mat_doc_123'), isTrue);
+      expect(cubit.state.isQuestionBookmarked('doc_123'), isFalse);
+      expect(cubit.state.materialCount, 1);
+      expect(cubit.state.questionCount, 2);
+
+      // Unbookmark the material
+      final removed = await cubit.toggleMaterialBookmark('doc_123');
+      expect(removed, isFalse);
+      expect(cubit.state.isMaterialBookmarked('doc_123'), isFalse);
+      expect(cubit.state.materialCount, 0);
+      expect(cubit.state.questionCount, 2);
+    });
   });
 }

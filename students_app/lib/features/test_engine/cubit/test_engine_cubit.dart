@@ -156,7 +156,7 @@ class TestEngineCubit extends Cubit<TestEngineState> {
     });
   }
 
-  /// Select an option and compute gamified streak / XP in Practice mode
+  /// Select an option. Gamified streak / XP are ONLY computed in Practice mode to preserve Exam integrity.
   void selectOption(int optionIndex) {
     if (state.status != TestExecutionStatus.inProgress) return;
     final currentQ = state.currentQuestion;
@@ -164,14 +164,14 @@ class TestEngineCubit extends Cubit<TestEngineState> {
     final previousSelection = updated[currentQ.id];
     updated[currentQ.id] = optionIndex;
 
-    // Gamification feedback
+    // Gamification feedback: Strictly only compute & reveal for Practice Mode
+    final isPractice = state.test.mode == TestMode.practice;
     final isCorrect = optionIndex == currentQ.correctOptionIndex;
-    int nextStreak = state.currentStreak;
-    int nextMaxStreak = state.maxStreak;
+    int nextStreak = isPractice ? state.currentStreak : 0;
+    int nextMaxStreak = isPractice ? state.maxStreak : 0;
     int addedXp = 0;
 
-    // In practice mode or first answer on question
-    if (previousSelection == null) {
+    if (isPractice && previousSelection == null) {
       if (isCorrect) {
         nextStreak += 1;
         nextMaxStreak = max(nextMaxStreak, nextStreak);
@@ -186,13 +186,14 @@ class TestEngineCubit extends Cubit<TestEngineState> {
       answers: updated,
       currentStreak: nextStreak,
       maxStreak: nextMaxStreak,
-      earnedXp: state.earnedXp + addedXp,
-      lastAnswerWasCorrect: isCorrect,
+      earnedXp: isPractice ? state.earnedXp + addedXp : 0,
+      lastAnswerWasCorrect: isPractice ? isCorrect : null,
     ));
   }
 
-  /// 50:50 Lifeline - Eliminates 2 incorrect options
+  /// 50:50 Lifeline - Eliminates 2 incorrect options. Strictly disabled in Exam Mode.
   bool useFiftyFiftyLifeline() {
+    if (state.test.mode != TestMode.practice) return false;
     if (state.lifelinesRemaining <= 0) return false;
     final q = state.currentQuestion;
     if (state.eliminatedOptionIndices.containsKey(q.id)) return false;
@@ -273,9 +274,10 @@ class TestEngineCubit extends Cubit<TestEngineState> {
           wrongCount++;
           wrongQuestionIds.add(question.id);
         }
-      } else {
-        wrongQuestionIds.add(question.id);
       }
+      // Note: Unanswered questions (selected == null) are skipped by the student.
+      // They are not counted as correct, and not added to wrongQuestionIds,
+      // ensuring wrongQuestionIds.length == wrongCount exactly.
     }
 
     final total = state.totalQuestions;
@@ -284,6 +286,8 @@ class TestEngineCubit extends Cubit<TestEngineState> {
       clientEventId: 'evt_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(99999)}',
       testId: state.test.testId,
       testMode: state.test.mode,
+      subject: state.test.subject,
+      topicCode: state.test.topicCode,
       totalQuestions: total,
       correctCount: correctCount,
       wrongCount: wrongCount,

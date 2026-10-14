@@ -19,6 +19,8 @@ class GeneratedTest {
     required this.durationMinutes,
     required this.blueprintVersion,
     required this.questionBankVersion,
+    this.subject,
+    this.topicCode,
   });
 
   final String testId;
@@ -27,6 +29,8 @@ class GeneratedTest {
   final int durationMinutes;
   final String blueprintVersion;
   final String questionBankVersion;
+  final String? subject;
+  final String? topicCode;
 }
 
 /// Shared TestGenerator (100% Client-Side per Section 12.1 of system_design.md).
@@ -82,6 +86,7 @@ class TestGenerator {
       durationMinutes: 30,
       blueprintVersion: currentBlueprintVersion,
       questionBankVersion: QuestionBankRepository.version,
+      subject: 'MS-CIT Comprehensive Exam',
     );
   }
 
@@ -122,6 +127,7 @@ class TestGenerator {
       durationMinutes: 60,
       blueprintVersion: currentBlueprintVersion,
       questionBankVersion: QuestionBankRepository.version,
+      subject: 'MS-CIT Final Assessment',
     );
   }
 
@@ -148,6 +154,14 @@ class TestGenerator {
         : pool.take(totalQuestions.clamp(1, pool.length)).toList();
     selected.shuffle(_random);
 
+    final singleTopic = (topics != null && topics.length == 1) ? topics.first : null;
+    final subject = singleTopic != null
+        ? singleTopic.label
+        : (topics == null || topics.length == QuestionTopic.values.length
+            ? 'Comprehensive Practice'
+            : 'Practice Test');
+    final topicCode = singleTopic?.name;
+
     final testId = 'PRAC_${DateTime.now().millisecondsSinceEpoch}';
 
     return GeneratedTest(
@@ -157,6 +171,8 @@ class TestGenerator {
       durationMinutes: durationMinutes,
       blueprintVersion: currentBlueprintVersion,
       questionBankVersion: QuestionBankRepository.version,
+      subject: subject,
+      topicCode: topicCode,
     );
   }
 
@@ -178,6 +194,7 @@ class TestGenerator {
       durationMinutes: duration,
       blueprintVersion: currentBlueprintVersion,
       questionBankVersion: QuestionBankRepository.version,
+      subject: 'Bookmarked Questions',
     );
   }
 }
