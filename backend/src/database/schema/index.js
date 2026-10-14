@@ -1,4 +1,4 @@
-import { boolean, check, doublePrecision, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, check, doublePrecision, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 export const studentAccessStatus = pgEnum('student_access_status', ['PENDING', 'ACTIVE', 'EXPIRED', 'REVOKED']);
 export const batchStatus = pgEnum('batch_status', ['ACTIVE', 'FULL', 'INACTIVE']);
@@ -84,6 +84,21 @@ export const broadcastTargets = pgTable('broadcast_target', {
         .notNull()
         .references(() => batches.batchId, { onDelete: 'cascade' }),
 }, (table) => [primaryKey({ columns: [table.broadcastId, table.batchId] })]);
+/**
+ * Per-student read receipts for published broadcasts.
+ * Authoritative server-backed persistent read status per SYSTEM_DESIGN.md §12.
+ */
+export const broadcastReads = pgTable('broadcast_read', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    broadcastId: uuid('broadcast_id')
+        .notNull()
+        .references(() => broadcasts.id, { onDelete: 'cascade' }),
+    authUserId: uuid('auth_user_id').notNull(),
+    readAt: timestamp('read_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+    uniqueIndex('broadcast_read_user_broadcast_idx').on(table.authUserId, table.broadcastId),
+    index('broadcast_read_user_idx').on(table.authUserId),
+]);
 export const teachers = pgTable('teacher', {
     id: uuid('id').defaultRandom().primaryKey(),
     name: varchar('name', { length: 200 }).notNull(),

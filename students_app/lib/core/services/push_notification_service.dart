@@ -138,8 +138,10 @@ class PushNotificationService {
 
       if (title != null && !kIsWeb) {
         AppBadgeService.instance.incrementBadge();
+        final broadcastId = message.data['broadcastId']?.toString();
+        final notifId = broadcastId != null ? broadcastId.hashCode : message.hashCode;
         _localNotifications.show(
-          id: message.hashCode,
+          id: notifId,
           title: title,
           body: body,
           notificationDetails: NotificationDetails(
@@ -195,6 +197,49 @@ class PushNotificationService {
   /// Check if the app was launched from a terminated state via a notification tap.
   Future<RemoteMessage?> getInitialMessage() async {
     return _messaging?.getInitialMessage();
+  }
+
+  /// Check if the app was launched from terminated state via either FCM or local notification tap.
+  Future<Map<String, dynamic>?> getInitialPayload() async {
+    if (!_initialized) return null;
+    try {
+      final fcmMessage = await _messaging?.getInitialMessage();
+      if (fcmMessage != null && fcmMessage.data.isNotEmpty) {
+        return fcmMessage.data;
+      }
+      final launchDetails =
+          await _localNotifications.getNotificationAppLaunchDetails();
+      if (launchDetails != null && launchDetails.didNotificationLaunchApp) {
+        final payload = launchDetails.notificationResponse?.payload;
+        if (payload != null && payload.isNotEmpty) {
+          return jsonDecode(payload) as Map<String, dynamic>;
+        }
+      }
+    } catch (e) {
+      debugPrint('[FCM] Error getting initial payload: $e');
+    }
+    return null;
+  }
+
+  /// Dismisses a notification from the Android notification panel by broadcast ID.
+  Future<void> dismissNotification(String broadcastId) async {
+    if (!_initialized) return;
+    try {
+      await _localNotifications.cancel(id: broadcastId.hashCode);
+    } catch (e) {
+      debugPrint('[FCM] Error dismissing notification $broadcastId: $e');
+    }
+  }
+
+  /// Dismisses all notifications from the Android notification panel.
+  Future<void> dismissAllNotifications() async {
+    if (!_initialized) return;
+    try {
+      await _localNotifications.cancelAll();
+      await AppBadgeService.instance.removeBadge();
+    } catch (e) {
+      debugPrint('[FCM] Error dismissing all notifications: $e');
+    }
   }
 
   /// Sends the active device FCM token to the backend.

@@ -18,6 +18,27 @@ class BroadcastsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Institute Notices'),
+        actions: [
+          BlocBuilder<BroadcastCubit, BroadcastState>(
+            builder: (context, state) {
+              final hasUnread = state is BroadcastsLoaded && state.unreadCount > 0;
+              if (!hasUnread) return const SizedBox.shrink();
+              return TextButton.icon(
+                onPressed: () => context.read<BroadcastCubit>().markAllAsRead(),
+                icon: const Icon(Icons.done_all_rounded, size: 18),
+                label: const Text('Mark all read'),
+                style: TextButton.styleFrom(
+                  foregroundColor: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                  textStyle: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: BlocBuilder<BroadcastCubit, BroadcastState>(
         builder: (context, state) {
@@ -151,11 +172,22 @@ class _BroadcastCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isUnread = !broadcast.isRead;
 
     return ScalePress(
+      onTap: () {
+        if (isUnread) {
+          context.read<BroadcastCubit>().markAsRead(broadcast.id);
+        }
+      },
       child: FrostedCard(
         padding: const EdgeInsets.all(AppSpacing.md),
-        elevation: 1,
+        elevation: isUnread ? 2 : 1,
+        borderColor: isUnread
+            ? (isDark
+                ? AppColors.darkBluePrimary.withOpacity(0.5)
+                : AppColors.googleBlue.withOpacity(0.4))
+            : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -179,13 +211,30 @@ class _BroadcastCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        broadcast.title,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              broadcast.title,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: isUnread ? FontWeight.w600 : FontWeight.w500,
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (isUnread) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       if (_publishedLabel.isNotEmpty) ...[
                         const SizedBox(height: 2),

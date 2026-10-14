@@ -43,6 +43,23 @@ class FakeAuthRepository extends AuthRepository {
     );
   }
 
+  String? lastRequestedPrn;
+  String? lastRequestedEmail;
+  Map<String, dynamic>? fakeAuthResponse;
+  ApiException? fakeAuthException;
+
+  @override
+  Future<Map<String, dynamic>> submitPublicAuthorizationRequest({
+    String? prn,
+    String? email,
+    String? name,
+  }) async {
+    lastRequestedPrn = prn;
+    lastRequestedEmail = email;
+    if (fakeAuthException != null) throw fakeAuthException!;
+    return fakeAuthResponse ?? {'message': 'Success', 'alreadyPending': false};
+  }
+
   @override
   Future<void> signOut() async {
     signedOutCalled = true;
@@ -162,5 +179,26 @@ void main() {
     await cubit.signOut();
     expect(fakeRepo.signedOutCalled, isTrue);
     expect(cubit.state, isA<AuthUnauthenticated>());
+  });
+
+  test('submitPublicAuthorizationRequest passes PRN and returns result', () async {
+    fakeRepo.fakeAuthResponse = {'message': 'Request submitted', 'alreadyPending': false};
+    final res = await fakeRepo.submitPublicAuthorizationRequest(prn: 'PRN123');
+    expect(fakeRepo.lastRequestedPrn, 'PRN123');
+    expect(res['message'], 'Request submitted');
+  });
+
+  test('submitPublicAuthorizationRequest handles already pending response', () async {
+    fakeRepo.fakeAuthResponse = {'message': 'Already pending', 'alreadyPending': true};
+    final res = await fakeRepo.submitPublicAuthorizationRequest(prn: 'PRN123');
+    expect(res['alreadyPending'], isTrue);
+  });
+
+  test('submitPublicAuthorizationRequest submits Gmail without PRN successfully', () async {
+    fakeRepo.fakeAuthResponse = {'message': 'Request submitted for new student', 'alreadyPending': false};
+    final res = await fakeRepo.submitPublicAuthorizationRequest(email: 'newstudent@gmail.com');
+    expect(fakeRepo.lastRequestedEmail, 'newstudent@gmail.com');
+    expect(fakeRepo.lastRequestedPrn, isNull);
+    expect(res['message'], 'Request submitted for new student');
   });
 }

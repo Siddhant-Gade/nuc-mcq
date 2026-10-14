@@ -67,8 +67,42 @@ class StubBroadcastService extends BroadcastService {
     async remove(id) {
         this.removeCalls.push(id);
     }
-    async listForStudent(batchId) {
-        return this.views.filter((view) => view.audienceType === 'ALL' || view.targetBatchIds.includes(batchId));
+    readsByUserId = new Map();
+    async listForStudent(batchId, authUserId) {
+        const userReads = this.readsByUserId.get(authUserId) ?? new Set();
+        return this.views
+            .filter((view) => view.audienceType === 'ALL' || view.targetBatchIds.includes(batchId))
+            .map((view) => ({
+                ...view,
+                isRead: userReads.has(view.id),
+                readAt: userReads.has(view.id) ? new Date('2026-08-26T10:00:00Z').toISOString() : null,
+            }));
+    }
+    async markRead(id, authUserId) {
+        if (!this.readsByUserId.has(authUserId)) {
+            this.readsByUserId.set(authUserId, new Set());
+        }
+        this.readsByUserId.get(authUserId).add(id);
+        return { broadcastId: id, isRead: true, readAt: new Date().toISOString() };
+    }
+    async markAllRead(batchId, authUserId) {
+        const visible = await this.listForStudent(batchId, authUserId);
+        if (!this.readsByUserId.has(authUserId)) {
+            this.readsByUserId.set(authUserId, new Set());
+        }
+        const userReads = this.readsByUserId.get(authUserId);
+        let updatedCount = 0;
+        for (const v of visible) {
+            if (!userReads.has(v.id)) {
+                userReads.add(v.id);
+                updatedCount++;
+            }
+        }
+        return { updatedCount };
+    }
+    async unreadCount(batchId, authUserId) {
+        const visible = await this.listForStudent(batchId, authUserId);
+        return visible.filter((v) => !v.isRead).length;
     }
 }
 const PROFILE_ID = '00000000-0000-4000-8000-00000000b001';
@@ -278,6 +312,68 @@ test('an active student receives only broadcasts for ALL or their own batch', as
         assert.equal(response.status, 200);
         const body = (await response.json());
         assert.deepEqual(body.data.map((view) => view.id).sort(), ['all-notice', 'own-batch-notice']);
+    }
+    finally {
+        await fixture.close();
+    }
+});
+test('student read receipts persist per student and update unread count', async () => {
+    const identityService = new StudentIdentityService(async (authUserId) => authUserId === AUTH_USER_ID ? resolvedStudentIdentity() : undefined);
+    const service = new StubBroadcastService([
+        broadcastView({ id: 'notice-1', audienceType: 'ALL', targetBatchIds: [] }),
+        broadcastView({ id: 'notice-2', audienceType: 'ALL', targetBatchIds: [] }),
+    ]);
+    const fixture = await startFixture({
+        roles: ['STUDENT'],
+        service,
+        studentIdentityService: identityService,
+        authUserId: AUTH_USER_ID,
+    });
+    try {
+        // Initially, unread count is 2
+        const unreadRes1 = await fetch(`${fixture.url}/api/v1/student/broadcasts/unread-count`, {
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal(unreadRes1.status, 200);
+        assert.equal((await unreadRes1.json()).data.count, 2);
+
+        // Mark notice-1 as read
+        const markRes = await fetch(`${fixture.url}/api/v1/student/broadcasts/notice-1/read`, {
+            method: 'PATCH',
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal(markRes.status, 200);
+        const markBody = await markRes.json();
+        assert.equal(markBody.data.isRead, true);
+
+        // Unread count is now 1
+        const unreadRes2 = await fetch(`${fixture.url}/api/v1/student/broadcasts/unread-count`, {
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal((await unreadRes2.json()).data.count, 1);
+
+        // GET list shows notice-1 read and notice-2 unread
+        const listRes = await fetch(`${fixture.url}/api/v1/student/broadcasts`, {
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        const listBody = await listRes.json();
+        const notice1 = listBody.data.find((b) => b.id === 'notice-1');
+        const notice2 = listBody.data.find((b) => b.id === 'notice-2');
+        assert.equal(notice1.isRead, true);
+        assert.equal(notice2.isRead, false);
+
+        // Read all marks remaining read and resets unread count to 0
+        const readAllRes = await fetch(`${fixture.url}/api/v1/student/broadcasts/read-all`, {
+            method: 'POST',
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal(readAllRes.status, 200);
+        assert.equal((await readAllRes.json()).data.updatedCount, 1);
+
+        const unreadRes3 = await fetch(`${fixture.url}/api/v1/student/broadcasts/unread-count`, {
+            headers: { authorization: 'Bearer verified-token' },
+        });
+        assert.equal((await unreadRes3.json()).data.count, 0);
     }
     finally {
         await fixture.close();

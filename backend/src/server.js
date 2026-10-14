@@ -88,6 +88,7 @@ const studyMaterialService = new StudyMaterialService(new DrizzleStudyMaterialRe
 authorizationRequestService.pushService = pushNotificationService;
 authorizationRequestService.invalidateIdentityCache = invalidateIdentityCache;
 authorizationRequestService.studentRepository = studentRepository;
+authorizationRequestService.batchRepository = batchRepository;
 studyMaterialService.pushService = pushNotificationService;
 broadcastService.pushService = pushNotificationService;
 const app = createApp({

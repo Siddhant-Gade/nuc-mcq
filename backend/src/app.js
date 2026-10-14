@@ -201,7 +201,8 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
         authorizationRequestService,
         tokenVerifier,
         (authUserId, email) => studentIdentityService.resolve?.(authUserId, email),
-        (prn) => studentIdentityService.findByStudentId?.(prn)
+        (prn) => studentIdentityService.findByStudentId?.(prn),
+        (email) => studentIdentityService.findByEmail?.(email),
     ));
     app.use('/api/v1/dashboard', createDashboardRouter(dashboardService, tokenVerifier));
     const requireActiveStudent = (authUserId, email) => studentIdentityService.requireActive(authUserId, email);

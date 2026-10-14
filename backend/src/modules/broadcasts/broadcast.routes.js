@@ -30,7 +30,9 @@ export const createBroadcastAdminRouter = (service, tokenVerifier) => {
 export const createStudentBroadcastRouter = (service, tokenVerifier, requireActiveStudent) => {
     const router = Router();
     const authenticate = createAuthenticationMiddleware(tokenVerifier);
-    router.get('/', authenticate, requireRoles('STUDENT'), async (request, response, next) => {
+    const requireStudent = [authenticate, requireRoles('STUDENT')];
+
+    router.get('/', ...requireStudent, async (request, response, next) => {
         try {
             const authUserId = request.auth?.authUserId;
             const email = request.auth?.email;
@@ -38,12 +40,60 @@ export const createStudentBroadcastRouter = (service, tokenVerifier, requireActi
                 throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Authentication token is required.');
             }
             const identity = await requireActiveStudent(authUserId, email);
-            const broadcastsForStudent = await service.listForStudent(identity.profile.batchId);
+            const broadcastsForStudent = await service.listForStudent(identity.profile.batchId, authUserId);
             response.status(200).json(successResponse(broadcastsForStudent));
         }
         catch (error) {
             next(error);
         }
     });
+
+    router.get('/unread-count', ...requireStudent, async (request, response, next) => {
+        try {
+            const authUserId = request.auth?.authUserId;
+            const email = request.auth?.email;
+            if (authUserId === undefined) {
+                throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Authentication token is required.');
+            }
+            const identity = await requireActiveStudent(authUserId, email);
+            const count = await service.unreadCount(identity.profile.batchId, authUserId);
+            response.status(200).json(successResponse({ count }));
+        } catch (error) {
+            next(error);
+        }
+    });
+
+    const handleMarkRead = async (request, response, next) => {
+        try {
+            const authUserId = request.auth?.authUserId;
+            const email = request.auth?.email;
+            if (authUserId === undefined) {
+                throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Authentication token is required.');
+            }
+            await requireActiveStudent(authUserId, email);
+            const result = await service.markRead(request.params.id, authUserId);
+            response.status(200).json(successResponse(result));
+        } catch (error) {
+            next(error);
+        }
+    };
+    router.patch('/:id/read', ...requireStudent, handleMarkRead);
+    router.post('/:id/read', ...requireStudent, handleMarkRead);
+
+    router.post('/read-all', ...requireStudent, async (request, response, next) => {
+        try {
+            const authUserId = request.auth?.authUserId;
+            const email = request.auth?.email;
+            if (authUserId === undefined) {
+                throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Authentication token is required.');
+            }
+            const identity = await requireActiveStudent(authUserId, email);
+            const result = await service.markAllRead(identity.profile.batchId, authUserId);
+            response.status(200).json(successResponse(result));
+        } catch (error) {
+            next(error);
+        }
+    });
+
     return router;
 };

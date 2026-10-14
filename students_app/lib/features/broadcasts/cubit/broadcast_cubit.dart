@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/services/app_badge_service.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../models/broadcast.dart';
 import '../repository/broadcast_repository.dart';
 
@@ -36,13 +36,13 @@ class BroadcastCubit extends Cubit<BroadcastState> {
   BroadcastCubit(this._repository) : super(const BroadcastsLoading());
 
   final BroadcastRepository _repository;
-  static const String _lastSeenKey = 'last_seen_broadcast_timestamp';
 
   Future<void> load() async {
     emit(const BroadcastsLoading());
     try {
+      await _repository.syncPendingReads();
       final broadcasts = await _repository.fetchPublished();
-      final unreadCount = await _computeUnreadCount(broadcasts);
+      final unreadCount = broadcasts.where((b) => !b.isRead).length;
       await AppBadgeService.instance.updateBadge(unreadCount);
       emit(BroadcastsLoaded(
         List.unmodifiable(broadcasts),
@@ -55,32 +55,53 @@ class BroadcastCubit extends Cubit<BroadcastState> {
     }
   }
 
-  Future<int> _computeUnreadCount(List<Broadcast> broadcasts) async {
-    if (broadcasts.isEmpty) return 0;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final lastSeenIso = prefs.getString(_lastSeenKey);
-      if (lastSeenIso == null) {
-        return broadcasts.length;
-      }
-      final lastSeen = DateTime.tryParse(lastSeenIso);
-      if (lastSeen == null) return broadcasts.length;
+  Future<void> markAsRead(String id) async {
+    final current = state;
+    if (current is! BroadcastsLoaded) return;
+    final index = current.broadcasts.indexWhere((b) => b.id == id);
+    if (index == -1 || current.broadcasts[index].isRead) return;
 
-      return broadcasts.where((b) =>
-          b.publishedAt != null && b.publishedAt!.isAfter(lastSeen)).length;
-    } catch (_) {
-      return 0;
-    }
+    final updated = List<Broadcast>.from(current.broadcasts);
+    updated[index] = updated[index].copyWith(
+      isRead: true,
+      readAt: DateTime.now(),
+    );
+    final unreadCount = updated.where((b) => !b.isRead).length;
+    emit(BroadcastsLoaded(List.unmodifiable(updated), unreadCount: unreadCount));
+    await AppBadgeService.instance.updateBadge(unreadCount);
+    await PushNotificationService.instance.dismissNotification(id);
+
+    try {
+      await _repository.markRead(id);
+    } catch (_) {}
   }
 
   Future<void> markAllAsSeen() async {
+    await markAllAsRead();
+  }
+
+  Future<void> markAllAsRead() async {
     final current = state;
     if (current is! BroadcastsLoaded) return;
+    if (current.unreadCount == 0) return;
+
+    final now = DateTime.now();
+    final updated = current.broadcasts
+        .map((b) => b.isRead ? b : b.copyWith(isRead: true, readAt: now))
+        .toList(growable: false);
+
+    emit(BroadcastsLoaded(List.unmodifiable(updated), unreadCount: 0));
+    await AppBadgeService.instance.removeBadge();
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_lastSeenKey, DateTime.now().toIso8601String());
-      await AppBadgeService.instance.removeBadge();
-      emit(BroadcastsLoaded(current.broadcasts, unreadCount: 0));
+      await PushNotificationService.instance.dismissAllNotifications();
     } catch (_) {}
+
+    try {
+      await _repository.markAllRead();
+    } catch (_) {}
+  }
+
+  void reset() {
+    emit(const BroadcastsLoading());
   }
 }
