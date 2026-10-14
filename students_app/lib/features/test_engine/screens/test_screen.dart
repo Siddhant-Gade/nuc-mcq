@@ -424,125 +424,160 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
                                     ],
                                   ),
 
-                                  // Row 2: Amazon Prime Video Gamification Toolbar (50:50 Lifeline + Prime X-Ray + Combo Multiplier)
+                                  // Row 2: Status / Mode Bar (Gamification Toolbar for Practice, Official Assessment Badge for Exam)
                                   const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      // Streak Pill with dynamic multiplier
-                                      if (state.currentStreak >= 2)
-                                        AnimatedContainer(
-                                          duration: AppAnim.normal,
+                                      if (isPracticeMode) ...[
+                                        // Streak Pill with dynamic multiplier in Practice Mode
+                                        if (state.currentStreak >= 2)
+                                          AnimatedContainer(
+                                            duration: AppAnim.normal,
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF2E2008),
+                                              borderRadius: BorderRadius.circular(16),
+                                              border: Border.all(color: AppColors.primeGold, width: 1.2),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: AppColors.primeGold.withOpacity(0.25),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.local_fire_department_rounded, size: 15, color: Color(0xFFFFA724)),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'x STREAK (x XP)',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w800,
+                                                    letterSpacing: 0.2,
+                                                    color: const Color(0xFFFFD54F),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        else
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: isDark ? const Color(0xFF131C2E) : const Color(0xFFE2E8F0),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.bolt_rounded, size: 14, color: AppColors.primeBlue),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'PRACTICE ARENA',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: isDark ? AppColors.primeBlue : const Color(0xFF0369A1),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                      ] else ...[
+                                        // Strict Exam Mode Badge
+                                        Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF2E2008),
-                                            borderRadius: BorderRadius.circular(16),
-                                            border: Border.all(color: AppColors.primeGold, width: 1.2),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: AppColors.primeGold.withOpacity(0.25),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(Icons.local_fire_department_rounded, size: 15, color: Color(0xFFFFA724)),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${state.currentStreak}x STREAK (${state.streakMultiplier}x XP)',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w800,
-                                                  letterSpacing: 0.2,
-                                                  color: const Color(0xFFFFD54F),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      else
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: isDark ? const Color(0xFF131C2E) : const Color(0xFFE2E8F0),
+                                            color: isDark ? const Color(0xFF131C2E) : const Color(0xFFEFF6FF),
                                             borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: isDark ? AppColors.darkBluePrimary : const Color(0xFF93C5FD),
+                                              width: 1,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(Icons.bolt_rounded, size: 14, color: AppColors.primeBlue),
-                                              const SizedBox(width: 4),
+                                              Icon(
+                                                Icons.verified_outlined,
+                                                size: 14,
+                                                color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                                              ),
+                                              const SizedBox(width: 5),
                                               Text(
-                                                'PRIME ARENA',
+                                                'OFFICIAL MOCK EXAM',
                                                 style: GoogleFonts.inter(
-                                                  fontSize: 10,
+                                                  fontSize: 10.5,
                                                   fontWeight: FontWeight.w700,
-                                                  color: isDark ? AppColors.primeBlue : const Color(0xFF0369A1),
+                                                  letterSpacing: 0.5,
+                                                  color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
+                                      ],
 
-                                      // Gamification Action Buttons: 50:50 and X-Ray
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          // 50:50 Lifeline Button
-                                          ScalePress(
-                                            onTap: (state.lifelinesRemaining <= 0 || state.hasUsedLifelineForCurrentQuestion || isAnswered)
-                                                ? null
-                                                : () {
-                                                    final used = context.read<TestEngineCubit>().useFiftyFiftyLifeline();
-                                                    if (used) {
-                                                      _triggerXpCelebration('⚡ 50:50 Used! 2 Options Eliminated');
-                                                    }
-                                                  },
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
-                                              decoration: BoxDecoration(
-                                                color: (state.lifelinesRemaining <= 0 || state.hasUsedLifelineForCurrentQuestion)
-                                                    ? (isDark ? const Color(0xFF162032) : const Color(0xFFE2E8F0))
-                                                    : (isDark ? const Color(0xFF0C243B) : const Color(0xFFE0F2FE)),
-                                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                                                border: Border.all(
+                                      // Practice Mode Gamification Action Buttons: 50:50 and X-Ray
+                                      if (isPracticeMode)
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // 50:50 Lifeline Button
+                                            ScalePress(
+                                              onTap: (state.lifelinesRemaining <= 0 || state.hasUsedLifelineForCurrentQuestion || isAnswered)
+                                                  ? null
+                                                  : () {
+                                                      final used = context.read<TestEngineCubit>().useFiftyFiftyLifeline();
+                                                      if (used) {
+                                                        _triggerXpCelebration('⚡ 50:50 Used! 2 Options Eliminated');
+                                                      }
+                                                    },
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                                                decoration: BoxDecoration(
                                                   color: (state.lifelinesRemaining <= 0 || state.hasUsedLifelineForCurrentQuestion)
-                                                      ? (isDark ? const Color(0xFF223250) : const Color(0xFFCBD5E1))
-                                                      : AppColors.primeBlue,
-                                                  width: 1.2,
-                                                ),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    Icons.bolt_rounded,
-                                                    size: 14,
+                                                      ? (isDark ? const Color(0xFF162032) : const Color(0xFFE2E8F0))
+                                                      : (isDark ? const Color(0xFF0C243B) : const Color(0xFFE0F2FE)),
+                                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                                  border: Border.all(
                                                     color: (state.lifelinesRemaining <= 0 || state.hasUsedLifelineForCurrentQuestion)
-                                                        ? (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8))
+                                                        ? (isDark ? const Color(0xFF223250) : const Color(0xFFCBD5E1))
                                                         : AppColors.primeBlue,
+                                                    width: 1.2,
                                                   ),
-                                                  const SizedBox(width: 3),
-                                                  Text(
-                                                    '50:50 (${state.lifelinesRemaining})',
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.w700,
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.bolt_rounded,
+                                                      size: 14,
                                                       color: (state.lifelinesRemaining <= 0 || state.hasUsedLifelineForCurrentQuestion)
                                                           ? (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8))
                                                           : AppColors.primeBlue,
                                                     ),
-                                                  ),
-                                                ],
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      '50:50 ()',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: (state.lifelinesRemaining <= 0 || state.hasUsedLifelineForCurrentQuestion)
+                                                            ? (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8))
+                                                            : AppColors.primeBlue,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
-                                          ),
 
-                                          // Prime X-Ray Hint Button (Practice Mode)
-                                          if (isPracticeMode) ...[
+                                            // Prime X-Ray Hint Button (Practice Mode)
                                             const SizedBox(width: 8),
                                             ScalePress(
                                               onTap: () {
@@ -589,8 +624,7 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
                                               ),
                                             ),
                                           ],
-                                        ],
-                                      ),
+                                        ),
                                     ],
                                   ),
                                   const SizedBox(height: 10),
@@ -712,7 +746,15 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
                                         borderColor = isDark ? AppColors.darkBluePrimary : AppColors.googleBlue;
                                         circleColor = isDark ? AppColors.darkBluePrimary : AppColors.googleBlue;
                                         circleBorderColor = Colors.transparent;
-                                        circleChild = const Icon(Icons.check, size: 14, color: Colors.white);
+                                        circleChild = Text(
+                                          optionLetter,
+                                          key: const ValueKey('selected_letter'),
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        );
                                       }
 
                                       return Padding(
@@ -1002,8 +1044,8 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
                     ],
                   ),
 
-                  // Floating Gamification XP / Streak Celebration Toast
-                  if (_recentXpMessage != null && _celebrationScaleAnim != null)
+                  // Floating Gamification XP / Streak Celebration Toast (Practice Mode only)
+                  if (isPracticeMode && _recentXpMessage != null && _celebrationScaleAnim != null)
                     Positioned(
                       top: 16,
                       left: 20,

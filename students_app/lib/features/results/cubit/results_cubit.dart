@@ -45,11 +45,18 @@ class ResultsCubit extends Cubit<ResultsState> {
   Future<void> loadResults({bool refreshFromCloud = true}) async {
     // 1. Immediately emit cached results if available for zero-latency UI
     List<TestResultModel> cachedResults = [];
-    StudentStats? cachedStats;
+    StudentStats cachedStats = const StudentStats(
+      totalTests: 0,
+      examCount: 0,
+      practiceCount: 0,
+      averageScore: 0.0,
+      passCount: 0,
+      pendingSyncCount: 0,
+    );
     try {
       cachedResults = await _repository.getAllResults();
       cachedStats = await _repository.getStudentStats();
-      if (cachedResults.isNotEmpty) {
+      if (cachedResults.isNotEmpty || !refreshFromCloud) {
         emit(ResultsLoaded(
           results: cachedResults,
           stats: cachedStats,

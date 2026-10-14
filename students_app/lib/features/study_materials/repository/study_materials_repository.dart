@@ -13,7 +13,10 @@ class StudyMaterialsRepository {
   List<StudyMaterialModel> _materials = [];
   final Map<String, Uint8List> _bytesCache = {};
 
-  Future<List<StudyMaterialModel>> getAllMaterials() async {
+  Future<List<StudyMaterialModel>> getAllMaterials({bool forceRefresh = false}) async {
+    if (!forceRefresh && _materials.isNotEmpty) {
+      return List.unmodifiable(_materials);
+    }
     if (_dio != null) {
       try {
         final response = await _dio.get<Object?>('/api/v1/student/study-materials');
@@ -33,8 +36,8 @@ class StudyMaterialsRepository {
     return List.unmodifiable(_materials);
   }
 
-  Future<List<StudyMaterialModel>> getMaterialsByCategory(String category) async {
-    final all = await getAllMaterials();
+  Future<List<StudyMaterialModel>> getMaterialsByCategory(String category, {bool forceRefresh = false}) async {
+    final all = await getAllMaterials(forceRefresh: forceRefresh);
     if (category == 'ALL') return all;
     return all.where((m) => m.category == category).toList();
   }

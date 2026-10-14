@@ -22,7 +22,7 @@ export class DrizzleBroadcastRepository {
         ]);
         return attachTargets(records, targetRows);
     }
-    async listPublishedForStudent(batchId) {
+    async listPublishedForStudent(batchId, authUserId) {
         const records = await this.database
             .select()
             .from(broadcasts)
@@ -36,7 +36,68 @@ export class DrizzleBroadcastRepository {
           ))`))
             .orderBy(desc(broadcasts.createdAt));
         const targetRows = await this.database.select().from(broadcastTargets).where(eq(broadcastTargets.batchId, batchId));
-        return attachTargets(records, targetRows);
+        const attached = attachTargets(records, targetRows);
+
+        if (!authUserId) {
+            return attached.map((b) => ({ ...b, isRead: false, readAt: null }));
+        }
+
+        const readRows = await this.database
+            .select({ broadcastId: schema.broadcastReads.broadcastId, readAt: schema.broadcastReads.readAt })
+            .from(schema.broadcastReads)
+            .where(eq(schema.broadcastReads.authUserId, authUserId));
+
+        const readMap = new Map();
+        for (const row of readRows) {
+            readMap.set(row.broadcastId, row.readAt);
+        }
+
+        return attached.map((b) => {
+            const readAt = readMap.get(b.id);
+            return {
+                ...b,
+                isRead: readAt !== undefined,
+                readAt: readAt ? (readAt instanceof Date ? readAt.toISOString() : String(readAt)) : null,
+            };
+        });
+    }
+    async markRead(broadcastId, authUserId) {
+        const now = new Date();
+        const [inserted] = await this.database
+            .insert(schema.broadcastReads)
+            .values({ broadcastId, authUserId, readAt: now })
+            .onConflictDoUpdate({
+                target: [schema.broadcastReads.authUserId, schema.broadcastReads.broadcastId],
+                set: { readAt: now },
+            })
+            .returning();
+        return {
+            broadcastId,
+            isRead: true,
+            readAt: (inserted?.readAt ? (inserted.readAt instanceof Date ? inserted.readAt.toISOString() : String(inserted.readAt)) : now.toISOString()),
+        };
+    }
+    async markAllRead(batchId, authUserId) {
+        const records = await this.listPublishedForStudent(batchId, authUserId);
+        const unread = records.filter((r) => !r.isRead);
+        if (unread.length === 0) {
+            return { updatedCount: 0 };
+        }
+        const now = new Date();
+        const values = unread.map((r) => ({
+            broadcastId: r.id,
+            authUserId,
+            readAt: now,
+        }));
+        await this.database
+            .insert(schema.broadcastReads)
+            .values(values)
+            .onConflictDoNothing();
+        return { updatedCount: unread.length };
+    }
+    async countUnread(batchId, authUserId) {
+        const records = await this.listPublishedForStudent(batchId, authUserId);
+        return records.filter((r) => !r.isRead).length;
     }
     async getById(id) {
         const [record] = await this.database.select().from(broadcasts).where(eq(broadcasts.id, id)).limit(1);

@@ -34,6 +34,7 @@ class StudyMaterialModel {
     this.descriptionHi,
     this.contentHi,
     this.keyPointsHi,
+    this.createdAt,
   });
 
   factory StudyMaterialModel.fromJson(Map<String, dynamic> json) {
@@ -76,6 +77,9 @@ class StudyMaterialModel {
       categoryHi: json['categoryHi']?.toString(),
       descriptionHi: json['descriptionHi']?.toString(),
       contentHi: json['contentHi']?.toString(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : (json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null),
     );
   }
 
@@ -92,6 +96,7 @@ class StudyMaterialModel {
   final String kind;
   final String? documentType;
   final String? embedUrl;
+  final DateTime? createdAt;
 
   final String? titleMr;
   final String? categoryMr;
@@ -104,6 +109,24 @@ class StudyMaterialModel {
   final String? descriptionHi;
   final String? contentHi;
   final List<String>? keyPointsHi;
+
+  String formattedUploadTime() {
+    if (createdAt != null) {
+      final now = DateTime.now();
+      final diff = now.difference(createdAt!);
+      if (diff.inDays == 0) {
+        if (diff.inHours == 0) {
+          return 'Uploaded recently';
+        }
+        return 'Uploaded ${diff.inHours}h ago';
+      } else if (diff.inDays == 1) {
+        return 'Uploaded yesterday';
+      } else if (diff.inDays < 30) {
+        return 'Uploaded ${diff.inDays} days ago';
+      }
+    }
+    return 'General • $readTimeMinutes min read/watch';
+  }
 
   String localizedTitle(String lang) {
     if (lang == 'mr' && titleMr != null && titleMr!.isNotEmpty) return titleMr!;

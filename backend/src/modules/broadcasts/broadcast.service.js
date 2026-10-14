@@ -9,9 +9,32 @@ export class BroadcastService {
     async list() {
         return this.repository.list();
     }
-    /** PUBLISHED broadcasts visible to the resolved student's batch (Phase 12). */
-    async listForStudent(batchId) {
-        return this.repository.listPublishedForStudent(batchId);
+    /** PUBLISHED broadcasts visible to the resolved student's batch with persistent read status. */
+    async listForStudent(batchId, authUserId) {
+        return this.repository.listPublishedForStudent(batchId, authUserId);
+    }
+    async markRead(id, authUserId) {
+        const broadcast = await this.getById(id);
+        if (broadcast.status !== 'PUBLISHED') {
+            throw notFound(id);
+        }
+        if (typeof this.repository.markRead === 'function') {
+            return this.repository.markRead(id, authUserId);
+        }
+        return { broadcastId: id, isRead: true, readAt: new Date().toISOString() };
+    }
+    async markAllRead(batchId, authUserId) {
+        if (typeof this.repository.markAllRead === 'function') {
+            return this.repository.markAllRead(batchId, authUserId);
+        }
+        return { updatedCount: 0 };
+    }
+    async unreadCount(batchId, authUserId) {
+        if (typeof this.repository.countUnread === 'function') {
+            return this.repository.countUnread(batchId, authUserId);
+        }
+        const broadcasts = await this.listForStudent(batchId, authUserId);
+        return broadcasts.filter((b) => !b.isRead).length;
     }
     async getById(id) {
         const broadcast = await this.repository.getById(id);

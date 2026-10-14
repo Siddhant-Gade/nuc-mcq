@@ -12,6 +12,7 @@ import '../../../core/widgets/scale_press.dart';
 import '../auth/cubit/auth_cubit.dart';
 import '../auth/models/student_identity.dart';
 import '../bookmarks/cubit/bookmarks_cubit.dart';
+import '../bookmarks/screens/bookmarks_screen.dart';
 import '../broadcasts/cubit/broadcast_cubit.dart';
 import '../broadcasts/repository/broadcast_repository.dart';
 import '../broadcasts/screens/broadcasts_screen.dart';
@@ -231,43 +232,64 @@ class _HomeShellState extends State<HomeShell> {
           ),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkBlueSurface : AppColors.googleBlueSurface,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Icon(
-                  Icons.school_outlined,
-                  color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
-                  size: 20,
+              Semantics(
+                button: true,
+                label: 'Home',
+                child: Tooltip(
+                  message: 'Home',
+                  child: ScalePress(
+                    onTap: () {
+                      if (_currentIndex != 0) {
+                        _onTabSelected(0);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkBlueSurface : AppColors.googleBlueSurface,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Icon(
+                        Icons.school_outlined,
+                        color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                        size: 20,
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'New Unique Computers',
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.3,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                child: GestureDetector(
+                  onTap: () {
+                    if (_currentIndex != 0) {
+                      _onTabSelected(0);
+                    }
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'New Unique Computers',
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.3,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'MS-CIT Authorized',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textTertiary,
+                      Text(
+                        'MS-CIT Authorized',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textTertiary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -279,7 +301,6 @@ class _HomeShellState extends State<HomeShell> {
                 final unreadCount = state is BroadcastsLoaded ? state.unreadCount : 0;
                 return ScalePress(
                   onTap: () {
-                    context.read<BroadcastCubit>().markAllAsSeen();
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const BroadcastsScreen(),
@@ -603,13 +624,13 @@ class _StudentProfileSettingsDrawer extends StatelessWidget {
                   _DrawerNavTile(
                     icon: Icons.menu_book_rounded,
                     iconColor: AppColors.googleBlue,
-                    title: l10n.text('tab_all_questions'),
+                    title: l10n.text('all_questions_title'),
                     subtitle: 'Browse all 8 syllabus topics & questions',
                     onTap: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => const AllQuestionsScreen(initialTabIndex: 0),
+                          builder: (_) => const AllQuestionsScreen(),
                         ),
                       );
                     },
@@ -623,13 +644,15 @@ class _StudentProfileSettingsDrawer extends StatelessWidget {
                         icon: Icons.bookmark_rounded,
                         iconColor: AppColors.googleYellow,
                         title: l10n.text('tab_bookmarks'),
-                        subtitle: '${state.count} saved questions for practice',
+                        subtitle: state.materialCount > 0
+                            ? '${state.questionCount} questions • ${state.materialCount} materials'
+                            : '${state.questionCount} saved questions for practice',
                         badgeText: state.count > 0 ? '${state.count}' : null,
                         onTap: () {
                           Navigator.of(context).pop();
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const AllQuestionsScreen(initialTabIndex: 1),
+                              builder: (_) => const BookmarksScreen(),
                             ),
                           );
                         },
@@ -649,7 +672,6 @@ class _StudentProfileSettingsDrawer extends StatelessWidget {
                         subtitle: 'Announcements from Institute',
                         badgeText: unreadCount > 0 ? '$unreadCount New' : null,
                         onTap: () {
-                          context.read<BroadcastCubit>().markAllAsSeen();
                           Navigator.of(context).pop();
                           Navigator.of(context).push(
                             MaterialPageRoute(

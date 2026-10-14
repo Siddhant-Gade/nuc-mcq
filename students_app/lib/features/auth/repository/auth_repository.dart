@@ -451,4 +451,61 @@ class AuthRepository {
       }
     }
   }
+
+  /// Opens Google account picker and returns selected account without signing into Supabase session.
+  Future<GoogleSignInAccount?> pickGoogleAccount() async {
+    final effectiveClientId = AppConfig.fromEnvironment().googleWebClientId;
+    GoogleSignIn googleSignIn = GoogleSignIn(
+      serverClientId: effectiveClientId.isNotEmpty ? effectiveClientId : null,
+      scopes: ['email', 'profile'],
+    );
+    try {
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {}
+      return await googleSignIn.signIn();
+    } catch (_) {
+      googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {}
+      return await googleSignIn.signIn();
+    }
+  }
+
+  Future<Map<String, dynamic>> submitPublicAuthorizationRequest({
+    String? prn,
+    String? email,
+    String? name,
+  }) async {
+    final payload = <String, dynamic>{};
+    if (prn != null && prn.trim().isNotEmpty) {
+      payload['prn'] = prn.trim();
+    }
+    if (email != null && email.trim().isNotEmpty) {
+      payload['email'] = email.trim();
+    }
+    if (name != null && name.trim().isNotEmpty) {
+      payload['name'] = name.trim();
+    }
+    if (payload.isEmpty) {
+      throw const ApiException(
+        'VALIDATION_ERROR',
+        'PRN or Gmail address is required.',
+      );
+    }
+    try {
+      final response = await _dio.post<Object?>(
+        '/api/v1/authorization-requests/request',
+        data: payload,
+      );
+      final data = requireSuccessData(response.data);
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+      return <String, dynamic>{};
+    } on DioException catch (e) {
+      throw exceptionFromDio(e);
+    }
+  }
 }
