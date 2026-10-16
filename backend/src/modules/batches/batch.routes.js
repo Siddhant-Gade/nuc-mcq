@@ -4,7 +4,6 @@ import { requireRoles } from '../../middleware/authorization.middleware.js';
 import { validateRequest } from '../../middleware/validation.middleware.js';
 import { BatchController } from './batch.controller.js';
 import { batchIdParamsSchema, createBatchSchema } from './batch.schema.js';
-import { successResponse } from '../../utils/api-response.js';
 export const createBatchRouter = (service, tokenVerifier) => {
     const router = Router();
     const controller = new BatchController(service);

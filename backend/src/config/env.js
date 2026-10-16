@@ -8,7 +8,7 @@ const environmentSchema = z.object({
     SUPABASE_JWT_AUDIENCE: z.string().trim().min(1).default('authenticated'),
     CORS_ORIGINS: z
         .string()
-        .default('http://localhost:5173')
+        .default('http://localhost:5173,http://localhost:5174')
         .transform((value) => value.split(',').map((origin) => origin.trim()).filter(Boolean))
         .refine((origins) => origins.every((origin) => z.url().safeParse(origin).success), {
         message: 'CORS_ORIGINS must be a comma-separated list of valid origins.',

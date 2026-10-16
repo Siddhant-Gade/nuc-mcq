@@ -15,9 +15,9 @@ const verifiedTokenVerifier = {
         return { authUserId: 'verified-user-id', email: 'verified@example.com', roles: ['STUDENT'] };
     },
 };
-const startFixture = async (tokenVerifier = verifiedTokenVerifier, serviceOverrides = {}) => {
+const startFixture = async (tokenVerifier = verifiedTokenVerifier, serviceOverrides = {}, allowedCorsOrigins = ['http://localhost:5173', 'http://localhost:5174']) => {
     const app = createApp({
-        allowedCorsOrigins: ['http://localhost:5173'],
+        allowedCorsOrigins,
         tokenVerifier,
         studentService: {},
         batchService: {},
@@ -266,3 +266,45 @@ test('google-student-auth: registers auth token and returns student identity for
         await fixture.close();
     }
 });
+
+test('student web origin http://localhost:5174 receives CORS headers', async () => {
+    const fixture = await startFixture(verifiedTokenVerifier, {}, ['http://localhost:5173', 'http://localhost:5174']);
+    try {
+        const response = await fetch(`${fixture.url}/health`, {
+            headers: { origin: 'http://localhost:5174' },
+        });
+        assert.equal(response.headers.get('access-control-allow-origin'), 'http://localhost:5174');
+    }
+    finally {
+        await fixture.close();
+    }
+});
+
+test('super admin email receives ADMIN role and is not granted STUDENT role without student record', async () => {
+    const superAdminVerifier = {
+        verify: async () => ({
+            authUserId: 'super-admin-uid',
+            email: 'newuniquesupabase@gmail.com',
+            roles: [],
+        }),
+    };
+    const studentIdentityService = {
+        resolve: async () => null,
+    };
+    const fixture = await startFixture(superAdminVerifier, { studentIdentityService });
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/me`, {
+            headers: { authorization: 'Bearer super-admin-token' },
+        });
+        assert.equal(response.status, 200);
+        const data = await response.json();
+        assert.equal(data.success, true);
+        assert.ok(data.data.identity.roles.includes('ADMIN'));
+        assert.ok(data.data.identity.roles.includes('SUPER_ADMIN'));
+        assert.equal(data.data.identity.roles.includes('STUDENT'), false, 'Admin must not have STUDENT role');
+    }
+    finally {
+        await fixture.close();
+    }
+});
+

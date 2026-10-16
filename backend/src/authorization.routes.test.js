@@ -386,6 +386,12 @@ test('unauthenticated student can submit an authorization request with Gmail / e
         findByEmail: async (email) => studentProfilesMap.get(email.toLowerCase()),
     };
 
+    authService.batchRepository = {
+        async list() {
+            return [{ batchId: 'BATCH_AUTO_01', name: 'Auto Assigned Batch' }];
+        },
+    };
+
     authService.studentRepository = {
         async create(input) {
             const newStudent = { id: `prof-new-${Date.now()}`, ...input };
@@ -466,6 +472,7 @@ test('unauthenticated student can submit an authorization request with Gmail / e
         assert.equal(brandNewBody.data.status, 'PENDING');
         assert.equal(brandNewBody.data.studentName, 'New Student');
         assert.equal(brandNewBody.data.email, 'newstudent@gmail.com');
+        assert.equal(studentProfilesMap.get('newstudent@gmail.com').profile.batchId, 'BATCH_AUTO_01');
     } finally {
         server.close();
         await once(server, 'close');

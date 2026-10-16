@@ -32,7 +32,8 @@ const baseTokenVerifier = new SupabaseJwtVerifier({
 });
 const studentRepository = new DrizzleStudentRepository(database);
 const studentService = new StudentService(studentRepository);
-const batchService = new BatchService(new DrizzleBatchRepository(database));
+const batchRepository = new DrizzleBatchRepository(database);
+const batchService = new BatchService(batchRepository);
 const authorizationRequestService = new AuthorizationRequestService(new DrizzleAuthorizationRequestRepository(database));
 const dashboardService = new DashboardService(new DrizzleDashboardRepository(database));
 const studentIdentityService = new StudentIdentityService((authUserId) => studentRepository.findByAuthUserId(authUserId), (email) => studentRepository.findByEmail(email), (studentId) => studentRepository.findByStudentId(studentId));
