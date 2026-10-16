@@ -112,7 +112,7 @@ export const DashboardTab: React.FC = () => {
     return Math.round(sum / recent5.length);
   }, [allResults]);
 
-  // Subject Performance Bar Chart Data
+  // Subject Performance Bar Chart Data (aggregates both topic-specific tests & comprehensive exam questions)
   const subjectChartData = useMemo(() => {
     const topics: { code: QuestionTopicCode; label: string }[] = [
       { code: 'computerFundamentals', label: 'Basics' },
@@ -126,17 +126,44 @@ export const DashboardTab: React.FC = () => {
     ];
 
     return topics.map((t) => {
-      const metric = analytics.subjectMetrics.find((m) => {
-        if (m.topicCode === t.code) return true;
-        const config = TOPIC_CONFIG[t.code];
-        return (
-          m.subjectName.toLowerCase().includes(config.label.toLowerCase()) ||
-          m.subjectName.toLowerCase().includes(t.label.toLowerCase())
-        );
-      });
+      let total = 0;
+      let correct = 0;
 
-      const total = metric ? metric.totalQuestions : 0;
-      const correct = metric ? metric.correctCount : 0;
+      // 1. Aggregate from all tests (including individual questions in comprehensive exams)
+      for (const r of allResults) {
+        if (r.topicCode === t.code) {
+          total += r.totalQuestions;
+          correct += r.correctCount;
+        } else if (r.studentAnswers && Object.keys(r.studentAnswers).length > 0) {
+          // Break down questions in comprehensive/mock exams by topic
+          for (const [qId, chosenIdx] of Object.entries(r.studentAnswers)) {
+            const q = questionBankService.getQuestionById(qId);
+            if (q && q.topic === t.code) {
+              total++;
+              if (chosenIdx === q.correctOptionIndex) {
+                correct++;
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Fallback to analytics.subjectMetrics if questionBank lookup wasn't available
+      if (total === 0) {
+        const metric = analytics.subjectMetrics.find((m) => {
+          if (m.topicCode === t.code) return true;
+          const config = TOPIC_CONFIG[t.code];
+          return (
+            m.subjectName.toLowerCase().includes(config.label.toLowerCase()) ||
+            m.subjectName.toLowerCase().includes(t.label.toLowerCase())
+          );
+        });
+        if (metric) {
+          total = metric.totalQuestions;
+          correct = metric.correctCount;
+        }
+      }
+
       const incorrect = Math.max(0, total - correct);
 
       return {
@@ -147,7 +174,7 @@ export const DashboardTab: React.FC = () => {
         accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
       };
     });
-  }, [analytics.subjectMetrics]);
+  }, [allResults, analytics.subjectMetrics]);
 
   // Question Summary Donut Chart Data (Overall vs Recent)
   const questionSummary = useMemo(() => {
