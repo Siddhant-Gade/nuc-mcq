@@ -13,6 +13,7 @@ import {
   ChevronRight,
   LogOut,
   X,
+  Menu,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -99,13 +100,15 @@ export const Sidebar: React.FC = () => {
           isSidebarCollapsed ? 'w-[68px]' : 'w-60'
         }`}
       >
-        {/* Brand Header */}
-        <div
-          className={`h-16 flex items-center border-b border-slate-100 dark:border-slate-800/80 px-3.5 ${
-            isSidebarCollapsed ? 'justify-center' : 'justify-between'
-          }`}
-        >
-          <NavLink to="/" className="flex items-center gap-3 overflow-hidden group">
+        {/* Brand Header & Hamburger Toggle */}
+        <div className="border-b border-slate-100 dark:border-slate-800/80 px-3.5 py-3 space-y-2">
+          {/* Row 1: Logo and text */}
+          <NavLink
+            to="/"
+            className={`flex items-center gap-3 overflow-hidden group ${
+              isSidebarCollapsed ? 'justify-center' : ''
+            }`}
+          >
             <img
               src="/icon/small_Icon.png"
               alt="NUC Logo"
@@ -122,6 +125,18 @@ export const Sidebar: React.FC = () => {
               </div>
             )}
           </NavLink>
+
+          {/* Row 2: Hamburger menu placed properly below icon & text, in the right corner */}
+          <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-end'}`}>
+            <button
+              onClick={toggleSidebarCollapsed}
+              aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation Items List */}
