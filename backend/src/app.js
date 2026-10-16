@@ -189,6 +189,7 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
                 studentId: resolvedStudent?.profile?.studentId,
                 batchId: resolvedStudent?.profile?.batchId ?? null,
                 batchName: resolvedStudent?.batchName ?? null,
+                accessStatus: resolvedStudent?.access?.status ?? null,
             },
         }));
     });

@@ -110,6 +110,7 @@ test('auth me returns only the verified identity', async () => {
                     roles: ['STUDENT'],
                     batchId: null,
                     batchName: null,
+                    accessStatus: null,
                 },
             },
         });
