@@ -252,6 +252,19 @@ export const DashboardTab: React.FC = () => {
     navigate('/test/active');
   };
 
+  const studentName = identity?.name
+    ? identity.name.trim().split(' ')[0]
+    : identity?.email
+    ? identity.email.split('@')[0]
+    : 'Student';
+
+  const welcomeGreeting =
+    language === 'mr'
+      ? `नमस्कार, ${studentName}`
+      : language === 'hi'
+      ? `नमस्ते, ${studentName}`
+      : `Hi, ${studentName}`;
+
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* ========================================================= */}
@@ -259,11 +272,16 @@ export const DashboardTab: React.FC = () => {
       {/* ========================================================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Dashboard Overview
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <span>{welcomeGreeting}</span>
+            <span className="text-2xl sm:text-3xl select-none">👋</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Quickly see your progress, strengths, and improvement areas.
+            {language === 'mr'
+              ? 'तुमची प्रगती आणि एमएस-सीआयटी सराव चाचण्यांचा आढावा घ्या.'
+              : language === 'hi'
+              ? 'अपनी प्रगति और एमएस-सीआईटी अभ्यास परीक्षाओं का विवरण देखें।'
+              : 'Welcome back! Track your progress and practice tests.'}
           </p>
         </div>
 
