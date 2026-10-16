@@ -1,139 +1,154 @@
-# MS-CIT Student Web Application (`std_web`)
+# MS-CIT Student Web Portal (React + TypeScript + Tailwind CSS)
 
-A modern, responsive Flutter Web application serving as the student-facing learning and examination portal for MS-CIT. It connects seamlessly to the shared backend and PostgreSQL database while preserving complete feature parity with the native student mobile app.
-
----
-
-## 1. System Architecture
-
-The project ecosystem is strictly divided into three isolated layers:
-
-```
-├── std_web/       --> Student Web Application (Flutter Web)
-├── admin/         --> Administrator Web Portal (React 18 + Vite)
-├── backend/       --> Shared REST API & Authentication Service (Node.js/Express 5.x)
-└── students_app/  --> Native Android/iOS Mobile App (Preserved source of truth)
-```
-
-Both frontends (`std_web` and `admin`) connect to the same shared Node.js Express backend and Supabase database.
+Modern, production-grade student web application for **New Unique Computers (MS-CIT Authorized Training Institute)**, built with React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router v7, and Recharts.
 
 ---
 
-## 2. Key Features Preserved & Adapted for Web
+## 🚀 Key Highlights & Feature Parity
 
-- **Authentication & Onboarding**:
-  - Direct PRN & custom password authentication.
-  - Google OAuth Sign-In integration via Google Web Client ID and backend bridge.
-  - Automated session restoration from browser `localStorage` / `SharedPreferences`.
-- **Access Lifecycle & Authorization**:
-  - Full adherence to student access states: `ACTIVE`, `PENDING`, `EXPIRED`, and `REVOKED`.
-  - Distinct access pending screen with live status polling and PRN linking.
-  - Required banner for revoked accounts: *"Access revoked, contact administrator."*
-- **Examination & Practice Engine**:
-  - Mock tests and subject-wise practice tests.
-  - Timed question navigation, multi-choice question palette, review flagging, and instant answer validation.
-  - Prevention of accidental double-submissions with backend result sync.
-  - Responsive layout constraints for wide screens (860px max width centering).
-- **Performance Analytics**:
-  - Dynamic subject performance summary, accuracy calculations, and attempt history.
-  - Detailed test result breakdown with subject mapping for both Mock and Practice exams.
-- **Study Materials**:
-  - Web-safe browser download pipeline converting binary payloads into browser Blobs via `package:web`.
-  - In-browser document view links via `url_launcher`.
-- **Broadcasts & Notifications**:
-  - Institute broadcast announcements and individual notifications.
-  - Persistent read/unread tracking with mark-all-as-read capability.
-- **Responsive UI/UX**:
-  - Adaptive desktop navigation: Top tab navigation bar on desktop screens (>= 768px) and mobile bottom bar on narrow viewports.
-  - Multi-language support: English, Marathi, and Hindi.
-  - Light and Dark theme modes.
+1. **Complete Syllabus MCQ Engine (100% Client-Side & Offline-Capable)**
+   - Pre-bundled with GCC-TBC MS-CIT question bank (`/data/question_bank.json`) across all 8 syllabus topics:
+     - *Computer Fundamentals, Operating System, MS Excel, MS Word, PowerPoint, MS Outlook, Internet, and PageMaker*.
+   - **Official Exam Mode**: 25 Questions, 30 Minutes, 50% passing mark, strict GCC-TBC blueprint.
+   - **Final Assessment Mode**: 50 Questions, 60 Minutes full exam simulation.
+   - **Practice Mode**: Flexible subject selection, custom question count (5–50), custom timer (5–60m), and live instant answer feedback with official explanations.
+   - **Question Palette**: Live sidebar navigation with color-coded states (Answered, Flagged, Unanswered).
+   - **Bookmarks**: Save difficult questions and instantly launch targeted practice tests containing only bookmarked questions.
 
----
+2. **Durable Local Storage & Automatic Cloud Sync**
+   - Test results persist immediately to browser `localStorage` (`student_app_test_results_v1`) before network transmission.
+   - Two-way sync: Merges historical attempts from `GET /api/v1/results` and pushes completed tests to `POST /api/v1/results/sync`.
 
-## 3. Prerequisites
+3. **Performance Analytics & Gamification**
+   - Interactive score progression area chart powered by **Recharts**.
+   - Identifies strongest and weakest syllabus subjects based on average score and accuracy.
+   - Subject-wise performance table with accuracy gauges and pass/fail indicators.
+   - Student leveling (XP points, streak tracker, achievement badges).
 
-- **Flutter SDK**: 3.24.x or higher (tested with Flutter 3.38.x / Dart 3.10.x).
-  Verify web support is enabled:
-  ```bash
-  flutter config --enable-web
-  ```
-- **Web Browser**: Google Chrome, Microsoft Edge, Firefox, or Safari.
-- **Shared Backend**: Node.js v18+ running on `http://localhost:3000`.
+4. **Multi-Language Support (English, Marathi & Hindi)**
+   - Complete translations for app UI, navigation, test interface, questions, options, and explanations.
+   - Instant language switching without page reload.
+
+5. **Study Materials & Document Viewer**
+   - Access official PDFs, Word docs, PowerPoint presentations, and notes from `GET /api/v1/student/study-materials`.
+   - In-app preview modal with formatted key points, text notes, and YouTube video embeds.
+   - Direct download support using web Blobs and signed URLs.
+
+6. **Institute Broadcasts & Announcements**
+   - Live notices from institute admin with priority badges.
+   - Offline-queued read receipts automatically synced with `PATCH /api/v1/student/broadcasts/:id/read`.
 
 ---
 
-## 4. Setup and Run Commands
+## 🛠️ Technology Stack
 
-### Install Dependencies
-From the `std_web` directory:
-```bash
-flutter pub get
-```
-
-### Run in Development Mode
-To run locally in Chrome:
-```bash
-flutter run -d chrome
-```
-
-To run on a specific port matching the backend CORS configuration:
-```bash
-flutter run -d chrome --web-port=5174
-```
-
-To run with custom backend environment parameters:
-```bash
-flutter run -d chrome --web-port=5174 \
-  --dart-define=API_BASE_URL=http://localhost:3000 \
-  --dart-define=SUPABASE_URL=https://<your-project>.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=<your-anon-key> \
-  --dart-define=GOOGLE_WEB_CLIENT_ID=<your-web-client-id>.apps.googleusercontent.com
-```
-
-### Run Automated Tests
-```bash
-flutter test
-```
-
-### Build for Production
-To compile an optimized, minified production release:
-```bash
-flutter build web --release
-```
-The deployable web assets will be generated in `std_web/build/web/`.
-
-To preview the built production site locally:
-```bash
-# Using python HTTP server
-python -m http.server 8080 --directory build/web
-
-# Or using npx serve
-npx serve build/web -p 8080
-```
+- **Framework:** React 19 + TypeScript (strict mode)
+- **Build Tool:** Vite 6
+- **Routing:** React Router v7
+- **Styling:** Tailwind CSS v3 with dark mode support
+- **State & Data Fetching:** TanStack Query v5 + React Context + Axios
+- **Authentication:** Supabase Client (`@supabase/supabase-js`) + Express Backend Bridge
+- **Icons:** Lucide React
+- **Charts:** Recharts
+- **Celebrations:** Canvas Confetti
 
 ---
 
-## 5. Configuration & Environment Variables
+## 📦 Directory Structure
 
-The application reads configuration through Flutter's compile-time `--dart-define` parameters with safe fallbacks:
-
-| Variable | Default Value | Description |
-| :--- | :--- | :--- |
-| `API_BASE_URL` | `http://localhost:3000` | Shared Node.js API base URL. |
-| `SUPABASE_URL` | Configured project URL | Supabase project endpoint for authentication. |
-| `SUPABASE_ANON_KEY` | Configured anon key | Supabase public anonymous key. |
-| `GOOGLE_WEB_CLIENT_ID` | Project OAuth Client ID | Google Cloud Web Client ID for Google Sign-In. |
-
-### Backend CORS Configuration
-Ensure that the URL where `std_web` runs is allowed in `backend/.env`:
-```env
-CORS_ORIGINS=http://localhost:5173,http://localhost:5174,http://localhost:8080
+```text
+std_web/
+├── public/                     # Static assets (MCQ bank JSON, subject icons, logo)
+│   ├── data/question_bank.json
+│   ├── icon/
+│   └── subjects/
+├── src/
+│   ├── app/
+│   │   ├── providers.tsx       # QueryClient, Theme, Language, Auth providers
+│   │   └── router.tsx          # Client-side routing & route guards
+│   ├── components/
+│   │   └── layout/
+│   │       ├── AppLayout.tsx   # Shell layout (Navbar, Content, Footer)
+│   │       ├── Navbar.tsx      # Responsive top navigation & mobile drawer
+│   │       └── Footer.tsx      # Institute footer
+│   ├── context/
+│   │   ├── AuthContext.tsx     # Student session & identity state
+│   │   ├── LanguageContext.tsx # EN / MR / HI localization
+│   │   └── ThemeContext.tsx    # Light / Dark theme switching
+│   ├── features/
+│   │   ├── auth/               # Login & Request Access screens
+│   │   ├── bookmarks/          # Bookmarked questions & practice
+│   │   ├── home/               # Dashboard, XP, streak, recent tests
+│   │   ├── notes/              # Study materials & document preview modal
+│   │   ├── notifications/      # Institute broadcasts & notices
+│   │   ├── question-bank/      # Full question search & topic filters
+│   │   ├── results/            # Results history, detail review, analytics
+│   │   ├── settings/           # Profile, language, theme, cache
+│   │   └── tests/              # Test hub, Active test engine, config modal
+│   ├── lib/
+│   │   ├── supabase.ts         # Supabase client initialization
+│   │   └── translations.ts     # Multi-language translation dictionary
+│   ├── services/
+│   │   ├── apiClient.ts        # Axios client with auto-fallback & Bearer token
+│   │   ├── authService.ts      # Authentication & authorization requests
+│   │   ├── questionBankService.ts # Bundled MCQ bank & offline cache
+│   │   ├── testGeneratorService.ts # Exam & Practice test generation algorithms
+│   │   ├── resultsService.ts   # Local result persistence, cloud sync & gamification
+│   │   ├── analyticsService.ts # Analytics computation & metrics
+│   │   ├── bookmarksService.ts # Bookmarks persistence
+│   │   ├── broadcastsService.ts # Broadcasts & read receipts
+│   │   └── studyMaterialsService.ts # Document access & downloads
+│   ├── types/
+│   │   └── index.ts            # Shared TypeScript interfaces & types
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── index.css
+│   └── vite-env.d.ts
+├── .env.example
+├── index.html
+├── package.json
+├── tailwind.config.js
+├── tsconfig.json
+└── vite.config.ts
 ```
 
 ---
 
-## 6. Browser Compatibility & Known Limitations
+## 🏃 Running Locally
 
-1. **Push Notifications**: Mobile background FCM push notifications (via `firebase_messaging` / system status bar trays) are mobile-native. For Web, student broadcasts and notifications are managed via live HTTP polling and persistent backend read/unread state.
-2. **Local File System**: On Android, files are downloaded to local storage directories (`/storage/emulated/0/Download`) using `path_provider`. On Web, downloads use native HTML5 Blob URL downloads directly to the user's browser download shelf.
-3. **Document Viewing**: PDF and Office document preview relies on opening external browser tabs or downloading rather than embedding native Android `open_filex` intents.
+### 1. Install Dependencies
+```bash
+cd std_web
+npm install
+```
+
+### 2. Configure Environment
+Copy `.env.example` to `.env` (already pre-configured with default values):
+```bash
+cp .env.example .env
+```
+
+| Variable | Description | Default |
+|---|---|---|
+| `VITE_BACKEND_BASE_URL` | Express API Base URL | `https://nuc-mcq-server.onrender.com` |
+| `VITE_SUPABASE_URL` | Supabase Project URL | `https://hwgnzhromdavlnttozai.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Public Supabase Key | *(pre-filled safe client key)* |
+| `VITE_GOOGLE_WEB_CLIENT_ID`| Google Web Client ID | *(pre-filled)* |
+
+### 3. Start Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:5174](http://localhost:5174) in your browser.
+
+### 4. Build for Production
+```bash
+npm run build
+```
+Generates a minified, production-ready static build inside `dist/`.
+
+### 5. Type-Check
+```bash
+npm run lint
+```
+Runs `tsc --noEmit` across all TypeScript modules.
