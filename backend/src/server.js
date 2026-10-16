@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { sql } from 'drizzle-orm';
 import { env } from './config/env.js';
 import { createApp } from './app.js';
 import { closeDatabaseConnection, database } from './database/client.js';
@@ -26,6 +27,33 @@ import { getFirebaseAdmin } from './config/firebase.js';
 
 // Initialize Firebase Admin SDK eagerly on startup
 getFirebaseAdmin();
+
+/**
+ * Idempotent startup migration: creates the broadcast_read table and its
+ * indexes if they were never applied to the production database.
+ * Safe to run on every cold start — all statements use IF NOT EXISTS.
+ */
+async function runStartupMigrations() {
+    try {
+        await database.execute(sql`
+            CREATE TABLE IF NOT EXISTS broadcast_read (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                broadcast_id UUID NOT NULL REFERENCES broadcast(id) ON DELETE CASCADE,
+                auth_user_id UUID NOT NULL,
+                read_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS broadcast_read_user_broadcast_idx
+                ON broadcast_read (auth_user_id, broadcast_id);
+            CREATE INDEX IF NOT EXISTS broadcast_read_user_idx
+                ON broadcast_read (auth_user_id);
+        `);
+        console.info('[startup] broadcast_read table migration: OK');
+    } catch (err) {
+        // Log but don't crash — the rest of the backend must stay operational.
+        console.error('[startup] broadcast_read migration failed (non-fatal):', err?.message ?? err);
+    }
+}
+
 const baseTokenVerifier = new SupabaseJwtVerifier({
     issuer: env.SUPABASE_JWT_ISSUER,
     audience: env.SUPABASE_JWT_AUDIENCE,
@@ -112,12 +140,16 @@ const server = createServer(app);
 server.timeout = 35_000;
 server.keepAliveTimeout = 65_000; // Must exceed ALB/Render's 60 s idle timeout.
 let isShuttingDown = false;
-server.listen(env.PORT, '0.0.0.0', () => {
-    console.info(`Backend listening on 0.0.0.0:${env.PORT} (${env.NODE_ENV}).`);
-});
-server.once('error', (error) => {
-    console.error('Backend startup failed.', error);
-    process.exitCode = 1;
+
+// Run idempotent startup migrations, then start accepting traffic.
+void runStartupMigrations().then(() => {
+    server.listen(env.PORT, '0.0.0.0', () => {
+        console.info(`Backend listening on 0.0.0.0:${env.PORT} (${env.NODE_ENV}).`);
+    });
+    server.once('error', (error) => {
+        console.error('Backend startup failed.', error);
+        process.exitCode = 1;
+    });
 });
 const shutdown = (signal) => {
     if (isShuttingDown) {

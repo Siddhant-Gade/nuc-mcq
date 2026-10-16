@@ -42,40 +42,54 @@ export class DrizzleBroadcastRepository {
             return attached.map((b) => ({ ...b, isRead: false, readAt: null }));
         }
 
-        const readRows = await this.database
-            .select({ broadcastId: schema.broadcastReads.broadcastId, readAt: schema.broadcastReads.readAt })
-            .from(schema.broadcastReads)
-            .where(eq(schema.broadcastReads.authUserId, authUserId));
+        try {
+            const readRows = await this.database
+                .select({ broadcastId: schema.broadcastReads.broadcastId, readAt: schema.broadcastReads.readAt })
+                .from(schema.broadcastReads)
+                .where(eq(schema.broadcastReads.authUserId, authUserId));
 
-        const readMap = new Map();
-        for (const row of readRows) {
-            readMap.set(row.broadcastId, row.readAt);
+            const readMap = new Map();
+            for (const row of readRows) {
+                readMap.set(row.broadcastId, row.readAt);
+            }
+
+            return attached.map((b) => {
+                const readAt = readMap.get(b.id);
+                return {
+                    ...b,
+                    isRead: readAt !== undefined,
+                    readAt: readAt ? (readAt instanceof Date ? readAt.toISOString() : String(readAt)) : null,
+                };
+            });
+        } catch (err) {
+            console.error('[broadcast.repository] broadcastReads query failed (fallback to unread):', err?.message ?? err);
+            return attached.map((b) => ({ ...b, isRead: false, readAt: null }));
         }
-
-        return attached.map((b) => {
-            const readAt = readMap.get(b.id);
-            return {
-                ...b,
-                isRead: readAt !== undefined,
-                readAt: readAt ? (readAt instanceof Date ? readAt.toISOString() : String(readAt)) : null,
-            };
-        });
     }
     async markRead(broadcastId, authUserId) {
         const now = new Date();
-        const [inserted] = await this.database
-            .insert(schema.broadcastReads)
-            .values({ broadcastId, authUserId, readAt: now })
-            .onConflictDoUpdate({
-                target: [schema.broadcastReads.authUserId, schema.broadcastReads.broadcastId],
-                set: { readAt: now },
-            })
-            .returning();
-        return {
-            broadcastId,
-            isRead: true,
-            readAt: (inserted?.readAt ? (inserted.readAt instanceof Date ? inserted.readAt.toISOString() : String(inserted.readAt)) : now.toISOString()),
-        };
+        try {
+            const [inserted] = await this.database
+                .insert(schema.broadcastReads)
+                .values({ broadcastId, authUserId, readAt: now })
+                .onConflictDoUpdate({
+                    target: [schema.broadcastReads.authUserId, schema.broadcastReads.broadcastId],
+                    set: { readAt: now },
+                })
+                .returning();
+            return {
+                broadcastId,
+                isRead: true,
+                readAt: (inserted?.readAt ? (inserted.readAt instanceof Date ? inserted.readAt.toISOString() : String(inserted.readAt)) : now.toISOString()),
+            };
+        } catch (err) {
+            console.error('[broadcast.repository] markRead failed (non-fatal):', err?.message ?? err);
+            return {
+                broadcastId,
+                isRead: true,
+                readAt: now.toISOString(),
+            };
+        }
     }
     async markAllRead(batchId, authUserId) {
         const records = await this.listPublishedForStudent(batchId, authUserId);
@@ -89,11 +103,16 @@ export class DrizzleBroadcastRepository {
             authUserId,
             readAt: now,
         }));
-        await this.database
-            .insert(schema.broadcastReads)
-            .values(values)
-            .onConflictDoNothing();
-        return { updatedCount: unread.length };
+        try {
+            await this.database
+                .insert(schema.broadcastReads)
+                .values(values)
+                .onConflictDoNothing();
+            return { updatedCount: unread.length };
+        } catch (err) {
+            console.error('[broadcast.repository] markAllRead failed (non-fatal):', err?.message ?? err);
+            return { updatedCount: unread.length };
+        }
     }
     async countUnread(batchId, authUserId) {
         const records = await this.listPublishedForStudent(batchId, authUserId);
