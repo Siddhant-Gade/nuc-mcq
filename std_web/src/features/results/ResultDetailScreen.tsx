@@ -93,24 +93,6 @@ export const ResultDetailScreen: React.FC = () => {
     };
   }, [id]);
 
-  if (!result) {
-    return (
-      <div className="min-h-[50vh] flex flex-col items-center justify-center space-y-4">
-        <p className="text-slate-500">Test result not found.</p>
-        <button
-          onClick={() => navigate('/results')}
-          className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold"
-        >
-          View Results History
-        </button>
-      </div>
-    );
-  }
-
-  const pct = result.totalQuestions > 0 ? (result.score / result.totalQuestions) * 100 : 0;
-  const isPass = pct >= 50;
-  const displaySubject = resultsService.getDisplaySubject(result, language);
-
   const wrongIdsSet = useMemo(() => {
     return new Set((result?.wrongQuestionIds || []).map((id) => String(id).trim().toLowerCase()));
   }, [result?.wrongQuestionIds]);
@@ -141,11 +123,30 @@ export const ResultDetailScreen: React.FC = () => {
   };
 
   const filteredQuestions = useMemo(() => {
+    if (!result) return [];
     if (filterMode === 'wrong') {
       return questions.filter((q) => isQuestionWrong(q.id));
     }
     return questions;
-  }, [filterMode, questions, wrongIdsSet]);
+  }, [filterMode, questions, wrongIdsSet, result]);
+
+  if (!result) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center space-y-4">
+        <p className="text-slate-500">Test result not found.</p>
+        <button
+          onClick={() => navigate('/results')}
+          className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold"
+        >
+          View Results History
+        </button>
+      </div>
+    );
+  }
+
+  const pct = result.totalQuestions > 0 ? (result.score / result.totalQuestions) * 100 : 0;
+  const isPass = pct >= 50;
+  const displaySubject = resultsService.getDisplaySubject(result, language);
 
   const handleRetake = () => {
     if (questions.length > 0) {

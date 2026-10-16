@@ -1,5 +1,5 @@
 import React from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useRouteError } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoginScreen } from '../features/auth/LoginScreen';
@@ -62,6 +62,31 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+// Friendly Route Error Fallback
+const RouteErrorFallback: React.FC = () => {
+  const error = useRouteError();
+  console.error('[RouteErrorFallback]', error);
+
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center space-y-4">
+      <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400 font-bold text-xl">
+        !
+      </div>
+      <h2 className="text-lg font-bold text-slate-800 dark:text-white">Something went wrong</h2>
+      <p className="text-xs text-slate-500 max-w-md">An unexpected error occurred while loading this view.</p>
+      <button
+        onClick={() => {
+          sessionStorage.removeItem('view_result');
+          window.location.href = '/results';
+        }}
+        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer"
+      >
+        Return to Results History
+      </button>
+    </div>
+  );
+};
+
 export const router = createBrowserRouter([
   {
     path: '/login',
@@ -91,6 +116,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/',
+    errorElement: <RouteErrorFallback />,
     element: (
       <ProtectedRoute>
         <AppLayout />
