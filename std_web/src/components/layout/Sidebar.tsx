@@ -13,7 +13,6 @@ import {
   ChevronRight,
   LogOut,
   X,
-  Menu,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -100,46 +99,49 @@ export const Sidebar: React.FC = () => {
           isSidebarCollapsed ? 'w-[68px]' : 'w-60'
         }`}
       >
-        {/* Upper div: ONLY logo and text */}
+        {/* Brand Header — Admin Panel Style with Collapse Button in Top Right */}
         <div
           className={`h-16 flex items-center border-b border-slate-100 dark:border-slate-800/80 px-3.5 ${
-            isSidebarCollapsed ? 'justify-center' : 'justify-start'
+            isSidebarCollapsed ? 'justify-center' : 'justify-between gap-2'
           }`}
         >
-          <NavLink
-            to="/"
-            className={`flex items-center gap-3 overflow-hidden group ${
-              isSidebarCollapsed ? 'justify-center' : ''
+          <div
+            onClick={isSidebarCollapsed ? toggleSidebarCollapsed : undefined}
+            title={isSidebarCollapsed ? 'Expand sidebar' : undefined}
+            className={`flex items-center gap-2.5 overflow-hidden min-w-0 ${
+              isSidebarCollapsed ? 'cursor-pointer justify-center' : 'flex-1'
             }`}
           >
-            <img
-              src="/icon/small_Icon.png"
-              alt="NUC Logo"
-              className="w-9 h-9 object-contain rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 p-0.5 bg-white shrink-0 group-hover:scale-105 transition-transform"
-            />
+            <NavLink to="/" className="shrink-0 flex items-center group">
+              <img
+                src="/icon/small_Icon.png"
+                alt="NUC Logo"
+                className="w-9 h-9 object-contain rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 p-0.5 bg-white shrink-0 group-hover:scale-105 transition-transform"
+              />
+            </NavLink>
             {!isSidebarCollapsed && (
-              <div className="flex flex-col overflow-hidden whitespace-nowrap">
+              <div className="flex flex-col min-w-0 overflow-hidden">
                 <span className="font-bold text-sm text-slate-900 dark:text-white leading-tight truncate">
-                  New Unique
+                  New Unique Computers
                 </span>
-                <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold tracking-wide">
+                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold tracking-wide uppercase truncate">
                   MS-CIT Student
                 </span>
               </div>
             )}
-          </NavLink>
-        </div>
+          </div>
 
-        {/* Below div: Hamburger menu option placed in right top corner */}
-        <div className={`px-3 pt-2.5 pb-1 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-end'}`}>
-          <button
-            onClick={toggleSidebarCollapsed}
-            aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          {/* Admin-style Desktop collapse toggle button on the right corner of top div */}
+          {!isSidebarCollapsed && (
+            <button
+              onClick={toggleSidebarCollapsed}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+              className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center shrink-0 transition-colors cursor-pointer shadow-xs"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Navigation Items List */}
