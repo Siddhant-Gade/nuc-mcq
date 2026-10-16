@@ -668,7 +668,10 @@ export const DashboardTab: React.FC = () => {
                     return (
                       <tr
                         key={resultKey}
-                        onClick={() => navigate(`/results/${resultKey}`)}
+                        onClick={() => {
+                          sessionStorage.setItem('view_result', JSON.stringify(result));
+                          navigate(`/results/${resultKey}`);
+                        }}
                         className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
                       >
                         {/* Exam Title */}

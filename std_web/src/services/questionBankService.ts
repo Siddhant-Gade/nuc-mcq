@@ -176,7 +176,61 @@ class QuestionBankService {
   }
 
   getQuestionById(id: string): QuestionModel | undefined {
-    return this.questions.find((q) => q.id === id);
+    if (!id) return undefined;
+    const cleanId = String(id).trim();
+    if (!cleanId) return undefined;
+    const lowerId = cleanId.toLowerCase();
+
+    // 1. Direct exact match
+    let found = this.questions.find((q) => q.id === cleanId);
+    if (found) return found;
+
+    // 2. Case-insensitive match
+    found = this.questions.find((q) => q.id.toLowerCase() === lowerId);
+    if (found) return found;
+
+    // 3. Match with/without 'q_' prefix
+    const stripped = lowerId.replace(/^q_/, '');
+    found = this.questions.find((q) => q.id.toLowerCase().replace(/^q_/, '') === stripped);
+    if (found) return found;
+
+    // 4. Match common topic abbreviations (e.g. Q_CF_1 -> Q_computerFundamentals_1)
+    const topicAbbrMap: Record<string, string> = {
+      cf: 'computerfundamentals',
+      wd: 'word',
+      ex: 'excel',
+      pp: 'powerpoint',
+      os: 'os',
+      ol: 'outlook',
+      it: 'internet',
+      pm: 'pagemaker',
+    };
+    const parts = stripped.split('_');
+    if (parts.length >= 2) {
+      const abbr = parts[0];
+      const rest = parts.slice(1).join('_');
+      const expandedTopic = topicAbbrMap[abbr];
+      if (expandedTopic) {
+        found = this.questions.find((q) => {
+          const qStripped = q.id.toLowerCase().replace(/^q_/, '');
+          return qStripped.startsWith(expandedTopic) && qStripped.endsWith(rest);
+        });
+        if (found) return found;
+      }
+    }
+
+    // 5. Match by numeric serial number if cleanId ends with a number
+    const numMatch = cleanId.match(/(\d+)$/);
+    if (numMatch) {
+      const num = parseInt(numMatch[1], 10);
+      found = this.questions.find((q) => {
+        const qMatch = q.id.match(/(\d+)$/);
+        return qMatch ? parseInt(qMatch[1], 10) === num : false;
+      });
+      if (found) return found;
+    }
+
+    return undefined;
   }
 
   getTopicCounts(): Record<QuestionTopicCode, number> {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Bookmark,
@@ -52,12 +52,27 @@ export const ResultDetailScreen: React.FC = () => {
 
       if (isMounted && found) {
         setResult(found);
-        // Load actual QuestionModels for review
+        // Load actual QuestionModels for review (from both studentAnswers and wrongQuestionIds)
+        const qIdSet = new Set<string>();
+        if (found.studentAnswers && typeof found.studentAnswers === 'object') {
+          Object.keys(found.studentAnswers).forEach((qId) => {
+            if (qId) qIdSet.add(String(qId).trim());
+          });
+        }
+        if (Array.isArray(found.wrongQuestionIds)) {
+          found.wrongQuestionIds.forEach((qId) => {
+            if (qId) qIdSet.add(String(qId).trim());
+          });
+        }
+
         const qList: QuestionModel[] = [];
-        const qIds = Object.keys(found.studentAnswers);
-        for (const qId of qIds) {
+        for (const qId of qIdSet) {
           const q = questionBankService.getQuestionById(qId);
-          if (q) qList.push(q);
+          if (q) {
+            if (!qList.some((existing) => existing.id === q.id)) {
+              qList.push(q);
+            }
+          }
         }
         setQuestions(qList);
 
@@ -96,10 +111,41 @@ export const ResultDetailScreen: React.FC = () => {
   const isPass = pct >= 50;
   const displaySubject = resultsService.getDisplaySubject(result, language);
 
-  const filteredQuestions =
-    filterMode === 'wrong'
-      ? questions.filter((q) => result.wrongQuestionIds.includes(q.id))
-      : questions;
+  const wrongIdsSet = useMemo(() => {
+    return new Set((result?.wrongQuestionIds || []).map((id) => String(id).trim().toLowerCase()));
+  }, [result?.wrongQuestionIds]);
+
+  const isQuestionWrong = (qId: string): boolean => {
+    if (!result) return false;
+    const lower = String(qId).trim().toLowerCase();
+    if (wrongIdsSet.has(lower)) return true;
+    const stripped = lower.replace(/^q_/, '');
+    for (const w of wrongIdsSet) {
+      if (w.replace(/^q_/, '') === stripped) return true;
+      const wNum = w.match(/(\d+)$/);
+      const qNum = lower.match(/(\d+)$/);
+      if (wNum && qNum && wNum[1] === qNum[1]) return true;
+    }
+    return false;
+  };
+
+  const getStudentChoice = (qId: string): number | undefined => {
+    if (!result?.studentAnswers) return undefined;
+    if (result.studentAnswers[qId] !== undefined) return result.studentAnswers[qId];
+    const lower = qId.toLowerCase();
+    for (const [key, val] of Object.entries(result.studentAnswers)) {
+      if (key.toLowerCase() === lower) return val;
+      if (key.toLowerCase().replace(/^q_/, '') === lower.replace(/^q_/, '')) return val;
+    }
+    return undefined;
+  };
+
+  const filteredQuestions = useMemo(() => {
+    if (filterMode === 'wrong') {
+      return questions.filter((q) => isQuestionWrong(q.id));
+    }
+    return questions;
+  }, [filterMode, questions, wrongIdsSet]);
 
   const handleRetake = () => {
     if (questions.length > 0) {
@@ -231,15 +277,33 @@ export const ResultDetailScreen: React.FC = () => {
         <h3 className="text-base font-bold text-slate-900 dark:text-white">Question Review</h3>
 
         {filteredQuestions.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center text-slate-500 text-xs">
-            {filterMode === 'wrong'
-              ? 'Awesome! You got every question right on this test.'
-              : 'Detailed question texts were stored offline.'}
+          <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center text-slate-500 text-xs space-y-2">
+            {filterMode === 'wrong' ? (
+              result.wrongCount === 0 ? (
+                <>
+                  <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                    Outstanding Performance! 🏆
+                  </p>
+                  <p>Awesome! You got every question right on this test.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-rose-500 text-sm">
+                    {result.wrongCount} question{result.wrongCount > 1 ? 's were' : ' was'} answered incorrectly.
+                  </p>
+                  <p>Question details could not be loaded from the question bank.</p>
+                </>
+              )
+            ) : (
+              <p>Detailed question texts were stored offline or are not available for this test record.</p>
+            )}
           </div>
         ) : (
           filteredQuestions.map((q, idx) => {
-            const studentChoice = result.studentAnswers[q.id];
-            const isCorrect = studentChoice === q.correctOptionIndex;
+            const studentChoice = getStudentChoice(q.id);
+            const hasStudentChoice = studentChoice !== undefined && studentChoice !== null;
+            const isWrong = isQuestionWrong(q.id);
+            const isCorrect = hasStudentChoice ? studentChoice === q.correctOptionIndex : !isWrong;
 
             const qText =
               language === 'mr' && q.questionTextMr?.trim()
@@ -316,7 +380,7 @@ export const ResultDetailScreen: React.FC = () => {
                 {/* Options */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {options.map((opt, oIdx) => {
-                    const isSelected = studentChoice === oIdx;
+                    const isSelected = hasStudentChoice && studentChoice === oIdx;
                     const isOfficialCorrect = q.correctOptionIndex === oIdx;
 
                     let optBg = 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300';
@@ -336,10 +400,16 @@ export const ResultDetailScreen: React.FC = () => {
                         </span>
                         <span className="flex-1">{opt}</span>
                         {isOfficialCorrect && (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px] shrink-0">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Correct Answer</span>
+                          </div>
                         )}
                         {isSelected && !isOfficialCorrect && (
-                          <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                          <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold text-[11px] shrink-0">
+                            <XCircle className="w-4 h-4" />
+                            <span>Your Choice</span>
+                          </div>
                         )}
                       </div>
                     );
