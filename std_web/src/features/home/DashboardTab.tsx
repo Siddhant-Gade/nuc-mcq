@@ -650,16 +650,16 @@ export const DashboardTab: React.FC = () => {
             ) : (
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th className="pb-3 pr-4 font-semibold">Exam</th>
-                    <th className="pb-3 px-3 font-semibold text-center">Questions</th>
-                    <th className="pb-3 px-3 font-semibold text-center">Date Taken</th>
-                    <th className="pb-3 px-3 font-semibold text-center">Previous</th>
-                    <th className="pb-3 px-3 font-semibold text-center">Duration</th>
-                    <th className="pb-3 pl-4 font-semibold">Score</th>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="pb-3 pr-4 font-semibold text-xs">Exam</th>
+                    <th className="pb-3 px-3 font-semibold text-center text-xs">Questions</th>
+                    <th className="pb-3 px-3 font-semibold text-center text-xs">Date Taken</th>
+                    <th className="pb-3 px-3 font-semibold text-center text-xs">Previous</th>
+                    <th className="pb-3 px-3 font-semibold text-center text-xs">Duration</th>
+                    <th className="pb-3 pl-4 font-semibold text-xs">Score</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
                   {recentExams.map((result, idx) => {
                     const pct =
                       result.totalQuestions > 0
@@ -693,42 +693,42 @@ export const DashboardTab: React.FC = () => {
                         className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
                       >
                         {/* Exam Title */}
-                        <td className="py-3.5 pr-4 font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">
+                        <td className="py-4 pr-4 font-semibold text-sm text-slate-900 dark:text-white truncate max-w-[220px]">
                           {displayName}
                         </td>
 
                         {/* Questions count */}
-                        <td className="py-3.5 px-3 text-center text-slate-600 dark:text-slate-300 font-medium">
+                        <td className="py-4 px-3 text-center text-slate-600 dark:text-slate-300 font-medium text-sm">
                           {result.totalQuestions}
                         </td>
 
                         {/* Date Taken */}
-                        <td className="py-3.5 px-3 text-center text-slate-500 dark:text-slate-400 font-medium">
+                        <td className="py-4 px-3 text-center text-slate-500 dark:text-slate-400 font-medium text-sm">
                           {dateStr}
                         </td>
 
                         {/* Previous Score Badge */}
-                        <td className="py-3.5 px-3 text-center">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                        <td className="py-4 px-3 text-center">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
                             {idx === 0 ? 'N/A' : '92%'}
                           </span>
                         </td>
 
                         {/* Duration */}
-                        <td className="py-3.5 px-3 text-center text-slate-600 dark:text-slate-300 font-medium">
+                        <td className="py-4 px-3 text-center text-slate-600 dark:text-slate-300 font-medium text-sm">
                           {durationStr}
                         </td>
 
                         {/* Score with Progress Bar */}
-                        <td className="py-3.5 pl-4">
+                        <td className="py-4 pl-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-24 sm:w-28 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                            <div className="w-24 sm:w-28 h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                                 style={{ width: `${Math.max(pct, 4)}%` }}
                               />
                             </div>
-                            <span className="font-bold text-slate-900 dark:text-white min-w-[32px]">
+                            <span className="font-bold text-sm text-slate-900 dark:text-white min-w-[36px]">
                               {pct}%
                             </span>
                           </div>
@@ -749,7 +749,7 @@ export const DashboardTab: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setRightTab('notices')}
-                  className={`text-sm font-bold pb-0.5 border-b-2 transition-colors cursor-pointer ${
+                  className={`text-base font-bold pb-0.5 border-b-2 transition-colors cursor-pointer ${
                     rightTab === 'notices'
                       ? 'border-blue-600 text-slate-900 dark:text-white'
                       : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -760,7 +760,7 @@ export const DashboardTab: React.FC = () => {
                 <span className="text-slate-300 dark:text-slate-700">|</span>
                 <button
                   onClick={() => setRightTab('leaderboard')}
-                  className={`text-sm font-bold pb-0.5 border-b-2 transition-colors cursor-pointer ${
+                  className={`text-base font-bold pb-0.5 border-b-2 transition-colors cursor-pointer ${
                     rightTab === 'leaderboard'
                       ? 'border-blue-600 text-slate-900 dark:text-white'
                       : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -774,7 +774,7 @@ export const DashboardTab: React.FC = () => {
                 onClick={() =>
                   navigate(rightTab === 'notices' ? '/notices' : '/results')
                 }
-                className="px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="px-3.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 See More
               </button>
@@ -803,11 +803,11 @@ export const DashboardTab: React.FC = () => {
                       <div
                         key={item.id}
                         onClick={() => navigate('/notices')}
-                        className="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/40 bg-slate-50/50 dark:bg-slate-800/40 transition-colors cursor-pointer group"
+                        className="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/40 bg-slate-50/50 dark:bg-slate-800/40 transition-colors cursor-pointer group"
                       >
-                        <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                            className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
                               isUrgent
                                 ? 'bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400'
                                 : isHigh
@@ -817,15 +817,15 @@ export const DashboardTab: React.FC = () => {
                           >
                             {item.priority || 'NORMAL'}
                           </span>
-                          <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                          <span className="text-xs text-slate-400 flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
                             {dateStr}
                           </span>
                         </div>
-                        <h3 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {item.title}
                         </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                           {item.message}
                         </p>
                       </div>
@@ -838,37 +838,37 @@ export const DashboardTab: React.FC = () => {
             {/* TAB 2: Top Performers (Matching Reference Screenshot) */}
             {rightTab === 'leaderboard' && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-slate-800">
                   <span>Student</span>
                   <span>Score / Rank</span>
                 </div>
 
                 {topPerformers.map((student) => (
                   <div
-                    key={student.rank}
-                    className={`flex items-center justify-between p-2.5 rounded-2xl transition-colors ${
+                    key={student.name}
+                    className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
                       student.isCurrent
                         ? 'bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50'
                         : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-lg">{student.badge}</span>
-                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs">
+                      <span className="text-xl">{student.badge}</span>
+                      <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm">
                         {student.initial}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">
                           {student.name}
                         </span>
-                        <span className="text-[11px] text-slate-400 font-medium">
+                        <span className="text-xs text-slate-400 font-medium">
                           {student.score}% accuracy
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
-                      <TrendingUp className="w-3 h-3" />
+                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                      <TrendingUp className="w-3.5 h-3.5" />
                       <span>{student.delta}</span>
                     </div>
                   </div>
@@ -877,9 +877,9 @@ export const DashboardTab: React.FC = () => {
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             <span>Institute Batch: {identity?.batchName || 'MS-CIT 2026'}</span>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">
+            <span className="font-bold text-blue-600 dark:text-blue-400">
               {stats.levelTitle}
             </span>
           </div>
