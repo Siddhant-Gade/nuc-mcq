@@ -8,7 +8,6 @@ import {
   Cell,
 } from 'recharts';
 import {
-  Sparkles,
   CheckCircle2,
   Clock,
   Target,
@@ -32,7 +31,6 @@ import { analyticsService } from '../../services/analyticsService';
 import { broadcastsService } from '../../services/broadcastsService';
 import { questionBankService } from '../../services/questionBankService';
 import { testGeneratorService } from '../../services/testGeneratorService';
-import { TestConfigModal } from '../tests/TestConfigModal';
 
 export const DashboardTab: React.FC = () => {
   const { identity } = useAuth();
@@ -43,7 +41,6 @@ export const DashboardTab: React.FC = () => {
   const [allResults, setAllResults] = useState<TestResultModel[]>([]);
   const [stats, setStats] = useState<StudentStats>(() => resultsService.getStudentStats());
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [summaryMode, setSummaryMode] = useState<'overall' | 'recent'>('overall');
   const [rightTab, setRightTab] = useState<'notices' | 'leaderboard'>('notices');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -214,30 +211,18 @@ export const DashboardTab: React.FC = () => {
       {/* ========================================================= */}
       {/* 1. DASHBOARD HEADER AREA                                  */}
       {/* ========================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <span>{welcomeGreeting}</span>
-            <span className="text-3xl sm:text-4xl select-none">👋</span>
-          </h1>
-          <p className="text-[15px] sm:text-base text-slate-500 dark:text-slate-400 mt-1">
-            {language === 'mr'
-              ? 'तुमची प्रगती आणि एमएस-सीआयटी सराव चाचण्यांचा आढावा घ्या.'
-              : language === 'hi'
-              ? 'अपनी प्रगति और एमएस-सीआईटी अभ्यास परीक्षाओं का विवरण देखें।'
-              : 'Welcome back! Track your progress and practice tests.'}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => setIsConfigOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 dark:border-blue-800/80 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 text-sm font-semibold hover:bg-blue-50/70 dark:hover:bg-blue-950/40 shadow-xs transition-colors cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-blue-500" />
-            <span>AI Practice Helper</span>
-          </button>
-        </div>
+      <div className="space-y-1">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <span>{welcomeGreeting}</span>
+          <span className="text-3xl sm:text-4xl select-none">👋</span>
+        </h1>
+        <p className="text-[15px] sm:text-base text-slate-500 dark:text-slate-400">
+          {language === 'mr'
+            ? 'तुमची प्रगती आणि एमएस-सीआयटी सराव चाचण्यांचा आढावा घ्या.'
+            : language === 'hi'
+            ? 'अपनी प्रगति और एमएस-सीआईटी अभ्यास परीक्षाओं का विवरण देखें।'
+            : 'Welcome back! Track your progress and practice tests.'}
+        </p>
       </div>
 
       {/* ========================================================= */}
@@ -757,14 +742,6 @@ export const DashboardTab: React.FC = () => {
           </span>
         </div>
       </div>
-
-      {/* Test Config Modal */}
-      {isConfigOpen && (
-        <TestConfigModal
-          isOpen={isConfigOpen}
-          onClose={() => setIsConfigOpen(false)}
-        />
-      )}
     </div>
   );
 };

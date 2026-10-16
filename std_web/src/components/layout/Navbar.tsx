@@ -4,7 +4,6 @@ import {
   Menu,
   Moon,
   Sun,
-  Bell,
   Settings,
   LogOut,
   Sparkles,
@@ -16,7 +15,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useLayout } from '../../context/LayoutContext';
 import { Language } from '../../types';
-import { broadcastsService } from '../../services/broadcastsService';
 
 export const Navbar: React.FC = () => {
   const { identity, signOut } = useAuth();
@@ -26,7 +24,6 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [unreadCount, setUnreadCount] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -42,25 +39,6 @@ export const Navbar: React.FC = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Sync unread announcements count
-  useEffect(() => {
-    let isMounted = true;
-    const checkUnread = async () => {
-      try {
-        const count = await broadcastsService.fetchUnreadCount();
-        if (isMounted) setUnreadCount(count);
-      } catch {
-        // Ignore
-      }
-    };
-    checkUnread();
-    const interval = setInterval(checkUnread, 30000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
   }, []);
 
   const handleHamburgerClick = () => {
@@ -173,17 +151,6 @@ export const Navbar: React.FC = () => {
               )}
             </button>
 
-            {/* Notification Bell */}
-            <NavLink
-              to="/notices"
-              title={t('tab_notices')}
-              className="relative p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
-              )}
-            </NavLink>
 
             {/* Settings Gear */}
             <NavLink
