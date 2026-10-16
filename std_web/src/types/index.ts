@@ -240,3 +240,18 @@ export interface Broadcast {
   readAt?: string | null;
   isRead?: boolean;
 }
+
+export interface LeaderboardEntry {
+  rank: number;
+  badge: string;
+  studentProfileId: string;
+  name: string;
+  studentId: string;
+  initial: string;
+  score: number;
+  accuracy: number;
+  totalTests: number;
+  batchName?: string | null;
+  isCurrent: boolean;
+}
+

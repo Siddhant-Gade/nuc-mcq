@@ -28,4 +28,18 @@ export class ResultController {
         const records = await this.service.getHistory(identity.profile.id);
         response.status(200).json(successResponse(records));
     };
+    getLeaderboard = async (request, response) => {
+        const authUserId = request.auth?.authUserId;
+        if (authUserId === undefined) {
+            throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Authentication token is required.');
+        }
+        const identity = await this.requireActiveStudent(authUserId, request.auth?.email);
+        const batchId = request.query.batchId || (request.query.scope === 'batch' ? identity.profile.batchId : undefined);
+        const leaderboard = await this.service.getLeaderboard({
+            batchId,
+            instituteId: identity.profile.instituteId,
+            currentStudentProfileId: identity.profile.id,
+        });
+        response.status(200).json(successResponse(leaderboard));
+    };
 }

@@ -49,4 +49,7 @@ export class ResultService {
     async getHistory(studentProfileId) {
         return this.repository.findByStudentProfileId(studentProfileId);
     }
+    async getLeaderboard(options) {
+        return this.repository.getLeaderboard(options);
+    }
 }

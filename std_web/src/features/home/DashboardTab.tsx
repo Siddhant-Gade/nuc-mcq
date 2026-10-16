@@ -21,6 +21,7 @@ import {
   Bell,
   FileText,
   Calendar,
+  Trophy,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -30,6 +31,7 @@ import {
   Broadcast,
   QuestionTopicCode,
   TOPIC_CONFIG,
+  LeaderboardEntry,
 } from '../../types';
 import { resultsService } from '../../services/resultsService';
 import { analyticsService } from '../../services/analyticsService';
@@ -50,6 +52,8 @@ export const DashboardTab: React.FC = () => {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [summaryMode, setSummaryMode] = useState<'overall' | 'recent'>('overall');
   const [rightTab, setRightTab] = useState<'notices' | 'leaderboard'>('notices');
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
 
   // Load and subscribe to real data
   useEffect(() => {
@@ -74,6 +78,21 @@ export const DashboardTab: React.FC = () => {
         if (isMounted) setBroadcasts(published.slice(0, 4));
       } catch {
         // Ignore
+      }
+
+      // Load real student leaderboard from database
+      try {
+        setIsLeaderboardLoading(true);
+        const lb = await resultsService.getLeaderboard();
+        if (isMounted && Array.isArray(lb)) {
+          setLeaderboard(lb);
+        }
+      } catch (err) {
+        console.warn('Failed to load leaderboard', err);
+      } finally {
+        if (isMounted) {
+          setIsLeaderboardLoading(false);
+        }
       }
     };
 
@@ -214,37 +233,32 @@ export const DashboardTab: React.FC = () => {
     return allResults.slice(0, 4);
   }, [allResults]);
 
-  // Mock Top Performers (Institute Leaderboard based on current student + peers)
-  const topPerformers = useMemo(() => {
-    const studentScore = stats.averageScore || 85;
-    return [
-      {
-        rank: 1,
-        name: 'Snehal Patil',
-        score: Math.max(94, Math.round(studentScore + 4)),
-        delta: '+4',
-        initial: 'S',
-        badge: '🥇',
-      },
-      {
-        rank: 2,
-        name: identity?.name || 'You (Current Student)',
-        score: Math.round(studentScore),
-        delta: '+3',
-        initial: (identity?.name || 'Y').charAt(0).toUpperCase(),
-        badge: '🥈',
-        isCurrent: true,
-      },
-      {
-        rank: 3,
-        name: 'Rohan Shinde',
-        score: Math.max(78, Math.round(studentScore - 6)),
-        delta: '+1',
-        initial: 'R',
-        badge: '🥉',
-      },
-    ];
-  }, [stats.averageScore, identity?.name]);
+  // Real Top Performers (Queried from Database via Results Service)
+  const displayedLeaderboard = useMemo(() => {
+    if (leaderboard.length > 0) {
+      return leaderboard;
+    }
+    // Fallback: If no other peers yet or offline, show current logged-in student (never mock dummy names)
+    if (identity?.name) {
+      const studentScore = stats.averageScore || 0;
+      return [
+        {
+          rank: 1,
+          badge: '🥇',
+          studentProfileId: identity?.studentId || 'current',
+          name: identity.name,
+          studentId: identity?.studentId || '',
+          initial: (identity.name || 'S').trim().charAt(0).toUpperCase(),
+          score: Math.round(studentScore),
+          accuracy: studentScore,
+          totalTests: stats.totalTests || 0,
+          batchName: identity?.batchName || '',
+          isCurrent: true,
+        },
+      ];
+    }
+    return [];
+  }, [leaderboard, identity, stats]);
 
   const handleStartMockExam = () => {
     const test = testGeneratorService.generateExamTest();
@@ -272,11 +286,11 @@ export const DashboardTab: React.FC = () => {
       {/* ========================================================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <span>{welcomeGreeting}</span>
-            <span className="text-2xl sm:text-3xl select-none">👋</span>
+            <span className="text-3xl sm:text-4xl select-none">👋</span>
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-[15px] sm:text-base text-slate-500 dark:text-slate-400 mt-1">
             {language === 'mr'
               ? 'तुमची प्रगती आणि एमएस-सीआयटी सराव चाचण्यांचा आढावा घ्या.'
               : language === 'hi'
@@ -306,7 +320,7 @@ export const DashboardTab: React.FC = () => {
           <div className="absolute -right-8 -bottom-8 w-40 h-40 rounded-full bg-white/10 blur-xl pointer-events-none" />
 
           <div>
-            <span className="text-xs font-semibold text-blue-100 tracking-wide uppercase">
+            <span className="text-sm font-semibold text-blue-100 tracking-wide uppercase">
               Last 5 Exams Average
             </span>
             <div className="text-4xl sm:text-5xl font-black tracking-tight text-white mt-2">
@@ -328,7 +342,7 @@ export const DashboardTab: React.FC = () => {
         {/* Card 2: Subject Performance / Quant Accuracy (Pale Blue Tint) */}
         <div className="rounded-3xl bg-sky-50/60 dark:bg-slate-900 border border-sky-100 dark:border-slate-800 p-6 flex flex-col justify-between shadow-xs min-h-[170px]">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
               Quant Performance
             </span>
             <div className="w-9 h-9 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center shadow-xs">
@@ -342,7 +356,7 @@ export const DashboardTab: React.FC = () => {
               : '78%'}
           </div>
 
-          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          <div className="text-[13px] text-slate-500 dark:text-slate-400 truncate">
             {analytics.weakestSubject ? (
               <span>Weakest topic: {analytics.weakestSubject.subjectName.toLowerCase()}</span>
             ) : analytics.strongestSubject ? (
@@ -356,7 +370,7 @@ export const DashboardTab: React.FC = () => {
         {/* Card 3: Tests Completed (Pale Green Tint) */}
         <div className="rounded-3xl bg-emerald-50/60 dark:bg-slate-900 border border-emerald-100 dark:border-slate-800 p-6 flex flex-col justify-between shadow-xs min-h-[170px]">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
               Courses Completed
             </span>
             <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
@@ -368,7 +382,7 @@ export const DashboardTab: React.FC = () => {
             {stats.totalTests < 10 ? `0${stats.totalTests}` : stats.totalTests}
           </div>
 
-          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          <div className="text-[13px] text-slate-500 dark:text-slate-400 truncate">
             {stats.totalTests > 0
               ? `Successfully finished tests (${stats.passCount} passed)`
               : 'Successfully finished courses'}
@@ -378,7 +392,7 @@ export const DashboardTab: React.FC = () => {
         {/* Card 4: Practice Drills In Progress (Pale Amber Tint) */}
         <div className="rounded-3xl bg-amber-50/60 dark:bg-slate-900 border border-amber-100 dark:border-slate-800 p-6 flex flex-col justify-between shadow-xs min-h-[170px]">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
               Course In Progress
             </span>
             <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-xs">
@@ -835,44 +849,61 @@ export const DashboardTab: React.FC = () => {
               </div>
             )}
 
-            {/* TAB 2: Top Performers (Matching Reference Screenshot) */}
+            {/* TAB 2: Top Performers (Real Database Leaderboard) */}
             {rightTab === 'leaderboard' && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-slate-800">
                   <span>Student</span>
-                  <span>Score / Rank</span>
+                  <span>Accuracy / Rank</span>
                 </div>
 
-                {topPerformers.map((student) => (
-                  <div
-                    key={student.name}
-                    className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
-                      student.isCurrent
-                        ? 'bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{student.badge}</span>
-                      <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm">
-                        {student.initial}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900 dark:text-white">
-                          {student.name}
-                        </span>
-                        <span className="text-xs text-slate-400 font-medium">
-                          {student.score}% accuracy
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      <span>{student.delta}</span>
-                    </div>
+                {isLeaderboardLoading ? (
+                  <div className="space-y-2.5 py-2">
+                    <div className="h-14 bg-slate-100 dark:bg-slate-800/60 rounded-2xl animate-pulse" />
+                    <div className="h-14 bg-slate-100 dark:bg-slate-800/60 rounded-2xl animate-pulse" />
                   </div>
-                ))}
+                ) : displayedLeaderboard.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 text-xs">
+                    <Trophy className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                    <span>No student rankings available yet</span>
+                  </div>
+                ) : (
+                  displayedLeaderboard.map((student) => (
+                    <div
+                      key={student.studentProfileId || student.studentId || student.name}
+                      className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
+                        student.isCurrent
+                          ? 'bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{student.badge}</span>
+                        <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm">
+                          {student.initial}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <span>{student.name}</span>
+                            {student.isCurrent && (
+                              <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-100/80 dark:bg-blue-900/60 px-1.5 py-0.5 rounded-md">
+                                You
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-xs text-slate-400 font-medium">
+                            {student.score}% accuracy • {student.totalTests} {student.totalTests === 1 ? 'test' : 'tests'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span>{student.score > 0 ? `${student.score}%` : `#${student.rank}`}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { Language, StudentStats, SyncStatus, TestMode, TestResultModel, TOPIC_CONFIG, QuestionTopicCode } from '../types';
+import { Language, StudentStats, SyncStatus, TestMode, TestResultModel, TOPIC_CONFIG, QuestionTopicCode, LeaderboardEntry } from '../types';
 import { apiClient } from './apiClient';
 
 const BASE_RESULTS_STORAGE_KEY = 'student_app_test_results_v1';
@@ -468,6 +468,33 @@ class ResultsService {
     }
 
     return lang === 'mr' ? 'एमएस-सीआयटी सराव' : lang === 'hi' ? 'एमएस-सीआईटी अभ्यास' : 'MS-CIT Practice';
+  }
+
+  async getLeaderboard(scope?: 'batch' | 'institute'): Promise<LeaderboardEntry[]> {
+    try {
+      const params = scope ? { scope } : {};
+      let rows: LeaderboardEntry[] = [];
+      try {
+        const res = await apiClient.get('/api/v1/results/leaderboard', { params });
+        if (Array.isArray(res.data?.data)) {
+          rows = res.data.data;
+        }
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 404) {
+          const resFallback = await apiClient.get('/api/v1/student/results/leaderboard', { params });
+          if (Array.isArray(resFallback.data?.data)) {
+            rows = resFallback.data.data;
+          }
+        } else {
+          throw err;
+        }
+      }
+      return rows;
+    } catch (err) {
+      console.warn('[ResultsService] Could not fetch real leaderboard:', err);
+      return [];
+    }
   }
 
   clear(): void {
