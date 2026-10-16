@@ -2,10 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
   Tooltip,
   PieChart,
   Pie,
@@ -29,8 +25,6 @@ import {
   StudentStats,
   TestResultModel,
   Broadcast,
-  QuestionTopicCode,
-  TOPIC_CONFIG,
   LeaderboardEntry,
 } from '../../types';
 import { resultsService } from '../../services/resultsService';
@@ -130,70 +124,6 @@ export const DashboardTab: React.FC = () => {
     );
     return Math.round(sum / recent5.length);
   }, [allResults]);
-
-  // Subject Performance Bar Chart Data (aggregates both topic-specific tests & comprehensive exam questions)
-  const subjectChartData = useMemo(() => {
-    const topics: { code: QuestionTopicCode; label: string }[] = [
-      { code: 'computerFundamentals', label: 'Basics' },
-      { code: 'os', label: 'Windows OS' },
-      { code: 'word', label: 'MS Word' },
-      { code: 'excel', label: 'MS Excel' },
-      { code: 'powerpoint', label: 'PowerPoint' },
-      { code: 'internet', label: 'Internet' },
-      { code: 'outlook', label: 'Outlook' },
-      { code: 'pagemaker', label: 'PageMaker' },
-    ];
-
-    return topics.map((t) => {
-      let total = 0;
-      let correct = 0;
-
-      // 1. Aggregate from all tests (including individual questions in comprehensive exams)
-      for (const r of allResults) {
-        if (r.topicCode === t.code) {
-          total += r.totalQuestions;
-          correct += r.correctCount;
-        } else if (r.studentAnswers && Object.keys(r.studentAnswers).length > 0) {
-          // Break down questions in comprehensive/mock exams by topic
-          for (const [qId, chosenIdx] of Object.entries(r.studentAnswers)) {
-            const q = questionBankService.getQuestionById(qId);
-            if (q && q.topic === t.code) {
-              total++;
-              if (chosenIdx === q.correctOptionIndex) {
-                correct++;
-              }
-            }
-          }
-        }
-      }
-
-      // 2. Fallback to analytics.subjectMetrics if questionBank lookup wasn't available
-      if (total === 0) {
-        const metric = analytics.subjectMetrics.find((m) => {
-          if (m.topicCode === t.code) return true;
-          const config = TOPIC_CONFIG[t.code];
-          return (
-            m.subjectName.toLowerCase().includes(config.label.toLowerCase()) ||
-            m.subjectName.toLowerCase().includes(t.label.toLowerCase())
-          );
-        });
-        if (metric) {
-          total = metric.totalQuestions;
-          correct = metric.correctCount;
-        }
-      }
-
-      const incorrect = Math.max(0, total - correct);
-
-      return {
-        subject: t.label,
-        total: total,
-        correct: correct,
-        incorrect: incorrect,
-        accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
-      };
-    });
-  }, [allResults, analytics.subjectMetrics]);
 
   // Question Summary Donut Chart Data (Overall vs Recent)
   const questionSummary = useMemo(() => {
@@ -413,224 +343,11 @@ export const DashboardTab: React.FC = () => {
       </div>
 
       {/* ========================================================= */}
-      {/* 3. MIDDLE ROW: Subject Performance Overview + Donut Chart */}
-      {/* ========================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Column: Subject Performance Overview Bar Chart (8 cols) */}
-        <div className="lg:col-span-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-              Subject Performance Overview
-            </h2>
-
-            <div className="flex items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" />
-                <span>Total Attempts</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                <span>Correct Answers</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bar Chart Container */}
-          <div className="w-full h-72 sm:h-80 pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={subjectChartData}
-                margin={{ top: 10, right: 10, left: -15, bottom: 20 }}
-                barSize={28}
-              >
-                <XAxis
-                  dataKey="subject"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: '#64748b' }}
-                  dy={8}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="rounded-2xl bg-slate-900 text-white p-3 shadow-xl text-xs space-y-1 border border-slate-800">
-                          <p className="font-bold text-slate-200 border-b border-slate-800 pb-1">
-                            {data.subject}
-                          </p>
-                          <div className="flex justify-between gap-4">
-                            <span className="text-slate-400">Total Attempts:</span>
-                            <span className="font-bold text-blue-400">{data.total}</span>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <span className="text-slate-400">Correct Answers:</span>
-                            <span className="font-bold text-emerald-400">{data.correct}</span>
-                          </div>
-                          <div className="flex justify-between gap-4 pt-1 border-t border-slate-800 text-[11px]">
-                            <span className="text-slate-400">Accuracy:</span>
-                            <span className="font-bold text-white">{data.accuracy}%</span>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                {/* Stacked Bars representing the sleek capsule from reference screenshot */}
-                <Bar
-                  dataKey="correct"
-                  name="Correct Answers"
-                  stackId="subjectStack"
-                  fill="#10b981"
-                  radius={[0, 0, 6, 6]}
-                />
-                <Bar
-                  dataKey="incorrect"
-                  name="Total Attempts"
-                  stackId="subjectStack"
-                  fill="#2563eb"
-                  radius={[6, 6, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Right Column: Question Summary Donut Chart (4 cols) */}
-        <div className="lg:col-span-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Question Summary
-            </h2>
-
-            {/* Overall / Recent Pill Toggle */}
-            <div className="bg-slate-100 dark:bg-slate-800 p-0.5 rounded-full inline-flex border border-slate-200/60 dark:border-slate-700/60 text-xs">
-              <button
-                onClick={() => setSummaryMode('overall')}
-                className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
-                  summaryMode === 'overall'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                }`}
-              >
-                Overall
-              </button>
-              <button
-                onClick={() => setSummaryMode('recent')}
-                className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
-                  summaryMode === 'recent'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                }`}
-              >
-                Last 5 Tests
-              </button>
-            </div>
-          </div>
-
-          {/* Donut Chart with Center Total Number */}
-          <div className="relative flex items-center justify-center h-48 sm:h-52 my-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={questionSummary.pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={78}
-                  paddingAngle={3}
-                  dataKey="value"
-                  strokeWidth={0}
-                >
-                  {questionSummary.pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0];
-                      return (
-                        <div className="rounded-xl bg-slate-900 text-white px-2.5 py-1.5 shadow-lg text-xs font-semibold">
-                          {data.name}: {data.value}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-
-            {/* Donut Center Counter */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight">
-                {questionSummary.total > 0 ? questionSummary.total : 800}
-              </span>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Total
-              </span>
-            </div>
-          </div>
-
-          {/* Legend Stats Breakdown */}
-          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" />
-                <span className="text-slate-600 dark:text-slate-300 font-medium">Correct</span>
-              </div>
-              <span className="font-bold text-slate-900 dark:text-white">
-                {questionSummary.correct > 0 ? questionSummary.correct : 624}{' '}
-                <span className="text-slate-400 font-normal">
-                  ({questionSummary.correctPct > 0 ? `${questionSummary.correctPct}%` : '85%'})
-                </span>
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block" />
-                <span className="text-slate-600 dark:text-slate-300 font-medium">Wrong</span>
-              </div>
-              <span className="font-bold text-slate-900 dark:text-white">
-                {questionSummary.wrong > 0 ? questionSummary.wrong : 96}{' '}
-                <span className="text-slate-400 font-normal">
-                  ({questionSummary.wrongPct > 0 ? `${questionSummary.wrongPct}%` : '08%'})
-                </span>
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700 inline-block" />
-                <span className="text-slate-600 dark:text-slate-300 font-medium">Skipped</span>
-              </div>
-              <span className="font-bold text-slate-900 dark:text-white">
-                {questionSummary.skipped > 0 ? questionSummary.skipped : 80}{' '}
-                <span className="text-slate-400 font-normal">
-                  ({questionSummary.skippedPct > 0 ? `${questionSummary.skippedPct}%` : '13%'})
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================= */}
-      {/* 4. BOTTOM ROW: Recent Exams Result + Notices / Leaderboard */}
+      {/* 3. MIDDLE ROW: Recent Exams Result + Question Summary     */}
       {/* ========================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: Recent Exams Result Table (8 cols) */}
-        <div className="lg:col-span-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs">
+        <div className="lg:col-span-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
               Recent Exams Result
@@ -756,119 +473,243 @@ export const DashboardTab: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Notice Board & Announcements / Top Performers (4 cols) */}
+        {/* Right Column: Question Summary Donut Chart (4 cols) */}
         <div className="lg:col-span-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setRightTab('notices')}
-                  className={`text-base font-bold pb-0.5 border-b-2 transition-colors cursor-pointer ${
-                    rightTab === 'notices'
-                      ? 'border-blue-600 text-slate-900 dark:text-white'
-                      : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  }`}
-                >
-                  Notice Board
-                </button>
-                <span className="text-slate-300 dark:text-slate-700">|</span>
-                <button
-                  onClick={() => setRightTab('leaderboard')}
-                  className={`text-base font-bold pb-0.5 border-b-2 transition-colors cursor-pointer ${
-                    rightTab === 'leaderboard'
-                      ? 'border-blue-600 text-slate-900 dark:text-white'
-                      : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  }`}
-                >
-                  Top Performers
-                </button>
-              </div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">
+              Question Summary
+            </h2>
 
+            {/* Overall / Recent Pill Toggle */}
+            <div className="bg-slate-100 dark:bg-slate-800 p-0.5 rounded-full inline-flex border border-slate-200/60 dark:border-slate-700/60 text-xs">
               <button
-                onClick={() =>
-                  navigate(rightTab === 'notices' ? '/notices' : '/results')
-                }
-                className="px-3.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                onClick={() => setSummaryMode('overall')}
+                className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
+                  summaryMode === 'overall'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
               >
-                See More
+                Overall
+              </button>
+              <button
+                onClick={() => setSummaryMode('recent')}
+                className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
+                  summaryMode === 'recent'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Last 5 Tests
+              </button>
+            </div>
+          </div>
+
+          {/* Donut Chart with Center Total Number */}
+          <div className="relative flex items-center justify-center h-48 sm:h-52 my-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={questionSummary.pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={78}
+                  paddingAngle={3}
+                  dataKey="value"
+                  strokeWidth={0}
+                >
+                  {questionSummary.pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0];
+                      return (
+                        <div className="rounded-xl bg-slate-900 text-white px-2.5 py-1.5 shadow-lg text-xs font-semibold">
+                          {data.name}: {data.value}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Donut Center Counter */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight">
+                {questionSummary.total > 0 ? questionSummary.total : 800}
+              </span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                Total
+              </span>
+            </div>
+          </div>
+
+          {/* Legend Stats Breakdown */}
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" />
+                <span className="text-slate-600 dark:text-slate-300 font-medium">Correct</span>
+              </div>
+              <span className="font-bold text-slate-900 dark:text-white">
+                {questionSummary.correct > 0 ? questionSummary.correct : 624}{' '}
+                <span className="text-slate-400 font-normal">
+                  ({questionSummary.correctPct > 0 ? `${questionSummary.correctPct}%` : '85%'})
+                </span>
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block" />
+                <span className="text-slate-600 dark:text-slate-300 font-medium">Wrong</span>
+              </div>
+              <span className="font-bold text-slate-900 dark:text-white">
+                {questionSummary.wrong > 0 ? questionSummary.wrong : 96}{' '}
+                <span className="text-slate-400 font-normal">
+                  ({questionSummary.wrongPct > 0 ? `${questionSummary.wrongPct}%` : '08%'})
+                </span>
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700 inline-block" />
+                <span className="text-slate-600 dark:text-slate-300 font-medium">Skipped</span>
+              </div>
+              <span className="font-bold text-slate-900 dark:text-white">
+                {questionSummary.skipped > 0 ? questionSummary.skipped : 80}{' '}
+                <span className="text-slate-400 font-normal">
+                  ({questionSummary.skippedPct > 0 ? `${questionSummary.skippedPct}%` : '13%'})
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* 4. BOTTOM ROW: Notice Board & Announcements / Leaderboard  */}
+      {/* ========================================================= */}
+      <div className="w-full rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setRightTab('notices')}
+                className={`text-base font-bold pb-0.5 border-b-2 transition-colors cursor-pointer ${
+                  rightTab === 'notices'
+                    ? 'border-blue-600 text-slate-900 dark:text-white'
+                    : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+              >
+                Notice Board
+              </button>
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <button
+                onClick={() => setRightTab('leaderboard')}
+                className={`text-base font-bold pb-0.5 border-b-2 transition-colors cursor-pointer ${
+                  rightTab === 'leaderboard'
+                    ? 'border-blue-600 text-slate-900 dark:text-white'
+                    : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+              >
+                Top Performers
               </button>
             </div>
 
-            {/* TAB 1: Notice Board */}
-            {rightTab === 'notices' && (
-              <div className="space-y-3">
-                {broadcasts.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 text-xs">
-                    <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                    <span>No new announcements</span>
-                  </div>
-                ) : (
-                  broadcasts.map((item) => {
-                    const isUrgent = item.priority === 'URGENT';
-                    const isHigh = item.priority === 'HIGH';
-                    const dateStr = item.publishedAt
-                      ? new Date(item.publishedAt).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                        })
-                      : 'Today';
+            <button
+              onClick={() =>
+                navigate(rightTab === 'notices' ? '/notices' : '/results')
+              }
+              className="px-3.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              See More
+            </button>
+          </div>
 
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => navigate('/notices')}
-                        className="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/40 bg-slate-50/50 dark:bg-slate-800/40 transition-colors cursor-pointer group"
-                      >
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span
-                            className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
-                              isUrgent
-                                ? 'bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400'
-                                : isHigh
-                                ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400'
-                                : 'bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400'
-                            }`}
-                          >
-                            {item.priority || 'NORMAL'}
-                          </span>
-                          <span className="text-xs text-slate-400 flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {dateStr}
-                          </span>
-                        </div>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {item.title}
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                          {item.message}
-                        </p>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-
-            {/* TAB 2: Top Performers (Real Database Leaderboard) */}
-            {rightTab === 'leaderboard' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-slate-800">
-                  <span>Student</span>
-                  <span>Accuracy / Rank</span>
+          {/* TAB 1: Notice Board */}
+          {rightTab === 'notices' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {broadcasts.length === 0 ? (
+                <div className="col-span-full text-center py-8 text-slate-400 text-xs">
+                  <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <span>No new announcements</span>
                 </div>
+              ) : (
+                broadcasts.map((item) => {
+                  const isUrgent = item.priority === 'URGENT';
+                  const isHigh = item.priority === 'HIGH';
+                  const dateStr = item.publishedAt
+                    ? new Date(item.publishedAt).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                      })
+                    : 'Today';
 
-                {isLeaderboardLoading ? (
-                  <div className="space-y-2.5 py-2">
-                    <div className="h-14 bg-slate-100 dark:bg-slate-800/60 rounded-2xl animate-pulse" />
-                    <div className="h-14 bg-slate-100 dark:bg-slate-800/60 rounded-2xl animate-pulse" />
-                  </div>
-                ) : displayedLeaderboard.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 text-xs">
-                    <Trophy className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                    <span>No student rankings available yet</span>
-                  </div>
-                ) : (
-                  displayedLeaderboard.map((student) => (
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => navigate('/notices')}
+                      className="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/40 bg-slate-50/50 dark:bg-slate-800/40 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                            isUrgent
+                              ? 'bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400'
+                              : isHigh
+                              ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400'
+                              : 'bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400'
+                          }`}
+                        >
+                          {item.priority || 'NORMAL'}
+                        </span>
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {dateStr}
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                        {item.message}
+                      </p>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: Top Performers (Real Database Leaderboard) */}
+          {rightTab === 'leaderboard' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-slate-800">
+                <span>Student</span>
+                <span>Accuracy / Rank</span>
+              </div>
+
+              {isLeaderboardLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
+                  <div className="h-14 bg-slate-100 dark:bg-slate-800/60 rounded-2xl animate-pulse" />
+                  <div className="h-14 bg-slate-100 dark:bg-slate-800/60 rounded-2xl animate-pulse" />
+                </div>
+              ) : displayedLeaderboard.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs">
+                  <Trophy className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <span>No student rankings available yet</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {displayedLeaderboard.map((student) => (
                     <div
                       key={student.studentProfileId || student.studentId || student.name}
                       className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
@@ -902,18 +743,18 @@ export const DashboardTab: React.FC = () => {
                         <span>{student.score > 0 ? `${student.score}%` : `#${student.rank}`}</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-          <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            <span>Institute Batch: {identity?.batchName || 'MS-CIT 2026'}</span>
-            <span className="font-bold text-blue-600 dark:text-blue-400">
-              {stats.levelTitle}
-            </span>
-          </div>
+        <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          <span>Institute Batch: {identity?.batchName || 'MS-CIT 2026'}</span>
+          <span className="font-bold text-blue-600 dark:text-blue-400">
+            {stats.levelTitle}
+          </span>
         </div>
       </div>
 
