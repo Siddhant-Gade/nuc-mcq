@@ -100,9 +100,12 @@ export const Sidebar: React.FC = () => {
           isSidebarCollapsed ? 'w-[68px]' : 'w-60'
         }`}
       >
-        {/* Brand Header & Hamburger Toggle */}
-        <div className="border-b border-slate-100 dark:border-slate-800/80 px-3.5 py-3 space-y-2">
-          {/* Row 1: Logo and text */}
+        {/* Upper div: ONLY logo and text */}
+        <div
+          className={`h-16 flex items-center border-b border-slate-100 dark:border-slate-800/80 px-3.5 ${
+            isSidebarCollapsed ? 'justify-center' : 'justify-start'
+          }`}
+        >
           <NavLink
             to="/"
             className={`flex items-center gap-3 overflow-hidden group ${
@@ -125,18 +128,18 @@ export const Sidebar: React.FC = () => {
               </div>
             )}
           </NavLink>
+        </div>
 
-          {/* Row 2: Hamburger menu placed properly below icon & text, in the right corner */}
-          <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-end'}`}>
-            <button
-              onClick={toggleSidebarCollapsed}
-              aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-          </div>
+        {/* Below div: Hamburger menu option placed in right top corner */}
+        <div className={`px-3 pt-2.5 pb-1 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-end'}`}>
+          <button
+            onClick={toggleSidebarCollapsed}
+            aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <Menu className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navigation Items List */}
