@@ -8,6 +8,9 @@ class StudentIdentity {
     this.studentId,
     this.batchId,
     this.batchName,
+    this.accessStatus,
+    this.suspendedAt,
+    this.suspensionReason,
   });
 
   final String authUserId;
@@ -16,9 +19,17 @@ class StudentIdentity {
   final String? studentId;
   final String? batchId;
   final String? batchName;
+  final String? accessStatus;
+  final String? suspendedAt;
+  final String? suspensionReason;
   final List<String> roles;
 
   bool get isStudent => roles.contains('STUDENT');
+  bool get isSuspended => accessStatus?.toUpperCase() == 'SUSPENDED';
+  bool get isRevoked => accessStatus?.toUpperCase() == 'REVOKED';
+  bool get isExpired => accessStatus?.toUpperCase() == 'EXPIRED';
+  bool get isBlocked => isSuspended || isRevoked || isExpired;
+  bool get isActive => accessStatus?.toUpperCase() == 'ACTIVE';
 
   factory StudentIdentity.fromMap(Map<String, dynamic> map) {
     return StudentIdentity(
@@ -28,6 +39,9 @@ class StudentIdentity {
       studentId: map['studentId'] == null ? null : '${map['studentId']}',
       batchId: map['batchId'] == null ? null : '${map['batchId']}',
       batchName: map['batchName'] == null ? null : '${map['batchName']}',
+      accessStatus: map['accessStatus'] == null ? null : '${map['accessStatus']}',
+      suspendedAt: map['suspendedAt'] == null ? null : '${map['suspendedAt']}',
+      suspensionReason: map['suspensionReason'] == null ? null : '${map['suspensionReason']}',
       roles: (map['roles'] as List<dynamic>? ?? const <dynamic>[])
           .map((role) => '$role')
           .toList(growable: false),
@@ -42,6 +56,9 @@ class StudentIdentity {
       'studentId': studentId,
       'batchId': batchId,
       'batchName': batchName,
+      'accessStatus': accessStatus,
+      'suspendedAt': suspendedAt,
+      'suspensionReason': suspensionReason,
       'roles': roles,
     };
   }

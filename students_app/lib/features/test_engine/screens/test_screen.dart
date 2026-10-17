@@ -183,6 +183,66 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
     );
   }
 
+  void _showSuspensionDialog(BuildContext context, String reason) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+          icon: const Icon(Icons.block_rounded, color: AppColors.googleRed, size: 48),
+          title: Text(
+            'Test Halted — Account Suspended',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+            textAlign: TextAlign.center,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                reason.isNotEmpty
+                    ? reason
+                    : 'Your student account has been placed on suspension by the administration. Active test execution is halted.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Your answered questions have been safely saved.',
+                  style: GoogleFonts.inter(fontSize: 11, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.googleRed,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  Navigator.of(dialogCtx).pop();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Acknowledge'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -190,6 +250,11 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
 
     return BlocConsumer<TestEngineCubit, TestEngineState>(
       listener: (context, state) {
+        if (state.status == TestExecutionStatus.suspended) {
+          _showSuspensionDialog(context, state.suspensionReason ?? 'Access suspended by administration.');
+          return;
+        }
+
         if (state.status == TestExecutionStatus.completed &&
             state.completedResult != null) {
           final questionBank = context.read<QuestionBankRepository>();

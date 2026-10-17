@@ -6,7 +6,7 @@ import '../../results/models/test_result_model.dart';
 import '../../results/repository/results_repository.dart';
 import '../services/test_generator.dart';
 
-enum TestExecutionStatus { inProgress, submitting, completed }
+enum TestExecutionStatus { inProgress, submitting, completed, suspended }
 
 class TestEngineState {
   const TestEngineState({
@@ -24,10 +24,12 @@ class TestEngineState {
     this.maxStreak = 0,
     this.earnedXp = 0,
     this.lastAnswerWasCorrect,
+    this.suspensionReason,
   });
 
   final GeneratedTest test;
   final int currentIndex;
+  final String? suspensionReason;
   final Map<String, int> answers; // questionId -> selectedOptionIndex
   final Set<String> flaggedQuestionIds;
   final int remainingSeconds;
@@ -97,6 +99,7 @@ class TestEngineState {
     int? maxStreak,
     int? earnedXp,
     bool? lastAnswerWasCorrect,
+    String? suspensionReason,
   }) {
     return TestEngineState(
       test: test,
@@ -113,6 +116,7 @@ class TestEngineState {
       maxStreak: maxStreak ?? this.maxStreak,
       earnedXp: earnedXp ?? this.earnedXp,
       lastAnswerWasCorrect: lastAnswerWasCorrect ?? this.lastAnswerWasCorrect,
+      suspensionReason: suspensionReason ?? this.suspensionReason,
     );
   }
 }
@@ -138,6 +142,15 @@ class TestEngineCubit extends Cubit<TestEngineState> {
 
   final ResultsRepository _resultsRepository;
   Timer? _timer;
+
+  void haltDueToSuspension(String reason) {
+    _timer?.cancel();
+    _timer = null;
+    emit(state.copyWith(
+      status: TestExecutionStatus.suspended,
+      suspensionReason: reason,
+    ));
+  }
 
   void _startTimer() {
     _timer?.cancel();
