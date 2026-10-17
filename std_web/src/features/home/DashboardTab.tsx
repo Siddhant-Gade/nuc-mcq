@@ -304,7 +304,7 @@ export const DashboardTab: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 4: Practice Drills In Progress (Pale Amber Tint) */}
+        {/* Card 4: Course In Progress (Current Streak & Level) */}
         <div className="rounded-3xl bg-amber-50/60 dark:bg-slate-900 border border-amber-100 dark:border-slate-800 p-6 flex flex-col justify-between shadow-xs min-h-[170px]">
           <div className="flex items-start justify-between">
             <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
@@ -316,13 +316,11 @@ export const DashboardTab: React.FC = () => {
           </div>
 
           <div className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight my-2">
-            {stats.practiceCount < 10 ? `0${stats.practiceCount}` : stats.practiceCount}
+            {stats.currentStreak ?? 0}
           </div>
 
-          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-            {stats.currentStreak > 0
-              ? `${stats.currentStreak} day streak • Level ${stats.level}`
-              : 'Currently ongoing courses'}
+          <div className="text-[13px] text-slate-500 dark:text-slate-400 truncate">
+            Level {stats.level || 1}
           </div>
         </div>
       </div>

@@ -3,6 +3,18 @@ import { apiClient } from './apiClient';
 
 const BASE_RESULTS_STORAGE_KEY = 'student_app_test_results_v1';
 
+export function toLocalDateKey(dateInput: Date | string): string {
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+    return dateInput.trim();
+  }
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  if (isNaN(date.getTime())) return '';
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export function normalizeTestResult(raw: any, existingLocal?: TestResultModel): TestResultModel {
   const modeStr = (raw.testMode || raw.mode || raw.test_mode || 'PRACTICE').toString().toUpperCase();
   const testMode: TestMode = modeStr === 'EXAM' ? 'EXAM' : 'PRACTICE';
@@ -348,31 +360,35 @@ class ResultsService {
     else if (level >= 3) levelTitle = 'Rising Scholar';
     else if (level >= 2) levelTitle = 'Active Learner';
 
-    // Streak calculation
+    // Streak calculation based on consecutive active days in user's timezone (matching Flutter app)
     const activeDates = new Set<string>();
     for (const r of this.results) {
-      const d = new Date(r.completedAt);
-      activeDates.add(d.toISOString().split('T')[0]);
+      if (!r.completedAt) continue;
+      const key = toLocalDateKey(r.completedAt);
+      if (key) activeDates.add(key);
     }
 
     let currentStreak = 0;
     const checkDate = new Date();
-    const todayStr = checkDate.toISOString().split('T')[0];
+    checkDate.setHours(12, 0, 0, 0);
+    const todayStr = toLocalDateKey(checkDate);
 
+    // If completed today or yesterday, count consecutive days backwards
     if (activeDates.has(todayStr)) {
       currentStreak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
       const yesterday = new Date();
+      yesterday.setHours(12, 0, 0, 0);
       yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const yesterdayStr = toLocalDateKey(yesterday);
       if (activeDates.has(yesterdayStr)) {
         checkDate.setDate(checkDate.getDate() - 1);
       }
     }
 
     while (true) {
-      const dStr = checkDate.toISOString().split('T')[0];
+      const dStr = toLocalDateKey(checkDate);
       if (activeDates.has(dStr)) {
         currentStreak++;
         checkDate.setDate(checkDate.getDate() - 1);
