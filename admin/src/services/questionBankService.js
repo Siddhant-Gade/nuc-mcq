@@ -13,6 +13,18 @@ export async function uploadQuestionBank(questions, replaceAll = true, version =
 export async function clearQuestionBank() {
     await request('delete', '/admin/question-bank/clear');
 }
+export async function createQuestion(questionData) {
+    return request('post', '/admin/question-bank/questions', questionData);
+}
+export async function getQuestion(id) {
+    return request('get', `/admin/question-bank/questions/${id}`);
+}
+export async function updateQuestion(id, questionData) {
+    return request('put', `/admin/question-bank/questions/${id}`, questionData);
+}
+export async function deleteQuestion(id) {
+    return request('delete', `/admin/question-bank/questions/${id}`);
+}
 export async function getPrebuiltQuestionBank(topic = 'FULL') {
     const res = await apiClient.get(`/admin/question-bank/prebuilt/${topic}`);
     const data = res.data?.data;

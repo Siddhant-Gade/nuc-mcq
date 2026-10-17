@@ -1,0 +1,325 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: overlayIn 120ms ease-out;
+}
+
+.modal {
+  background: var(--color-surface-card);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 44rem;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-outline-variant);
+  animation: modalIn 150ms ease-out;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.topicBadge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.srBadge {
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  font-weight: 500;
+}
+
+.closeBtn {
+  width: 1.875rem;
+  height: 1.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.closeBtn:hover {
+  background: var(--color-surface-container);
+}
+
+.modalBody {
+  padding: 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.questionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.questionTextEn {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--color-on-surface);
+}
+
+.translationBox {
+  margin-top: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface-container);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+  font-size: 0.875rem;
+  color: var(--color-on-surface-variant);
+  line-height: 1.4;
+}
+
+.translationLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-outline);
+  margin-bottom: 0.25rem;
+}
+
+.sectionHeading {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 0.5rem;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.625rem;
+}
+
+.optionCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface);
+  transition: all 0.15s ease;
+}
+
+.optionCardCorrect {
+  border-color: #34a853;
+  background: #f0fdf4;
+}
+
+.optionLetter {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+  border: 1px solid var(--color-outline-variant);
+  flex-shrink: 0;
+}
+
+.optionLetterCorrect {
+  background: #34a853;
+  color: #ffffff;
+  border-color: #34a853;
+}
+
+.optionContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.optionText {
+  font-size: 0.875rem;
+  color: var(--color-on-surface);
+}
+
+.optionTextCorrect {
+  font-weight: 600;
+  color: #1e7e34;
+}
+
+.optionTranslation {
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+}
+
+.correctTag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #137333;
+  background: #ceead6;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.explanationBox {
+  padding: 0.875rem 1rem;
+  background: #e8f0fe;
+  border: 1px solid #d2e3fc;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: #1a73e8;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.explanationTitle {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.explanationText {
+  color: var(--color-on-surface);
+  line-height: 1.4;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--color-surface-container);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-outline-variant);
+  font-size: 0.75rem;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.metaLabel {
+  font-weight: 500;
+  color: var(--color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metaValue {
+  font-weight: 600;
+  color: var(--color-on-surface);
+  word-break: break-all;
+}
+
+.modalFooter {
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--color-outline-variant);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.secondaryBtn {
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--color-outline-variant);
+  background: transparent;
+  color: var(--color-on-surface);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.secondaryBtn:hover {
+  background: var(--color-surface-container);
+}
+
+.primaryBtn {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: var(--color-primary);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.primaryBtn:hover {
+  background: var(--color-primary-hover);
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .modal {
+    max-height: 95vh;
+  }
+  .modalBody {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  .headerLeft {
+    gap: 0.5rem;
+  }
+}

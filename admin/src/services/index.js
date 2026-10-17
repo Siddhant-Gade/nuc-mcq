@@ -9,3 +9,4 @@ export { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from './n
 export { getBroadcasts, getBroadcastById, createBroadcast, updateBroadcast, publishBroadcast, deleteBroadcast } from './broadcastService';
 export { getStudyMaterials, getStudyMaterialById, uploadStudyMaterialDocument, createStudyMaterialVideo, updateStudyMaterial, publishStudyMaterial, deleteStudyMaterial } from './studyMaterialService';
 export { loadTheme, saveTheme, loadLanguage, saveLanguage, loadNotifications, saveNotifications, loadAllSettings, resetSettings } from './settingsStorage';
+export { getQuestionBankSummary, getQuestionList, uploadQuestionBank, clearQuestionBank, getPrebuiltQuestionBank, parseQuestionBankFile, createQuestion, getQuestion, updateQuestion, deleteQuestion } from './questionBankService';

@@ -6,7 +6,14 @@ import {
     clearQuestionBank,
     parseQuestionBankFile,
     getPrebuiltQuestionBank,
+    createQuestion,
+    getQuestion,
+    updateQuestion,
+    deleteQuestion,
 } from '../services/questionBankService';
+import ConfirmModal from '../components/ConfirmModal';
+import QuestionFormModal from '../components/QuestionFormModal';
+import QuestionDetailModal from '../components/QuestionDetailModal';
 import styles from './QuestionBank.module.css';
 
 export default function QuestionBank() {
@@ -15,6 +22,13 @@ export default function QuestionBank() {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [statusMsg, setStatusMsg] = useState(null);
+
+    // CRUD modal states
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingQuestion, setEditingQuestion] = useState(null);
+    const [detailQuestion, setDetailQuestion] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // File upload & preview state
     const [dragActive, setDragActive] = useState(false);
@@ -181,6 +195,48 @@ export default function QuestionBank() {
             setStatusMsg({ text: msg, type: 'error' });
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleCreateQuestion(payload) {
+        await createQuestion(payload);
+        setStatusMsg({ text: 'Question created successfully.', type: 'success' });
+        setShowCreateModal(false);
+        await loadData();
+    }
+
+    async function handleUpdateQuestion(payload) {
+        if (!editingQuestion?.id) return;
+        await updateQuestion(editingQuestion.id, payload);
+        setStatusMsg({ text: 'Question updated successfully.', type: 'success' });
+        setEditingQuestion(null);
+        await loadData();
+    }
+
+    async function handleDeleteQuestion() {
+        if (!deleteTarget?.id) return;
+        try {
+            setIsDeleting(true);
+            await deleteQuestion(deleteTarget.id);
+            setStatusMsg({ text: 'Question deleted successfully.', type: 'success' });
+            setDeleteTarget(null);
+            await loadData();
+        } catch (err) {
+            const serverMsg = err?.response?.data?.message;
+            const msg = serverMsg || (err instanceof Error ? err.message : 'Failed to delete question.');
+            setStatusMsg({ text: msg, type: 'error' });
+        } finally {
+            setIsDeleting(false);
+        }
+    }
+
+    async function handleViewQuestion(q) {
+        try {
+            const res = await getQuestion(q.id);
+            const questionData = res?.data || res;
+            setDetailQuestion(questionData || q);
+        } catch {
+            setDetailQuestion(q);
         }
     }
 
@@ -484,9 +540,18 @@ export default function QuestionBank() {
 
             {/* Live Question Bank Explorer */}
             <div className={styles.uploadCard}>
-                <h2 className={styles.previewTitle} style={{ marginBottom: '1rem' }}>
-                    Current Question Bank ({summary?.totalQuestions ?? 0} total)
-                </h2>
+                <div className={styles.cardHeaderWithAction}>
+                    <h2 className={styles.previewTitle} style={{ margin: 0 }}>
+                        Current Question Bank ({summary?.totalQuestions ?? 0} total)
+                    </h2>
+                    <button
+                        type="button"
+                        className={styles.primaryBtn}
+                        onClick={() => setShowCreateModal(true)}
+                    >
+                        + Add Question
+                    </button>
+                </div>
 
                 <div className={styles.searchBar}>
                     <div className={styles.searchWrapper}>
@@ -539,13 +604,14 @@ export default function QuestionBank() {
                                 <th>Question (Marathi)</th>
                                 <th>Correct Ans</th>
                                 <th>Explanation</th>
+                                <th style={{ textAlign: 'center' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {questions.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
-                                        {loading ? 'Loading questions...' : 'No questions found. Upload a question bank above.'}
+                                    <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
+                                        {loading ? 'Loading questions...' : 'No questions found. Upload a question bank above or click "+ Add Question".'}
                                     </td>
                                 </tr>
                             ) : (
@@ -555,15 +621,43 @@ export default function QuestionBank() {
                                         <td>
                                             <span className={styles.badge}>{q.section}</span>
                                         </td>
-                                        <td style={{ maxWidth: '280px' }}>{q.question_en}</td>
-                                        <td style={{ maxWidth: '280px', color: 'var(--color-on-surface-variant)' }}>
+                                        <td style={{ maxWidth: '260px' }}>{q.question_en}</td>
+                                        <td style={{ maxWidth: '240px', color: 'var(--color-on-surface-variant)' }}>
                                             {q.question_mr || '-'}
                                         </td>
                                         <td>
                                             <strong>Option {q.correct_option}</strong> ({q.correct_answer})
                                         </td>
-                                        <td style={{ maxWidth: '200px', color: 'var(--color-outline)' }}>
+                                        <td style={{ maxWidth: '180px', color: 'var(--color-outline)' }}>
                                             {q.explanation_en || '-'}
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <div className={styles.actionBtnGroup}>
+                                                <button
+                                                    type="button"
+                                                    className={`${styles.tableActionBtn} ${styles.viewActionBtn}`}
+                                                    onClick={() => handleViewQuestion(q)}
+                                                    title="View Full Details"
+                                                >
+                                                    View
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`${styles.tableActionBtn} ${styles.editActionBtn}`}
+                                                    onClick={() => setEditingQuestion(q)}
+                                                    title="Edit Question"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`${styles.tableActionBtn} ${styles.deleteActionBtn}`}
+                                                    onClick={() => setDeleteTarget(q)}
+                                                    title="Delete Question"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -580,6 +674,48 @@ export default function QuestionBank() {
                     )}
                 </div>
             </div>
+
+            {/* Modals */}
+            {showCreateModal && (
+                <QuestionFormModal
+                    onConfirm={handleCreateQuestion}
+                    onCancel={() => setShowCreateModal(false)}
+                    existingTopics={summary ? Object.keys(summary.topicCounts) : []}
+                />
+            )}
+
+            {editingQuestion && (
+                <QuestionFormModal
+                    question={editingQuestion}
+                    onConfirm={handleUpdateQuestion}
+                    onCancel={() => setEditingQuestion(null)}
+                    existingTopics={summary ? Object.keys(summary.topicCounts) : []}
+                />
+            )}
+
+            {detailQuestion && (
+                <QuestionDetailModal
+                    question={detailQuestion}
+                    onClose={() => setDetailQuestion(null)}
+                    onEdit={(q) => {
+                        setDetailQuestion(null);
+                        setEditingQuestion(q);
+                    }}
+                />
+            )}
+
+            {deleteTarget && (
+                <ConfirmModal
+                    title="Delete Question"
+                    message={`Are you sure you want to delete Question #${deleteTarget.sr || ''}: "${deleteTarget.question_en?.slice(0, 80)}${deleteTarget.question_en?.length > 80 ? '...' : ''}"? This action cannot be undone.`}
+                    confirmText="Delete Question"
+                    cancelText="Cancel"
+                    isDestructive={true}
+                    disabled={isDeleting}
+                    onConfirm={handleDeleteQuestion}
+                    onCancel={() => setDeleteTarget(null)}
+                />
+            )}
         </div>
     );
 }

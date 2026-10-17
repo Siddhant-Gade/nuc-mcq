@@ -204,6 +204,58 @@ export const createAdminQuestionBankRouter = (verifier, service = new QuestionBa
             next(err);
         }
     });
+    // Create individual question
+    router.post('/questions', async (req, res, next) => {
+        try {
+            const uploadedBy = req.auth?.authUserId;
+            const created = await service.createQuestion(req.body, uploadedBy, 'INST001');
+            res.status(201).json({
+                success: true,
+                message: 'Question created successfully.',
+                data: created,
+            });
+        } catch (err) {
+            next(err);
+        }
+    });
+    // Get individual question by ID
+    router.get('/questions/:id', async (req, res, next) => {
+        try {
+            const question = await service.getQuestionById(req.params.id, 'INST001');
+            res.status(200).json({
+                success: true,
+                data: question,
+            });
+        } catch (err) {
+            next(err);
+        }
+    });
+    // Update individual question by ID
+    router.put('/questions/:id', async (req, res, next) => {
+        try {
+            const updated = await service.updateQuestion(req.params.id, req.body, 'INST001');
+            res.status(200).json({
+                success: true,
+                message: 'Question updated successfully.',
+                data: updated,
+            });
+        } catch (err) {
+            next(err);
+        }
+    });
+    // Delete individual question by ID
+    router.delete('/questions/:id', async (req, res, next) => {
+        try {
+            const result = await service.deleteQuestion(req.params.id, 'INST001');
+            res.status(200).json({
+                success: true,
+                message: 'Question deleted successfully.',
+                data: result,
+            });
+        } catch (err) {
+            next(err);
+        }
+    });
     // Clear questions
     router.delete('/clear', async (_req, res, next) => {
         try {
