@@ -40,6 +40,9 @@ export class StudentIdentityService {
         if (resolved === undefined) {
             throw new ApiError(403, 'STUDENT_IDENTITY_NOT_LINKED', 'No student profile is linked to this account.');
         }
+        if (resolved.access.status === 'SUSPENDED') {
+            throw new ApiError(403, 'STUDENT_ACCESS_SUSPENDED', resolved.access.suspensionReason || 'Student access has been suspended by the administrator.');
+        }
         if (resolved.access.status !== 'ACTIVE') {
             throw new ApiError(403, 'STUDENT_ACCESS_INACTIVE', `Student access is ${resolved.access.status}; ACTIVE access is required.`);
         }

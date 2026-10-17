@@ -1,6 +1,6 @@
 import { boolean, check, doublePrecision, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-export const studentAccessStatus = pgEnum('student_access_status', ['PENDING', 'ACTIVE', 'EXPIRED', 'REVOKED']);
+export const studentAccessStatus = pgEnum('student_access_status', ['PENDING', 'ACTIVE', 'EXPIRED', 'REVOKED', 'SUSPENDED']);
 export const batchStatus = pgEnum('batch_status', ['ACTIVE', 'FULL', 'INACTIVE']);
 export const authorizationRequestStatus = pgEnum('authorization_request_status', ['PENDING', 'APPROVED', 'REJECTED']);
 export const broadcastStatus = pgEnum('broadcast_status', ['DRAFT', 'PUBLISHED']);
@@ -144,6 +144,9 @@ export const studentAccess = pgTable('student_access', {
     accessGrantedAt: timestamp('access_granted_at', { withTimezone: true }),
     accessExpiryAt: timestamp('access_expiry_at', { withTimezone: true }),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    suspendedAt: timestamp('suspended_at', { withTimezone: true }),
+    suspendedBy: uuid('suspended_by'),
+    suspensionReason: text('suspension_reason'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -226,5 +229,24 @@ export const studentDeviceTokens = pgTable('student_device_token', {
 }, (table) => [
     index('device_token_auth_user_idx').on(table.authUserId),
     index('device_token_fcm_token_idx').on(table.fcmToken),
+]);
+
+export const authSessions = pgTable('auth_session', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+    authUserId: uuid('auth_user_id').notNull(),
+    clientType: varchar('client_type', { length: 20 }).notNull(),
+    identity: jsonb('identity').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    userAgent: text('user_agent'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+}, (table) => [
+    uniqueIndex('auth_session_token_hash_idx').on(table.tokenHash),
+    index('auth_session_auth_user_idx').on(table.authUserId),
+    index('auth_session_expires_at_idx').on(table.expiresAt),
+    index('auth_session_revoked_at_idx').on(table.revokedAt),
 ]);
 

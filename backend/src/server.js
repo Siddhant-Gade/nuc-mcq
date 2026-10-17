@@ -4,6 +4,7 @@ import { env } from './config/env.js';
 import { createApp } from './app.js';
 import { closeDatabaseConnection, database } from './database/client.js';
 import { SupabaseJwtVerifier } from './modules/auth/auth-token-verifier.js';
+import { SessionService } from './modules/auth/session.service.js';
 import { DrizzleStudentRepository } from './modules/students/student.repository.js';
 import { StudentService } from './modules/students/student.service.js';
 import { DrizzleBatchRepository } from './modules/batches/batch.repository.js';
@@ -49,8 +50,46 @@ async function runStartupMigrations() {
         `);
         console.info('[startup] broadcast_read table migration: OK');
     } catch (err) {
-        // Log but don't crash — the rest of the backend must stay operational.
         console.error('[startup] broadcast_read migration failed (non-fatal):', err?.message ?? err);
+    }
+
+    try {
+        try {
+            await database.execute(sql`ALTER TYPE student_access_status ADD VALUE IF NOT EXISTS 'SUSPENDED';`);
+        } catch (_) {}
+        await database.execute(sql`
+            ALTER TABLE student_access ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
+            ALTER TABLE student_access ADD COLUMN IF NOT EXISTS suspended_by UUID;
+            ALTER TABLE student_access ADD COLUMN IF NOT EXISTS suspension_reason TEXT;
+        `);
+        console.info('[startup] student_access suspension fields migration: OK');
+    } catch (err) {
+        console.error('[startup] student_access suspension fields migration failed (non-fatal):', err?.message ?? err);
+    }
+
+    try {
+        await database.execute(sql`
+            CREATE TABLE IF NOT EXISTS auth_session (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                token_hash VARCHAR(64) NOT NULL UNIQUE,
+                auth_user_id UUID NOT NULL,
+                client_type VARCHAR(20) NOT NULL,
+                identity JSONB NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                last_used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                expires_at TIMESTAMPTZ NOT NULL,
+                revoked_at TIMESTAMPTZ NULL,
+                user_agent TEXT NULL,
+                ip_address VARCHAR(45) NULL
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS auth_session_token_hash_idx ON auth_session (token_hash);
+            CREATE INDEX IF NOT EXISTS auth_session_auth_user_idx ON auth_session (auth_user_id);
+            CREATE INDEX IF NOT EXISTS auth_session_expires_at_idx ON auth_session (expires_at);
+            CREATE INDEX IF NOT EXISTS auth_session_revoked_at_idx ON auth_session (revoked_at);
+        `);
+        console.info('[startup] auth_session table migration: OK');
+    } catch (err) {
+        console.error('[startup] auth_session table migration failed (non-fatal):', err?.message ?? err);
     }
 }
 
@@ -120,9 +159,11 @@ authorizationRequestService.studentRepository = studentRepository;
 authorizationRequestService.batchRepository = batchRepository;
 studyMaterialService.pushService = pushNotificationService;
 broadcastService.pushService = pushNotificationService;
+const sessionService = new SessionService(database);
 const app = createApp({
     allowedCorsOrigins: env.CORS_ORIGINS,
     tokenVerifier,
+    sessionService,
     studentService,
     batchService,
     authorizationRequestService,

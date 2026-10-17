@@ -164,12 +164,19 @@ export class DrizzleStudentRepository {
             .returning();
         return student;
     }
-    async updateAccessStatus(id, status) {
+    async updateAccessStatus(id, status, metadata = {}) {
         const now = new Date();
         if (status === 'ACTIVE') {
             const [access] = await this.database
                 .update(studentAccess)
-                .set({ status, accessGrantedAt: now, updatedAt: now })
+                .set({
+                    status,
+                    accessGrantedAt: now,
+                    suspendedAt: null,
+                    suspendedBy: null,
+                    suspensionReason: null,
+                    updatedAt: now,
+                })
                 .where(eq(studentAccess.studentProfileId, id))
                 .returning();
             if (access) {
@@ -212,6 +219,36 @@ export class DrizzleStudentRepository {
                     }
                 }
                 catch { }
+            }
+            return access;
+        }
+        if (status === 'SUSPENDED') {
+            const [access] = await this.database
+                .update(studentAccess)
+                .set({
+                    status: 'SUSPENDED',
+                    suspendedAt: now,
+                    suspendedBy: metadata.suspendedBy ?? null,
+                    suspensionReason: metadata.reason ?? null,
+                    updatedAt: now,
+                })
+                .where(eq(studentAccess.studentProfileId, id))
+                .returning();
+            // Synchronize authorization_request -> REJECTED
+            try {
+                await this.database
+                    .update(authorizationRequests)
+                    .set({ status: 'REJECTED', reviewedAt: now, reviewedBy: metadata.suspendedBy ?? null })
+                    .where(eq(authorizationRequests.studentProfileId, id));
+            } catch { }
+            if (access?.authUserId) {
+                try {
+                    await this.database.execute(sql`
+                        UPDATE auth.users
+                        SET raw_app_meta_data = (raw_app_meta_data - 'role')
+                        WHERE id = ${access.authUserId}::uuid;
+                    `);
+                } catch { }
             }
             return access;
         }

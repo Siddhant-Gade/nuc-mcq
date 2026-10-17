@@ -19,5 +19,8 @@ export const updateStudentSchema = createStudentSchema
     .partial()
     .refine((input) => Object.keys(input).length > 0, 'At least one student field must be provided.');
 export const updateStudentStatusSchema = z.object({
-    status: z.enum(studentAccessStatuses),
+    status: z.enum(['PENDING', 'ACTIVE', 'EXPIRED', 'REVOKED']),
+});
+export const suspendStudentSchema = z.object({
+    reason: z.string().trim().max(500).optional(),
 });

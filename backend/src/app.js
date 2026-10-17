@@ -5,6 +5,7 @@ import { rateLimit } from 'express-rate-limit';
 import { createAuthenticationMiddleware } from './middleware/auth.middleware.js';
 import { requireRoles } from './middleware/authorization.middleware.js';
 import { createCorsMiddleware } from './middleware/cors.middleware.js';
+import { cookieParserMiddleware } from './middleware/cookie.middleware.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { notFoundMiddleware } from './middleware/not-found.middleware.js';
 import { ApiError } from './utils/api-error.js';
@@ -20,12 +21,23 @@ import { createNotificationRouter } from './modules/notifications/notification.r
 import { createStudyMaterialAdminRouter, createStudentStudyMaterialRouter, } from './modules/study-materials/study-material.routes.js';
 import { createAdminQuestionBankRouter, createStudentQuestionBankRouter, } from './modules/question-bank/question-bank.routes.js';
 import { QuestionBankService } from './modules/question-bank/question-bank.service.js';
-export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService, authorizationRequestService, dashboardService, studentIdentityService, resultService, broadcastService, notificationService, studyMaterialService, superAdminEmail = 'newuniquesupabase@gmail.com' }) => {
+export const createApp = ({ allowedCorsOrigins, tokenVerifier, sessionService, studentService, batchService, authorizationRequestService, dashboardService, studentIdentityService, resultService, broadcastService, notificationService, studyMaterialService, superAdminEmail = 'newuniquesupabase@gmail.com' }) => {
     const app = express();
     app.use(helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
     }));
     app.use(createCorsMiddleware(allowedCorsOrigins));
+    app.use(cookieParserMiddleware);
+
+    if (sessionService && tokenVerifier) {
+        tokenVerifier.sessionService = sessionService;
+    }
+    if (sessionService && studentService) {
+        studentService.sessionService = sessionService;
+    }
+    if (batchService && studentService) {
+        studentService.batchRepository = batchService.repository;
+    }
 
     // Request timeout protection (30 seconds)
     app.use((request, response, next) => {
@@ -59,6 +71,173 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
     const authenticationMiddleware = createAuthenticationMiddleware(tokenVerifier);
     app.get('/health', (_request, response) => {
         response.status(200).json(successResponse({ status: 'healthy' }));
+    });
+    app.post('/api/v1/auth/session', async (request, response, next) => {
+        try {
+            const authHeader = request.header('authorization');
+            const match = /^Bearer\s+(.+)$/i.exec(authHeader?.trim() || '');
+            const bearerToken = match?.[1]?.trim();
+            if (!bearerToken) {
+                throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Bearer token is required to create a browser session.');
+            }
+
+            let verified;
+            try {
+                verified = await tokenVerifier.verify(bearerToken);
+            } catch {
+                throw new ApiError(401, 'AUTHENTICATION_ERROR', 'Authentication token is invalid or expired.');
+            }
+            const roles = [...verified.roles];
+
+            if (verified.email && verified.email.toLowerCase() === superAdminEmail.toLowerCase()) {
+                if (!roles.includes('SUPER_ADMIN')) roles.push('SUPER_ADMIN');
+                if (!roles.includes('ADMIN')) roles.push('ADMIN');
+            }
+
+            let resolvedStudent = null;
+            try {
+                const student = await studentIdentityService.resolve?.(verified.authUserId, verified.email);
+                if (student) {
+                    resolvedStudent = student;
+                    const status = student.access.status;
+                    if (status === 'SUSPENDED') {
+                        throw new ApiError(403, 'STUDENT_ACCESS_SUSPENDED', student.access.suspensionReason || 'Student access has been suspended by the administrator.');
+                    }
+                    if (status === 'REVOKED') {
+                        throw new ApiError(403, 'STUDENT_ACCESS_REVOKED', 'Student access has been revoked by the administrator.');
+                    }
+                    if (status === 'EXPIRED') {
+                        throw new ApiError(403, 'STUDENT_ACCESS_EXPIRED', 'Student access has expired.');
+                    }
+                    if (status === 'ACTIVE') {
+                        if (!roles.includes('STUDENT')) roles.push('STUDENT');
+                    } else {
+                        const studentIdx = roles.indexOf('STUDENT');
+                        if (studentIdx !== -1) roles.splice(studentIdx, 1);
+                    }
+                }
+            } catch (err) {
+                if (err instanceof ApiError) throw err;
+            }
+
+            const clientType = (request.body?.clientType === 'ADMIN_WEB' || roles.includes('ADMIN') || roles.includes('SUPER_ADMIN'))
+                ? 'ADMIN_WEB'
+                : 'STUDENT_WEB';
+
+            const fullIdentity = {
+                ...verified,
+                roles,
+                name: resolvedStudent?.profile?.name ?? verified.name,
+                studentId: resolvedStudent?.profile?.studentId,
+                batchId: resolvedStudent?.profile?.batchId ?? null,
+                batchName: resolvedStudent?.batchName ?? null,
+                accessStatus: resolvedStudent?.access?.status ?? null,
+            };
+
+            if (!sessionService) {
+                throw new ApiError(500, 'SERVER_ERROR', 'Session service is not configured.');
+            }
+
+            const session = await sessionService.createSession({
+                authUserId: verified.authUserId,
+                clientType,
+                identity: fullIdentity,
+                userAgent: request.header('user-agent'),
+                ipAddress: request.ip || request.socket?.remoteAddress,
+                ttlSeconds: 86400,
+            });
+
+            const isProd = process.env.NODE_ENV === 'production';
+            response.cookie('nuc_session', session.rawToken, {
+                httpOnly: true,
+                secure: isProd,
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 86400 * 1000,
+            });
+
+            response.status(200).json(successResponse({
+                identity: fullIdentity,
+                expiresAt: session.expiresAt.toISOString(),
+            }));
+        } catch (error) {
+            next(error);
+        }
+    });
+    app.get('/api/v1/auth/session', authenticationMiddleware, async (request, response, next) => {
+        try {
+            if (!request.auth) {
+                throw new ApiError(401, 'AUTHENTICATION_ERROR', 'No authenticated session found.');
+            }
+
+            const roles = [...request.auth.roles];
+            if (request.auth.email && request.auth.email.toLowerCase() === superAdminEmail.toLowerCase()) {
+                if (!roles.includes('SUPER_ADMIN')) roles.push('SUPER_ADMIN');
+                if (!roles.includes('ADMIN')) roles.push('ADMIN');
+            }
+
+            let resolvedStudent = null;
+            try {
+                const student = await studentIdentityService.resolve?.(request.auth.authUserId, request.auth.email);
+                if (student) {
+                    resolvedStudent = student;
+                    const status = student.access.status;
+                    if (status === 'SUSPENDED') {
+                        throw new ApiError(403, 'STUDENT_ACCESS_SUSPENDED', student.access.suspensionReason || 'Student access has been suspended by the administrator.');
+                    }
+                    if (status === 'REVOKED') {
+                        throw new ApiError(403, 'STUDENT_ACCESS_REVOKED', 'Student access has been revoked by the administrator.');
+                    }
+                    if (status === 'EXPIRED') {
+                        throw new ApiError(403, 'STUDENT_ACCESS_EXPIRED', 'Student access has expired.');
+                    }
+                    if (status === 'ACTIVE') {
+                        if (!roles.includes('STUDENT')) roles.push('STUDENT');
+                    } else {
+                        const studentIdx = roles.indexOf('STUDENT');
+                        if (studentIdx !== -1) roles.splice(studentIdx, 1);
+                    }
+                }
+            } catch (err) {
+                if (err instanceof ApiError) throw err;
+            }
+
+            response.status(200).json(successResponse({
+                identity: {
+                    ...request.auth,
+                    roles,
+                    name: resolvedStudent?.profile?.name ?? request.auth.name,
+                    studentId: resolvedStudent?.profile?.studentId,
+                    batchId: resolvedStudent?.profile?.batchId ?? null,
+                    batchName: resolvedStudent?.batchName ?? null,
+                    accessStatus: resolvedStudent?.access?.status ?? null,
+                },
+            }));
+        } catch (error) {
+            next(error);
+        }
+    });
+    app.post('/api/v1/auth/logout', async (request, response, next) => {
+        try {
+            const rawToken = request.cookies?.nuc_session;
+            if (rawToken && sessionService) {
+                try {
+                    await sessionService.revokeSession(rawToken);
+                } catch (_) {}
+            }
+
+            const isProd = process.env.NODE_ENV === 'production';
+            response.clearCookie('nuc_session', {
+                httpOnly: true,
+                secure: isProd,
+                sameSite: 'lax',
+                path: '/',
+            });
+
+            response.status(200).json(successResponse({ signedOut: true }));
+        } catch (error) {
+            next(error);
+        }
     });
     app.post('/api/v1/auth/resolve-identifier', async (request, response, next) => {
         try {

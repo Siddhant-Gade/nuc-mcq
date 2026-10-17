@@ -1,4 +1,5 @@
 import { successResponse } from '../../utils/api-response.js';
+
 export class StudentController {
     service;
     constructor(service) {
@@ -17,7 +18,8 @@ export class StudentController {
     };
     create = async (_request, response) => {
         const input = response.locals.validated.body;
-        response.status(201).json(successResponse(await this.service.create(input)));
+        const student = await this.service.create(input);
+        response.status(201).json(successResponse({ ...student, student }));
     };
     update = async (_request, response) => {
         const { id } = response.locals.validated.params;
@@ -28,6 +30,18 @@ export class StudentController {
         const { id } = response.locals.validated.params;
         const { status } = response.locals.validated.body;
         response.status(200).json(successResponse(await this.service.updateAccessStatus(id, status)));
+    };
+    suspend = async (request, response) => {
+        const { id } = response.locals.validated.params;
+        const reason = request.body?.reason;
+        const suspendedBy = request.auth?.authUserId;
+        const result = await this.service.suspend(id, reason, suspendedBy);
+        response.status(200).json(successResponse(result));
+    };
+    restore = async (_request, response) => {
+        const { id } = response.locals.validated.params;
+        const result = await this.service.restore(id);
+        response.status(200).json(successResponse(result));
     };
     delete = async (_request, response) => {
         const { id } = response.locals.validated.params;
