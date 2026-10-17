@@ -17,13 +17,25 @@ export const authService = {
     const trimmed = prn.trim();
     const authEmail = prnToAuthEmail(trimmed);
 
+    const onSuccessfulLogin = async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) {
+        void this.exchangeTokenForSession(token).catch(() => {});
+        await this.verifyIdentity(token);
+      }
+    };
+
     // Attempt 1: Direct sign in with PRN email alias
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: authEmail,
         password,
       });
-      if (!error) return;
+      if (!error) {
+        await onSuccessfulLogin();
+        return;
+      }
     } catch {
       // Continue to next attempt
     }
@@ -39,7 +51,10 @@ export const authService = {
           email: resolved.email.toLowerCase(),
           password,
         });
-        if (!error) return;
+        if (!error) {
+          await onSuccessfulLogin();
+          return;
+        }
       }
     } catch {
       // Continue to attempt 3
@@ -57,14 +72,20 @@ export const authService = {
           email: authEmail,
           password,
         });
-        if (!err1) return;
+        if (!err1) {
+          await onSuccessfulLogin();
+          return;
+        }
 
         if (data.email) {
           const { error: err2 } = await supabase.auth.signInWithPassword({
             email: data.email,
             password,
           });
-          if (!err2) return;
+          if (!err2) {
+            await onSuccessfulLogin();
+            return;
+          }
         }
       }
     } catch (e: unknown) {
@@ -91,19 +112,34 @@ export const authService = {
     });
     registerData = response.data?.data ?? null;
 
+    const onSuccessfulLogin = async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) {
+        void this.exchangeTokenForSession(token).catch(() => {});
+        await this.verifyIdentity(token);
+      }
+    };
+
     // Step 2: Instantly sign in
     const { error: err1 } = await supabase.auth.signInWithPassword({
       email: authEmail,
       password,
     });
-    if (!err1) return;
+    if (!err1) {
+      await onSuccessfulLogin();
+      return;
+    }
 
     if (registerData?.email && registerData.email !== authEmail) {
       const { error: err2 } = await supabase.auth.signInWithPassword({
         email: registerData.email,
         password,
       });
-      if (!err2) return;
+      if (!err2) {
+        await onSuccessfulLogin();
+        return;
+      }
     }
 
     throw new Error('Registration succeeded, but auto-login failed. Please sign in with your credentials.');
@@ -130,12 +166,14 @@ export const authService = {
       });
 
       if (!idTokenErr && idTokenData?.session) {
-        const identity = await this.verifyIdentity(idTokenData.session.access_token);
+        const token = idTokenData.session.access_token;
+        void this.exchangeTokenForSession(token).catch(() => {});
+        const identity = await this.verifyIdentity(token);
         const isAdmin = identity.roles.includes('ADMIN') || identity.roles.includes('SUPER_ADMIN');
         const isStudent = identity.roles.includes('STUDENT');
 
         if (isAdmin && !isStudent) {
-          await supabase.auth.signOut();
+          await this.signOut();
           throw new Error('Admin accounts cannot access the Student Portal. Please use the Admin Portal.');
         }
 
@@ -191,12 +229,18 @@ export const authService = {
         throw new Error(passErr.message);
       }
 
-      const identity = await this.verifyIdentity(passData?.session?.access_token);
+      const token = passData?.session?.access_token;
+      if (!token) {
+        throw new Error('No access token received.');
+      }
+
+      void this.exchangeTokenForSession(token).catch(() => {});
+      const identity = await this.verifyIdentity(token);
       const isAdmin = identity.roles.includes('ADMIN') || identity.roles.includes('SUPER_ADMIN');
       const isStudent = identity.roles.includes('STUDENT');
 
       if (isAdmin && !isStudent) {
-        await supabase.auth.signOut();
+        await this.signOut();
         throw new Error('Admin accounts cannot access the Student Portal. Please use the Admin Portal.');
       }
 
@@ -211,9 +255,9 @@ export const authService = {
           `No admitted student record found with Google email: ${email}. Please contact the institute administrator to enroll.`
         );
       }
-      if (axiosErr?.code === 'ERR_NETWORK') {
+      if (axiosErr?.code === 'ERR_NETWORK' || axiosErr?.code === 'ECONNABORTED') {
         throw new Error(
-          'Could not connect to backend server. If developing locally, ensure the local backend is running (npm run dev) or that CORS_ORIGINS includes http://localhost:5174.'
+          'Could not connect to backend server. If using the cloud backend (Render), the instance was likely waking up from cold start—please retry now. If developing locally, ensure the local backend is running (npm run dev) or that CORS_ORIGINS includes http://localhost:5174.'
         );
       }
       if (bridgeErr instanceof Error) {
@@ -248,6 +292,28 @@ export const authService = {
     await this.signInWithGoogleOAuth();
   },
 
+  async exchangeTokenForSession(accessToken: string): Promise<StudentIdentity | null> {
+    try {
+      const response = await apiClient.post(
+        '/api/v1/auth/session',
+        { clientType: 'STUDENT_WEB' },
+        { headers: { Authorization: `Bearer ${accessToken}` }, withCredentials: true }
+      );
+      return (response.data?.data?.identity as StudentIdentity) ?? null;
+    } catch {
+      return null;
+    }
+  },
+
+  async getSessionIdentity(): Promise<StudentIdentity | null> {
+    try {
+      const response = await apiClient.get('/api/v1/auth/session', { withCredentials: true });
+      return (response.data?.data?.identity as StudentIdentity) ?? null;
+    } catch {
+      return null;
+    }
+  },
+
   async verifyIdentity(explicitToken?: string): Promise<StudentIdentity> {
     const headers = explicitToken ? { Authorization: `Bearer ${explicitToken}` } : undefined;
     const response = await apiClient.get('/api/v1/auth/me', { headers });
@@ -256,6 +322,67 @@ export const authService = {
       throw new Error('Invalid identity returned from server.');
     }
     return identity as StudentIdentity;
+  },
+
+  async restoreSession(): Promise<{
+    status: 'authenticated' | 'unauthorized' | 'unauthenticated';
+    identity: StudentIdentity | null;
+    error?: string;
+  }> {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        // Fallback: Check if there is an active HttpOnly cookie session
+        const cookieIdentity = await this.getSessionIdentity();
+        if (cookieIdentity) {
+          const isBlocked =
+            cookieIdentity.accessStatus?.toUpperCase() === 'SUSPENDED' ||
+            cookieIdentity.accessStatus?.toUpperCase() === 'REVOKED' ||
+            cookieIdentity.accessStatus?.toUpperCase() === 'EXPIRED';
+          return isBlocked
+            ? { status: 'unauthorized', identity: cookieIdentity }
+            : { status: 'authenticated', identity: cookieIdentity };
+        }
+        return { status: 'unauthenticated', identity: null };
+      }
+
+      // Proactively establish server-side session in background if supported
+      void this.exchangeTokenForSession(token).catch(() => {});
+
+      const identity = await this.verifyIdentity(token);
+      const isAdmin = identity.roles?.includes('ADMIN') || identity.roles?.includes('SUPER_ADMIN');
+      const isStudent = identity.roles?.includes('STUDENT');
+
+      if (isAdmin && !isStudent) {
+        await this.signOut();
+        return {
+          status: 'unauthenticated',
+          identity: null,
+          error: 'Admin accounts cannot access the Student Portal. Please use the Admin Portal.',
+        };
+      }
+
+      const isBlocked =
+        identity.accessStatus?.toUpperCase() === 'SUSPENDED' ||
+        identity.accessStatus?.toUpperCase() === 'REVOKED' ||
+        identity.accessStatus?.toUpperCase() === 'EXPIRED';
+
+      if (isStudent && !isBlocked) {
+        return { status: 'authenticated', identity };
+      }
+      return { status: 'unauthorized', identity };
+    } catch (e: unknown) {
+      const httpStatus = (e as { response?: { status?: number } })?.response?.status;
+      if (httpStatus === 401) {
+        await supabase.auth.signOut().catch(() => {});
+        return { status: 'unauthenticated', identity: null };
+      }
+      if (httpStatus === 403) {
+        return { status: 'unauthorized', identity: null };
+      }
+      return { status: 'unauthenticated', identity: null };
+    }
   },
 
   async requestAccess(prn?: string): Promise<boolean> {
@@ -275,6 +402,11 @@ export const authService = {
   },
 
   async signOut(): Promise<void> {
-    await supabase.auth.signOut();
+    try {
+      await apiClient.post('/api/v1/auth/logout', {}, { withCredentials: true });
+    } catch (_) {}
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {}
   },
 };
