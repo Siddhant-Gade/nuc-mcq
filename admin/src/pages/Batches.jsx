@@ -19,8 +19,10 @@ export default function Batches() {
     const [search, setSearch] = useState('');
     const [showCreate, setShowCreate] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [loadError, setLoadError] = useState(null);
     const [actionError, setActionError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const { t } = useLanguage();
     useEffect(() => {
         getBatches()
@@ -47,17 +49,28 @@ export default function Batches() {
         }
     }
     async function handleDelete() {
-        if (!deleteTarget)
+        if (!deleteTarget || isDeleting)
             return;
         setActionError(null);
+        setSuccessMessage(null);
+        setIsDeleting(true);
         try {
             await deleteBatch(deleteTarget.batchId);
+            const count = deleteTarget.enrolledCount || 0;
             setBatches((prev) => prev.filter((b) => b.batchId !== deleteTarget.batchId));
+            setSuccessMessage(
+                count > 0
+                    ? `Batch "${deleteTarget.batchName}" deleted successfully. ${count} student(s) have been reassigned to Unassigned.`
+                    : `Batch "${deleteTarget.batchName}" deleted successfully.`
+            );
             setDeleteTarget(null);
         }
         catch (error) {
             setActionError(getErrorMessage(error));
             setDeleteTarget(null);
+        }
+        finally {
+            setIsDeleting(false);
         }
     }
     if (loading) {
@@ -85,6 +98,18 @@ export default function Batches() {
           {t('batches.createBatch')}
         </button>
       </div>
+
+      {successMessage && (
+        <div className={styles.successBanner}>
+          <div className={styles.successContent}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span>{successMessage}</span>
+          </div>
+          <button className={pageStyles.errorRetryBtn} onClick={() => setSuccessMessage(null)}>Dismiss</button>
+        </div>
+      )}
 
       {actionError && (<div className={pageStyles.errorBanner}>
           <span>{actionError}</span>
@@ -142,6 +167,30 @@ export default function Batches() {
 
       {showCreate && (<CreateBatchModal onConfirm={handleCreate} onCancel={() => setShowCreate(false)}/>)}
 
-      {deleteTarget && (<ConfirmModal title={t('batches.deleteTitle')} message={t('batches.deleteMsg')} fields={[{ label: t('batches.batchName'), value: deleteTarget.batchName }]} confirmLabel={t('batches.confirmDelete')} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)}/>)}
+      {deleteTarget && (
+        <ConfirmModal
+          title={t('batches.deleteTitle')}
+          message={
+            deleteTarget.enrolledCount > 0
+              ? `Are you sure you want to delete this batch? All ${deleteTarget.enrolledCount} student(s) currently assigned to this batch will become Unassigned. Existing student accounts, attempts, and historical exam records will remain intact.`
+              : t('batches.deleteMsg')
+          }
+          fields={[
+            { label: t('batches.batchName'), value: deleteTarget.batchName },
+            { label: t('batches.batchId'), value: deleteTarget.batchId },
+            {
+              label: t('batches.enrolled'),
+              value:
+                deleteTarget.enrolledCount > 0
+                  ? `${deleteTarget.enrolledCount} student(s) (will become Unassigned)`
+                  : '0 students',
+            },
+          ]}
+          confirmLabel={isDeleting ? 'Deleting...' : t('batches.confirmDelete')}
+          disabled={isDeleting}
+          onConfirm={handleDelete}
+          onCancel={() => !isDeleting && setDeleteTarget(null)}
+        />
+      )}
     </div>);
 }

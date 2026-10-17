@@ -44,6 +44,7 @@ class FakeBatchRepository {
         if (index === -1) {
             return undefined;
         }
+        this.assignedStudentsByBatchId.set(batchId, 0);
         const [removed] = this.batches.splice(index, 1);
         assert.ok(removed !== undefined);
         return removed;
@@ -135,17 +136,21 @@ test('removing an unknown batch throws not found', async () => {
         return true;
     });
 });
-test('removal is blocked while students are assigned to the batch', async () => {
+test('removing a batch with assigned students succeeds and unassigns them', async () => {
     const repository = new FakeBatchRepository();
     const service = new BatchService(repository);
-    repository.seed(createBatchInput());
-    repository.assignedStudentsByBatchId.set('B100', 12);
-    await assert.rejects(() => service.remove('B100'), (error) => {
-        assert.ok(error instanceof ApiError);
-        assert.equal(error.statusCode, 409);
-        assert.equal(error.code, 'CONFLICT');
-        assert.match(error.message, /12 student/);
-        return true;
-    });
-    assert.ok((await repository.findById('B100')) !== undefined);
+    repository.seed(createBatchInput({ batchId: 'B100', batchName: 'Batch A' }));
+    repository.seed(createBatchInput({ batchId: 'B200', batchName: 'Batch B' }));
+    repository.assignedStudentsByBatchId.set('B100', 20);
+    repository.assignedStudentsByBatchId.set('B200', 15);
+
+    const result = await service.remove('B100');
+    assert.deepEqual(result, { deleted: true, batchId: 'B100' });
+    assert.equal(await repository.findById('B100'), undefined);
+    assert.equal(await repository.countAssignedStudents('B100'), 0);
+
+    // Other batch B200 and its assigned students remain untouched
+    const batchB = await repository.findById('B200');
+    assert.ok(batchB !== undefined);
+    assert.equal(await repository.countAssignedStudents('B200'), 15);
 });

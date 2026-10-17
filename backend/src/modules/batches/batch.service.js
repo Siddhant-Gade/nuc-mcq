@@ -59,22 +59,20 @@ export class BatchService {
         }
     }
     /**
-     * V1 deletion policy default (pending explicit product confirmation):
-     * a batch with assigned students cannot be deleted. This prevents orphaned
-     * student_profile rows while student_profile.batch_id has no foreign key.
+     * Batch deletion policy:
+     * When a batch is deleted, any students currently assigned to it
+     * are changed to 'Unassigned' in student_profile atomically.
+     * Historical test attempts, results, and accounts are preserved.
      */
     async remove(batchId) {
         const stored = await this.repository.findById(batchId);
         if (stored === undefined) {
             throw new ApiError(404, 'NOT_FOUND', 'Batch not found.');
         }
-        const assignedStudents = await this.repository.countAssignedStudents(batchId);
-        if (assignedStudents > 0) {
-            throw new ApiError(409, 'CONFLICT', `Cannot delete batch ${batchId} while ${assignedStudents} student(s) are assigned to it.`);
-        }
         const removed = await this.repository.remove(batchId);
         if (removed === undefined) {
             throw new ApiError(404, 'NOT_FOUND', 'Batch not found.');
         }
+        return { deleted: true, batchId };
     }
 }

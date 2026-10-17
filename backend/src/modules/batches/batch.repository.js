@@ -44,7 +44,20 @@ export class DrizzleBatchRepository {
         return batch;
     }
     async remove(batchId) {
-        const [batch] = await this.database.delete(batches).where(eq(batches.batchId, batchId)).returning();
-        return batch;
+        return this.database.transaction(async (tx) => {
+            await tx
+                .update(studentProfiles)
+                .set({ batchId: 'Unassigned', updatedAt: new Date() })
+                .where(eq(studentProfiles.batchId, batchId));
+            const [batch] = await tx.delete(batches).where(eq(batches.batchId, batchId)).returning();
+            return batch;
+        });
+    }
+    async unassignStudents(batchId) {
+        return this.database
+            .update(studentProfiles)
+            .set({ batchId: 'Unassigned', updatedAt: new Date() })
+            .where(eq(studentProfiles.batchId, batchId))
+            .returning();
     }
 }

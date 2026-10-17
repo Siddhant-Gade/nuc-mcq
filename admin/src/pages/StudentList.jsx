@@ -105,6 +105,7 @@ export default function StudentList() {
         <div className={styles.selectWrapper}>
           <select className={styles.select} value={batchFilter} onChange={(e) => { setBatchFilter(e.target.value); setPage(1); }}>
             <option value="">{t('students.allBatches')}</option>
+            <option value="Unassigned">Unassigned</option>
             {batches.map((b) => (<option key={b.batchId} value={b.batchId}>{b.batchName}</option>))}
           </select>
           <svg className={styles.selectChevron} width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>

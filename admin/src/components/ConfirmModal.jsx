@@ -1,13 +1,13 @@
 import { useLanguage } from '../contexts/LanguageContext';
 import styles from './ConfirmModal.module.css';
-export default function ConfirmModal({ title, message, fields, confirmLabel, onConfirm, onCancel }) {
+export default function ConfirmModal({ title, message, fields, confirmLabel, onConfirm, onCancel, disabled = false }) {
     const { t } = useLanguage();
     const resolvedConfirmLabel = confirmLabel ?? t('common.confirm');
-    return (<div className={styles.overlay} onClick={onCancel}>
+    return (<div className={styles.overlay} onClick={() => !disabled && onCancel()}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h2 className={styles.title}>{title}</h2>
-          <button className={styles.closeBtn} onClick={onCancel}>
+          <button className={styles.closeBtn} onClick={onCancel} disabled={disabled}>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13.5 4.5 4.5 13.5M4.5 4.5l9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </button>
         </div>
@@ -26,8 +26,8 @@ export default function ConfirmModal({ title, message, fields, confirmLabel, onC
         </div>
 
         <div className={styles.modalFooter}>
-          <button className={styles.cancelBtn} onClick={onCancel}>{t('common.cancel')}</button>
-          <button className={styles.confirmBtn} onClick={onConfirm}>{resolvedConfirmLabel}</button>
+          <button className={styles.cancelBtn} onClick={onCancel} disabled={disabled}>{t('common.cancel')}</button>
+          <button className={styles.confirmBtn} onClick={onConfirm} disabled={disabled}>{resolvedConfirmLabel}</button>
         </div>
       </div>
     </div>);
