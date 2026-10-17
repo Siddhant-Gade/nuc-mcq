@@ -144,6 +144,8 @@ export interface StudentIdentity {
   batchId?: string | null;
   batchName?: string | null;
   accessStatus?: string | null;
+  suspendedAt?: string | null;
+  suspensionReason?: string | null;
   roles: string[];
 }
 

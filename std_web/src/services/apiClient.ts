@@ -1,5 +1,4 @@
 import axios, { AxiosError } from 'axios';
-import { supabase } from '../lib/supabase';
 
 const PRIMARY_BASE_URL =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_BASE_URL) ||
@@ -15,19 +14,16 @@ const FALLBACK_URLS = [
 export const apiClient = axios.create({
   baseURL: PRIMARY_BASE_URL,
   timeout: 15000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
 });
 
-// Bearer token interceptor
-apiClient.interceptors.request.use(async (config) => {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+// Request interceptor: Rely on HttpOnly nuc_session cookie by default.
+// Explicitly provided Authorization header (e.g. for session exchange) is preserved.
+apiClient.interceptors.request.use((config) => {
   return config;
 });
 
@@ -39,6 +35,21 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as (typeof error.config & { _fallbackTried?: boolean });
 
+    // Detect student suspension or access blocking
+    if (error.response?.status === 403) {
+      const errData = error.response.data as { error?: { code?: string; message?: string } } | undefined;
+      const code = errData?.error?.code;
+      if (code === 'STUDENT_ACCESS_SUSPENDED' || code === 'STUDENT_ACCESS_REVOKED' || code === 'STUDENT_ACCESS_EXPIRED') {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('nuc_student_access_blocked', {
+              detail: { code, message: errData?.error?.message }
+            })
+          );
+        }
+      }
+    }
+
     // Try fallback on network/connection failure if not already retried
     if (
       originalRequest &&
@@ -49,7 +60,7 @@ apiClient.interceptors.response.use(
       for (const candidate of FALLBACK_URLS) {
         if (candidate === apiClient.defaults.baseURL) continue;
         try {
-          const probe = await axios.get(`${candidate}/health`, { timeout: 2000 });
+          const probe = await axios.get(`${candidate}/health`, { timeout: 2000, withCredentials: true });
           if (probe.status === 200) {
             apiClient.defaults.baseURL = candidate;
             originalRequest.baseURL = candidate;
@@ -80,6 +91,16 @@ export function getErrorMessage(error: unknown): string {
       return 'Session expired. Please sign in again.';
     }
     if (error.response?.status === 403) {
+      const errData = error.response?.data as { error?: { code?: string; message?: string } } | undefined;
+      if (errData?.error?.code === 'STUDENT_ACCESS_SUSPENDED') {
+        return 'Your student account has been suspended by administration.';
+      }
+      if (errData?.error?.code === 'STUDENT_ACCESS_REVOKED') {
+        return 'Your student access has been revoked.';
+      }
+      if (errData?.error?.code === 'STUDENT_ACCESS_EXPIRED') {
+        return 'Your student access has expired.';
+      }
       return 'Access not authorized for this account.';
     }
     if (error.code === 'ERR_NETWORK') {

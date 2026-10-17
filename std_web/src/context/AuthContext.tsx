@@ -29,61 +29,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyCurrentSession = useCallback(async () => {
     try {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        setStatus('unauthenticated');
-        setIdentity(null);
-        return;
+      const res = await authService.restoreSession();
+      setStatus(res.status);
+      setIdentity(res.identity);
+      if (res.error) {
+        setError(res.error);
       }
-
-      const verified = await authService.verifyIdentity(data.session.access_token);
-
-      // Case B: Admin account signed in on the student website
-      const isAdmin = verified.roles?.includes('ADMIN') || verified.roles?.includes('SUPER_ADMIN');
-      const isStudent = verified.roles?.includes('STUDENT');
-
-      if (isAdmin && !isStudent) {
-        // Clear unauthorized admin session from student portal storage
-        await supabase.auth.signOut();
-        setStatus('unauthenticated');
-        setIdentity(null);
-        setError('Admin accounts cannot access the Student Portal. Please use the Admin Portal.');
-        return;
-      }
-
-      setIdentity(verified);
-
-      // Check if student role is confirmed and access status is not REVOKED/PENDING
-      const isBlocked =
-        verified.accessStatus?.toUpperCase() === 'REVOKED' ||
-        verified.accessStatus?.toUpperCase() === 'EXPIRED';
-
-      if (isStudent && !isBlocked) {
-        setStatus('authenticated');
-        resultsService.setStudentContext(verified.authUserId || verified.studentId);
+      if (res.status === 'authenticated' && res.identity) {
+        resultsService.setStudentContext(res.identity.authUserId || res.identity.studentId || '');
         void resultsService.syncFromBackend();
-      } else {
-        setStatus('unauthorized');
       }
     } catch (e: unknown) {
       console.warn('[AuthContext] Verification failed:', e);
-      const httpStatus = (e as { response?: { status?: number } })?.response?.status;
-      const isAuthRejection = httpStatus === 401;
-
-      if (isAuthRejection) {
-        // Explicitly rejected session/token
-        await supabase.auth.signOut().catch(() => {});
-        setStatus('unauthenticated');
-        setIdentity(null);
-      } else {
-        // Preserve Supabase session on network error or server startup
-        setStatus(httpStatus === 403 ? 'unauthorized' : 'unauthenticated');
-      }
+      setStatus('unauthenticated');
+      setIdentity(null);
     }
   }, []);
 
   useEffect(() => {
     verifyCurrentSession();
+
+    const handleBlocked = (e: Event) => {
+      const custom = e as CustomEvent<{ code?: string; message?: string }>;
+      const code = custom.detail?.code;
+      if (
+        code === 'STUDENT_ACCESS_SUSPENDED' ||
+        code === 'STUDENT_ACCESS_REVOKED' ||
+        code === 'STUDENT_ACCESS_EXPIRED'
+      ) {
+        const statusClean = code.replace('STUDENT_ACCESS_', '');
+        setIdentity((prev) => (prev ? { ...prev, accessStatus: statusClean } : null));
+        setStatus('unauthorized');
+      }
+    };
+    window.addEventListener('nuc_student_access_blocked', handleBlocked);
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -95,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      window.removeEventListener('nuc_student_access_blocked', handleBlocked);
       authListener.subscription.unsubscribe();
     };
   }, [verifyCurrentSession]);

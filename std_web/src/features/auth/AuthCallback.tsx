@@ -41,15 +41,15 @@ export const AuthCallback: React.FC = () => {
           throw new Error('Authentication session could not be established. Please try signing in again.');
         }
 
-        // Authoritative verification via backend /api/v1/auth/me
-        const identity = await authService.verifyIdentity(session.access_token);
+        // Authoritative verification and session exchange via backend /api/v1/auth/session
+        const identity = await authService.exchangeTokenForSession(session.access_token);
 
         // Enforce boundary: Case B (Admin on student website)
         const isAdmin = identity.roles.includes('ADMIN') || identity.roles.includes('SUPER_ADMIN');
         const isStudent = identity.roles.includes('STUDENT');
 
         if (isAdmin && !isStudent) {
-          await supabase.auth.signOut();
+          await authService.signOut();
           if (!cancelled) {
             navigate('/login?error=Admin+accounts+cannot+access+the+Student+Portal.+Please+use+the+Admin+Portal.', {
               replace: true,
@@ -60,6 +60,7 @@ export const AuthCallback: React.FC = () => {
 
         // Case A (Student on student website)
         const isBlocked =
+          identity.accessStatus?.toUpperCase() === 'SUSPENDED' ||
           identity.accessStatus?.toUpperCase() === 'REVOKED' ||
           identity.accessStatus?.toUpperCase() === 'EXPIRED';
 

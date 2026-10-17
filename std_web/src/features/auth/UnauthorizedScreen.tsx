@@ -64,19 +64,42 @@ export const UnauthorizedScreen: React.FC = () => {
     }
   };
 
+  const isSuspended = identity?.accessStatus?.toUpperCase() === 'SUSPENDED';
+  const isRevoked = identity?.accessStatus?.toUpperCase() === 'REVOKED';
+  const isExpired = identity?.accessStatus?.toUpperCase() === 'EXPIRED';
+  const isBlocked = isSuspended || isRevoked || isExpired;
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-6 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 text-center transition-colors">
-        <div className="inline-flex p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900 text-amber-600 dark:text-amber-400">
+        <div
+          className={`inline-flex p-4 rounded-2xl border ${
+            isSuspended || isRevoked
+              ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400'
+              : 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-900 text-amber-600 dark:text-amber-400'
+          }`}
+        >
           <ShieldAlert className="w-12 h-12" />
         </div>
 
         <div className="space-y-2">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-            {t('request_access_title')}
+            {isSuspended
+              ? 'Account Suspended'
+              : isRevoked
+              ? 'Access Revoked'
+              : isExpired
+              ? 'Access Expired'
+              : t('request_access_title')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            {t('request_access_desc')}
+            {isSuspended
+              ? 'Your student account has been temporarily suspended by the institute administration. Access to practice tests and exam features is halted. Please contact your administrator.'
+              : isRevoked
+              ? 'Your student access has been revoked by the institute administrator. Please contact your training center.'
+              : isExpired
+              ? 'Your admission period or course access has expired. Please contact the administrator to renew your enrollment.'
+              : t('request_access_desc')}
           </p>
         </div>
 
@@ -89,6 +112,14 @@ export const UnauthorizedScreen: React.FC = () => {
                 {identity.name || 'Student'}
               </span>
             </div>
+            {identity.studentId && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">Student ID / PRN:</span>
+                <span className="font-mono text-slate-800 dark:text-slate-200">
+                  {identity.studentId}
+                </span>
+              </div>
+            )}
             {identity.email && (
               <div className="flex justify-between">
                 <span className="text-slate-500">Email:</span>
@@ -97,12 +128,24 @@ export const UnauthorizedScreen: React.FC = () => {
                 </span>
               </div>
             )}
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center pt-1">
               <span className="text-slate-500">Access Status:</span>
-              <span className="px-2 py-0.5 rounded font-bold uppercase text-[10px] bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">
+              <span
+                className={`px-2 py-0.5 rounded font-bold uppercase text-[10px] ${
+                  isSuspended || isRevoked
+                    ? 'bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300'
+                    : 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300'
+                }`}
+              >
                 {identity.accessStatus || 'PENDING'}
               </span>
             </div>
+            {identity.suspensionReason && (
+              <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700 text-rose-600 dark:text-rose-400">
+                <span className="font-semibold">Reason: </span>
+                <span>{identity.suspensionReason}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -112,35 +155,37 @@ export const UnauthorizedScreen: React.FC = () => {
           </div>
         )}
 
-        {/* Request Form */}
-        {!submitted ? (
-          <form onSubmit={handleRequestAccess} className="space-y-3 text-left">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                {t('input_prn')} (Optional if using Google)
-              </label>
-              <input
-                type="text"
-                value={prn}
-                onChange={(e) => setPrn(e.target.value)}
-                placeholder="e.g. 20260101"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+        {/* Request Form (Only if not suspended/revoked/expired) */}
+        {!isBlocked && (
+          !submitted ? (
+            <form onSubmit={handleRequestAccess} className="space-y-3 text-left">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {t('input_prn')} (Optional if using Google)
+                </label>
+                <input
+                  type="text"
+                  value={prn}
+                  onChange={(e) => setPrn(e.target.value)}
+                  placeholder="e.g. 20260101"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Send className="w-4 h-4" />
+                <span>{t('btn_request_access')}</span>
+              </button>
+            </form>
+          ) : (
+            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
+              <span>Request registered! You will be admitted once the admin approves.</span>
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Send className="w-4 h-4" />
-              <span>{t('btn_request_access')}</span>
-            </button>
-          </form>
-        ) : (
-          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
-            <span>Request registered! You will be admitted once the admin approves.</span>
-          </div>
+          )
         )}
 
         {/* Action Buttons */}

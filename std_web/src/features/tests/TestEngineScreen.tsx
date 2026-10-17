@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -16,6 +16,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { GeneratedTest, Language, QuestionModel, TestResultModel } from '../../types';
 import { resultsService } from '../../services/resultsService';
 import { bookmarksService } from '../../services/bookmarksService';
+import { apiClient } from '../../services/apiClient';
 
 export const TestEngineScreen: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -31,9 +32,78 @@ export const TestEngineScreen: React.FC = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [haltedModal, setHaltedModal] = useState<{ isHalted: boolean; message: string } | null>(null);
 
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const answersRef = useRef(answers);
+
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  const haltTestImmediately = useCallback((reason: string) => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    // Safely preserve answers to localStorage
+    try {
+      localStorage.setItem(
+        'nuc_suspended_test_backup',
+        JSON.stringify({
+          testId: test?.testId,
+          answers: answersRef.current,
+          haltedAt: new Date().toISOString(),
+          reason,
+        })
+      );
+    } catch {}
+    setHaltedModal({
+      isHalted: true,
+      message: reason || 'Your access has been suspended by administration. Test is halted.',
+    });
+  }, [test?.testId]);
+
+  useEffect(() => {
+    // 1. Listen to global blocked event from apiClient
+    const handleBlockedEvent = (e: Event) => {
+      const detail = (e as CustomEvent<{ code?: string; message?: string }>).detail;
+      haltTestImmediately(detail?.message || 'Access suspended by administration.');
+    };
+    window.addEventListener('nuc_student_access_blocked', handleBlockedEvent);
+
+    // 2. Periodic poll check every 30s
+    const checkSuspension = async () => {
+      try {
+        const res = await apiClient.get('/api/v1/auth/session');
+        const status = res.data?.data?.identity?.accessStatus?.toUpperCase();
+        if (status === 'SUSPENDED' || status === 'REVOKED' || status === 'EXPIRED') {
+          haltTestImmediately('Your student account status has changed to ' + status + '. Test halted.');
+        }
+      } catch (err: unknown) {
+        const httpStatus = (err as { response?: { status?: number; data?: { error?: { message?: string } } } })?.response?.status;
+        if (httpStatus === 403) {
+          const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+          haltTestImmediately(msg || 'Student access is restricted.');
+        }
+      }
+    };
+
+    const intervalId = window.setInterval(checkSuspension, 30000);
+
+    // 3. Tab focus / visibility check
+    const handleFocus = () => {
+      void checkSuspension();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('nuc_student_access_blocked', handleBlockedEvent);
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(intervalId);
+    };
+  }, [haltTestImmediately]);
 
   useEffect(() => {
     const raw = sessionStorage.getItem('active_test');
@@ -53,6 +123,11 @@ export const TestEngineScreen: React.FC = () => {
 
   // Timer countdown
   useEffect(() => {
+    if (haltedModal?.isHalted) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
     if (secondsRemaining <= 0 && test) {
       // Time is up -> Auto submit
       handleSubmitTest();
@@ -108,6 +183,7 @@ export const TestEngineScreen: React.FC = () => {
   const currentExplanation = getExplanation(currentQ);
 
   const handleSelectOption = (index: number) => {
+    if (haltedModal?.isHalted) return;
     setAnswers((prev) => ({
       ...prev,
       [currentQ.id]: index,
@@ -115,6 +191,7 @@ export const TestEngineScreen: React.FC = () => {
   };
 
   const handleClearAnswer = () => {
+    if (haltedModal?.isHalted) return;
     setAnswers((prev) => {
       const copy = { ...prev };
       delete copy[currentQ.id];
@@ -123,6 +200,7 @@ export const TestEngineScreen: React.FC = () => {
   };
 
   const handleToggleFlag = () => {
+    if (haltedModal?.isHalted) return;
     setFlagged((prev) => {
       const copy = new Set(prev);
       if (copy.has(currentQ.id)) {
@@ -139,6 +217,7 @@ export const TestEngineScreen: React.FC = () => {
   };
 
   const handleSubmitTest = async () => {
+    if (haltedModal?.isHalted) return;
     if (!test) return;
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -613,6 +692,36 @@ export const TestEngineScreen: React.FC = () => {
                 {t('btn_quit')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Test Suspension Modal */}
+      {haltedModal?.isHalted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-rose-200 dark:border-rose-900 text-center space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              Test Halted — Account Suspended
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              {haltedModal.message}
+            </p>
+            <p className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/80 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+              Your answered questions have been safely saved to local storage backup.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem('active_test');
+                navigate('/unauthorized', { replace: true });
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition-colors cursor-pointer"
+            >
+              Acknowledge & View Account Status
+            </button>
           </div>
         </div>
       )}
