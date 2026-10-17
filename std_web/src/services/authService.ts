@@ -251,9 +251,9 @@ export const authService = {
           `No admitted student record found with Google email: ${email}. Please contact the institute administrator to enroll.`
         );
       }
-      if (axiosErr?.code === 'ERR_NETWORK') {
+      if (axiosErr?.code === 'ERR_NETWORK' || axiosErr?.code === 'ECONNABORTED') {
         throw new Error(
-          'Could not connect to backend server. If developing locally, ensure the local backend is running (npm run dev) or that CORS_ORIGINS includes http://localhost:5174.'
+          'Could not connect to backend server. If using the cloud backend (Render), the instance was likely waking up from cold start—please retry now. If developing locally, ensure the local backend is running (npm run dev) or that CORS_ORIGINS includes http://localhost:5174.'
         );
       }
       if (bridgeErr instanceof Error) {

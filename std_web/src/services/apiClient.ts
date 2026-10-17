@@ -13,7 +13,7 @@ const FALLBACK_URLS = [
 
 export const apiClient = axios.create({
   baseURL: PRIMARY_BASE_URL,
-  timeout: 15000,
+  timeout: 45000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
