@@ -1,5 +1,6 @@
 import axios from 'axios';
 import config from '../config';
+
 /** Normalized failure surfaced by every service; safe to render in the UI. */
 export class ApiError extends Error {
     code;
@@ -11,6 +12,7 @@ export class ApiError extends Error {
         this.status = status;
     }
 }
+
 export function getErrorMessage(error) {
     if (error instanceof ApiError)
         return error.message;
@@ -18,13 +20,16 @@ export function getErrorMessage(error) {
         return error.message;
     return 'Something went wrong. Please try again.';
 }
-let readAccessToken = () => undefined;
+
 let handleUnauthorized = () => { };
-/** Registered by authService once the Supabase client is available. */
+
+/** Registered by authService. */
 export function configureApiClient(options) {
-    readAccessToken = options.readAccessToken;
-    handleUnauthorized = options.onUnauthorized;
+    if (options?.onUnauthorized) {
+        handleUnauthorized = options.onUnauthorized;
+    }
 }
+
 function extractBackendError(data) {
     if (data && typeof data === 'object' && 'error' in data) {
         const error = data.error;
@@ -37,39 +42,39 @@ function extractBackendError(data) {
     }
     return null;
 }
+
 const apiClient = axios.create({
     baseURL: config.apiBaseUrl,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
 });
-apiClient.interceptors.request.use((request) => {
-    const token = readAccessToken();
-    if (token) {
-        request.headers.Authorization = `Bearer ${token}`;
-    }
-    return request;
-});
+
 apiClient.interceptors.response.use(
-// Unwrap the backend envelope: callers receive `data` directly.
-(response) => response, (error) => {
-    if (error.response?.status === 401) {
-        handleUnauthorized();
+    // Unwrap the backend envelope: callers receive `data` directly.
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            handleUnauthorized();
+        }
+        const backendError = extractBackendError(error.response?.data);
+        if (backendError) {
+            return Promise.reject(new ApiError(backendError.code, backendError.message, error.response?.status ?? 0));
+        }
+        if (error.code === 'ERR_NETWORK') {
+            return Promise.reject(new ApiError('NETWORK_UNAVAILABLE', 'Could not reach the server. Is the backend running?', 0));
+        }
+        return Promise.reject(new ApiError('REQUEST_FAILED', error.message || 'The request failed.', error.response?.status ?? 0));
     }
-    const backendError = extractBackendError(error.response?.data);
-    if (backendError) {
-        return Promise.reject(new ApiError(backendError.code, backendError.message, error.response?.status ?? 0));
-    }
-    if (error.code === 'ERR_NETWORK') {
-        return Promise.reject(new ApiError('NETWORK_UNAVAILABLE', 'Could not reach the server. Is the backend running?', 0));
-    }
-    return Promise.reject(new ApiError('REQUEST_FAILED', error.message || 'The request failed.', error.response?.status ?? 0));
-});
+);
+
 /** Performs a GET/POST/PATCH/DELETE against the backend and unwraps the
  * `{ success: true, data }` envelope. Error envelopes become {@link ApiError}.
  */
-export async function request(method, url, body) {
-    const response = await apiClient.request({ method, url, data: body });
-    return response.data.data;
+export async function request(method, url, body, options = {}) {
+    const response = await apiClient.request({ method, url, data: body, ...options });
+    return response.data?.data;
 }
+
 export default apiClient;

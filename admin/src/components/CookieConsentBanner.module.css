@@ -1,0 +1,123 @@
+.cookieBanner {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  max-width: 680px;
+  margin: 0 auto;
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem 1.5rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.cookieContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.cookieIcon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  color: var(--color-primary, #0284c7);
+  margin-top: 2px;
+}
+
+.cookieTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+  margin: 0 0 0.25rem 0;
+}
+
+.cookieText {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary, #64748b);
+  margin: 0;
+}
+
+.cookieActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.rejectBtn {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #64748b);
+  background: transparent;
+  border: 1px solid var(--color-border, #cbd5e1);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.rejectBtn:hover {
+  background: var(--color-bg-hover, #f1f5f9);
+  color: var(--color-text-primary, #1e293b);
+}
+
+.acceptBtn {
+  padding: 0.5rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #ffffff;
+  background: var(--color-primary, #0284c7);
+  border: 1px solid var(--color-primary, #0284c7);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.acceptBtn:hover {
+  background: var(--color-primary-dark, #0369a1);
+}
+
+@media (max-width: 640px) {
+  .cookieBanner {
+    bottom: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .cookieActions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .rejectBtn,
+  .acceptBtn {
+    flex: 1;
+    text-align: center;
+  }
+}

@@ -37,9 +37,13 @@ export default function StudentAdmission() {
             e.name = t('admission.errNameRequired');
         if (!form.batchId)
             e.batchId = t('admission.errBatchRequired');
-        if (!form.photo)
-            e.photo = t('admission.errPhotoRequired');
-        else if (form.photo.size > 102400)
+        if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+            e.email = 'Please enter a valid email address';
+        }
+        if (form.mobile.trim() && !/^\+?[0-9\s-]{7,15}$/.test(form.mobile.trim())) {
+            e.mobile = 'Please enter a valid mobile number';
+        }
+        if (form.photo && form.photo.size > 102400)
             e.photo = t('admission.errPhotoSize');
         return e;
     }
@@ -120,9 +124,27 @@ export default function StudentAdmission() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#10b981"/><path d="M8 12.5l2.5 2.5 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <p className={styles.successText}>{t('admission.successMsg')}</p>
-          <button className={styles.successBtn} onClick={handleReset}>
-            {t('admission.addAnother')}
-          </button>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px' }}>
+            <button className={styles.successBtn} onClick={handleReset}>
+              {t('admission.addAnother')}
+            </button>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={() => navigate('/students')}
+              style={{
+                padding: '10px 20px',
+                borderRadius: '8px',
+                border: '1px solid var(--color-border, #e2e8f0)',
+                background: 'var(--color-surface, #ffffff)',
+                color: 'var(--color-text-primary, #1e293b)',
+                fontWeight: 500,
+                cursor: 'pointer'
+              }}
+            >
+              View Students List
+            </button>
+          </div>
         </div>
       </div>);
     }
@@ -176,11 +198,13 @@ export default function StudentAdmission() {
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label} htmlFor="email">{t('admission.emailAddress')}</label>
-                  <input id="email" name="email" type="email" className={styles.input} placeholder="jane.doe@example.com" value={form.email} onChange={handleChange}/>
+                  <input id="email" name="email" type="email" className={`${styles.input} ${errors.email ? styles.inputError : ''}`} placeholder="jane.doe@example.com" value={form.email} onChange={handleChange}/>
+                  {errors.email && <span className={styles.errorText}>{errors.email}</span>}
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label} htmlFor="mobile">{t('admission.mobileNumber')}</label>
-                  <input id="mobile" name="mobile" className={styles.input} placeholder="+1 (555) 000-0000" value={form.mobile} onChange={handleChange}/>
+                  <input id="mobile" name="mobile" className={`${styles.input} ${errors.mobile ? styles.inputError : ''}`} placeholder="+1 (555) 000-0000" value={form.mobile} onChange={handleChange}/>
+                  {errors.mobile && <span className={styles.errorText}>{errors.mobile}</span>}
                 </div>
               </div>
             </div>
@@ -215,7 +239,7 @@ export default function StudentAdmission() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h3 className={styles.cardTitle}>
-                {t('admission.officialPhoto')} <span style={{ color: '#ef4444' }}>*</span>
+                {t('admission.officialPhoto')} <span style={{ color: 'var(--color-text-secondary, #64748b)', fontSize: '0.875rem', fontWeight: 'normal' }}>(Optional)</span>
               </h3>
               <p className={styles.cardDescription}>{t('admission.photoDesc')}</p>
             </div>

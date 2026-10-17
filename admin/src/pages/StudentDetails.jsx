@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getStudentById, getStudentAccess, getStudentPerformance, updateStudentAccessStatus, deleteStudent, getBatches } from '../services';
+import {
+    getStudentById,
+    getStudentAccess,
+    getStudentPerformance,
+    updateStudentAccessStatus,
+    suspendStudent,
+    restoreStudent,
+    deleteStudent,
+    getBatches,
+} from '../services';
 import { getErrorMessage } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
 import StatusUpdateModal from '../components/StatusUpdateModal';
@@ -15,10 +24,13 @@ function statusBadgeClass(status) {
         return `${styles.badge} ${styles.badgePending}`;
     if (status === 'EXPIRED')
         return `${styles.badge} ${styles.badgeExpired}`;
+    if (status === 'SUSPENDED')
+        return `${styles.badge} ${styles.badgeRevoked}`;
     return `${styles.badge} ${styles.badgeRevoked}`;
 }
 
 function formatDate(iso, lang) {
+    if (!iso) return '—';
     const locale = lang === 'en' ? 'en-US' : lang === 'mr' ? 'mr-IN' : 'hi-IN';
     return new Date(iso).toLocaleDateString(locale, { month: 'numeric', day: 'numeric', year: 'numeric' });
 }
@@ -27,11 +39,16 @@ export default function StudentDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [student, setStudent] = useState(null);
+    const [accessData, setAccessData] = useState(null);
     const [accessStatus, setAccessStatus] = useState('PENDING');
     const [performance, setPerformance] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showSuspendModal, setShowSuspendModal] = useState(false);
+    const [suspensionReason, setSuspensionReason] = useState('');
+    const [isSuspending, setIsSuspending] = useState(false);
+    const [isRestoring, setIsRestoring] = useState(false);
     const [batches, setBatches] = useState([]);
     const [actionError, setActionError] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -48,6 +65,7 @@ export default function StudentDetails() {
         ])
             .then(([s, a, p, b]) => {
                 setStudent(s ?? null);
+                setAccessData(a ?? null);
                 setAccessStatus(a?.status ?? 'PENDING');
                 setPerformance(p ?? null);
                 setBatches(b ?? []);
@@ -81,11 +99,54 @@ export default function StudentDetails() {
         try {
             await updateStudentAccessStatus(id, newStatus);
             setAccessStatus(newStatus);
+            setAccessData((prev) => ({ ...prev, status: newStatus }));
             setShowModal(false);
         }
         catch (error) {
             setActionError(getErrorMessage(error));
             setShowModal(false);
+        }
+    }
+
+    async function handleSuspend() {
+        if (!id) return;
+        setIsSuspending(true);
+        setActionError(null);
+        try {
+            const res = await suspendStudent(id, suspensionReason.trim() || undefined);
+            setAccessStatus('SUSPENDED');
+            setAccessData((prev) => ({
+                ...prev,
+                status: 'SUSPENDED',
+                suspendedAt: res?.suspendedAt || new Date().toISOString(),
+                suspensionReason: res?.suspensionReason || suspensionReason.trim(),
+            }));
+            setShowSuspendModal(false);
+            setSuspensionReason('');
+        } catch (error) {
+            setActionError(getErrorMessage(error));
+        } finally {
+            setIsSuspending(false);
+        }
+    }
+
+    async function handleRestore() {
+        if (!id) return;
+        setIsRestoring(true);
+        setActionError(null);
+        try {
+            await restoreStudent(id);
+            setAccessStatus('ACTIVE');
+            setAccessData((prev) => ({
+                ...prev,
+                status: 'ACTIVE',
+                suspendedAt: null,
+                suspensionReason: null,
+            }));
+        } catch (error) {
+            setActionError(getErrorMessage(error));
+        } finally {
+            setIsRestoring(false);
         }
     }
 
@@ -114,7 +175,7 @@ export default function StudentDetails() {
           </nav>
           <h1 className={pageStyles.heading}>{student.name}</h1>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button className={styles.backBtn} style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }} onClick={() => setShowEditModal(true)}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -122,6 +183,36 @@ export default function StudentDetails() {
             </svg>
             Edit Details
           </button>
+
+          {accessStatus === 'SUSPENDED' ? (
+            <button
+              className={styles.backBtn}
+              style={{ color: '#10b981', borderColor: '#10b981' }}
+              disabled={isRestoring}
+              onClick={handleRestore}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+              </svg>
+              {isRestoring ? 'Restoring...' : 'Restore Access'}
+            </button>
+          ) : (
+            <button
+              className={styles.backBtn}
+              style={{ color: '#ef4444', borderColor: '#ef4444' }}
+              onClick={() => setShowSuspendModal(true)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+              Suspend Student
+            </button>
+          )}
+
           <button className={styles.backBtn} style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)' }} disabled={isDeleting} onClick={handleDelete}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -193,13 +284,60 @@ export default function StudentDetails() {
             <div className={styles.cardBody}>
               <div className={styles.statusRow}>
                 <span className={styles.statusLabel}>{t('studentDetail.currentStatus')}</span>
-                <span className={statusBadgeClass(accessStatus)}>{t(statusKey)}</span>
+                <span className={statusBadgeClass(accessStatus)}>
+                  {accessStatus === 'SUSPENDED' ? 'SUSPENDED' : t(statusKey)}
+                </span>
               </div>
-              <div className={styles.statusActions}>
+
+              {accessStatus === 'SUSPENDED' && (
+                <div style={{ marginTop: '0.875rem', padding: '0.875rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontWeight: 600, fontSize: '0.875rem' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <span>Student Access Suspended</span>
+                  </div>
+                  <p style={{ margin: '0.375rem 0 0', fontSize: '0.8125rem', color: 'var(--color-on-surface-variant)', lineHeight: 1.4 }}>
+                    Web and mobile access is immediately halted. Active assessments are terminated.
+                  </p>
+                  {accessData?.suspendedAt && (
+                    <p style={{ margin: '0.375rem 0 0', fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>
+                      <strong>Suspended On:</strong> {formatDate(accessData.suspendedAt, language)}
+                    </p>
+                  )}
+                  {accessData?.suspensionReason && (
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>
+                      <strong>Reason:</strong> {accessData.suspensionReason}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className={styles.statusActions} style={{ display: 'flex', gap: '0.625rem', marginTop: '1rem', flexWrap: 'wrap' }}>
                 <button className={styles.updateBtn} onClick={() => setShowModal(true)}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   {t('studentDetail.updateStatus')}
                 </button>
+                {accessStatus === 'SUSPENDED' ? (
+                  <button
+                    className={styles.updateBtn}
+                    style={{ background: '#10b981', color: '#fff', borderColor: '#10b981' }}
+                    disabled={isRestoring}
+                    onClick={handleRestore}
+                  >
+                    {isRestoring ? 'Restoring...' : 'Restore Access'}
+                  </button>
+                ) : (
+                  <button
+                    className={styles.updateBtn}
+                    style={{ background: '#ef4444', color: '#fff', borderColor: '#ef4444' }}
+                    onClick={() => setShowSuspendModal(true)}
+                  >
+                    Suspend Student
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -238,33 +376,6 @@ export default function StudentDetails() {
                       📝 {performance.practiceCount} Practice • 🎓 {performance.examCount} Exam
                     </span>
                   </div>
-
-                  {performance.recentTests && performance.recentTests.length > 0 && (
-                    <div className={styles.recentTestsList}>
-                      <span className={styles.recentTestsTitle}>Recent Test Attempts</span>
-                      {performance.recentTests.map((rt) => (
-                        <div key={rt.id} className={styles.recentTestItem}>
-                          <div className={styles.recentTestLeft}>
-                            <span className={`${styles.testModeBadge} ${rt.mode === 'EXAM' ? styles.modeExam : styles.modePractice}`}>
-                              {rt.mode}
-                            </span>
-                            <span className={styles.testScoreText}>
-                              {rt.score}/{rt.totalQuestions} ({rt.percentage}%)
-                            </span>
-                          </div>
-                          <span className={`${styles.testPassBadge} ${rt.passed ? styles.passed : styles.failed}`}>
-                            {rt.passed ? 'PASSED' : 'FAILED'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className={styles.perfFooter}>
-                    <button className={styles.analyticsLinkBtn} onClick={() => navigate('/analytics')}>
-                      View Institute Analytics →
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <div className={styles.perfEmptyState}>
@@ -292,6 +403,7 @@ export default function StudentDetails() {
       </div>
 
       {showModal && (<StatusUpdateModal studentName={student.name} currentStatus={accessStatus} onConfirm={handleStatusConfirm} onCancel={() => setShowModal(false)}/>)}
+      
       {showEditModal && (
         <EditStudentModal
           student={student}
@@ -299,6 +411,61 @@ export default function StudentDetails() {
           onSave={(updated) => setStudent((prev) => ({ ...prev, ...updated }))}
           onClose={() => setShowEditModal(false)}
         />
+      )}
+
+      {showSuspendModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div style={{ background: 'var(--color-surface-card)', borderRadius: '12px', maxWidth: '480px', width: '100%', padding: '1.5rem', border: '1px solid var(--color-outline-variant)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-on-surface)' }}>Suspend Student Access</h3>
+                <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--color-on-surface-variant)' }}>{student.name} ({student.studentId})</p>
+              </div>
+            </div>
+            
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-on-surface)', lineHeight: 1.5, marginBottom: '1rem' }}>
+              Suspending this student will immediately block access to the Student React website and Flutter application. Any active assessment will be stopped. Continue?
+            </p>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-on-surface)', marginBottom: '0.375rem' }}>
+                Suspension Reason (optional)
+              </label>
+              <textarea
+                style={{ width: '100%', minHeight: '80px', padding: '0.625rem', borderRadius: '6px', border: '1px solid var(--color-outline-variant)', background: 'var(--color-surface-container)', color: 'var(--color-on-surface)', fontSize: '0.875rem', resize: 'vertical', outline: 'none' }}
+                placeholder="e.g. Temporary academic suspension, pending fee verification..."
+                value={suspensionReason}
+                onChange={(e) => setSuspensionReason(e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid var(--color-outline-variant)', background: 'transparent', color: 'var(--color-on-surface)', cursor: 'pointer', fontSize: '0.875rem' }}
+                disabled={isSuspending}
+                onClick={() => { setShowSuspendModal(false); setSuspensionReason(''); }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                disabled={isSuspending}
+                onClick={handleSuspend}
+              >
+                {isSuspending ? 'Suspending...' : 'Confirm Suspension'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>);
 }
