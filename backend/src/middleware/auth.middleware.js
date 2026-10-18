@@ -13,6 +13,28 @@ const getBearerToken = (authorizationHeader) => {
     return match?.[1]?.trim() || undefined;
 };
 
+export const PASSIVE_POLLING_ROUTES = new Set([
+    '/api/v1/student/broadcasts/unread-count',
+    '/api/v1/notifications/unread-count',
+    '/api/v1/auth/session',
+]);
+
+export const isPassivePollingRequest = (request) => {
+    if (request.header('x-passive-request') === 'true') {
+        return true;
+    }
+    const rawPath = request.originalUrl?.split('?')[0] || request.path || '';
+    if (PASSIVE_POLLING_ROUTES.has(rawPath)) {
+        return true;
+    }
+    if (request.path === '/unread-count' || request.path === '/session') {
+        if (request.baseUrl?.includes('broadcasts') || request.baseUrl?.includes('notifications') || request.baseUrl?.includes('auth')) {
+            return true;
+        }
+    }
+    return false;
+};
+
 export const createAuthenticationMiddleware = (
     tokenVerifier,
     sessionStore,
@@ -83,10 +105,12 @@ export const createAuthenticationMiddleware = (
                     }
                 }
 
-                // Refresh idle activity if > 10 seconds since last activity
-                const lastActivityMs = new Date(session.lastActivityAt).getTime();
-                if (now.getTime() - lastActivityMs > 10_000) {
-                    store.touchSessionActivity(session.id).catch(() => {});
+                // Refresh idle activity if > 10 seconds since last activity and request is not passive polling
+                if (!isPassivePollingRequest(request)) {
+                    const lastActivityMs = new Date(session.lastActivityAt).getTime();
+                    if (now.getTime() - lastActivityMs > 10_000) {
+                        store.touchSessionActivity(session.id).catch(() => {});
+                    }
                 }
 
                 // Build authenticated request identity
@@ -115,6 +139,17 @@ export const createAuthenticationMiddleware = (
             } catch (err) {
                 return next(err);
             }
+        }
+
+        // Enforce web session cookie requirement for student web clients.
+        // Prevents silent fallback to 1-hour Supabase Bearer tokens for student web navigation,
+        // while preserving Bearer exchange during explicit POST /api/v1/auth/session.
+        const isStudentWeb = request.header('x-client-type') === 'STUDENT_WEB';
+        const rawPath = request.originalUrl?.split('?')[0] || request.path || '';
+        const isAuthExchangeRoute = request.method === 'POST' && (rawPath === '/api/v1/auth/session' || request.path === '/session');
+
+        if (isStudentWeb && !rawSessionToken && !isAuthExchangeRoute) {
+            return next(new ApiError(401, 'AUTHENTICATION_ERROR', 'Active web session is required.'));
         }
 
         // 2. Fallback to Bearer Token Authentication (Mobile App & Admin Web)

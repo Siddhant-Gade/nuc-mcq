@@ -31,6 +31,12 @@ export const createCookieMiddleware = (isProduction = process.env.NODE_ENV === '
             const options = getSessionCookieOptions(isProduction);
             const serialized = serialize(cookieName, rawToken, options);
             appendSetCookie(serialized);
+            if (isProduction) {
+                appendSetCookie(serialize(SESSION_COOKIE_NAME_DEV, rawToken, {
+                    ...options,
+                    secure: false,
+                }));
+            }
         };
 
         // Helper to clear all potential session cookie variants

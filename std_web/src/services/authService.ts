@@ -21,7 +21,7 @@ export const authService = {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (token) {
-        void this.exchangeTokenForSession(token).catch(() => {});
+        await this.exchangeTokenForSession(token);
         await this.verifyIdentity(token);
       }
     };
@@ -116,7 +116,7 @@ export const authService = {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (token) {
-        void this.exchangeTokenForSession(token).catch(() => {});
+        await this.exchangeTokenForSession(token);
         await this.verifyIdentity(token);
       }
     };
@@ -167,7 +167,7 @@ export const authService = {
 
       if (!idTokenErr && idTokenData?.session) {
         const token = idTokenData.session.access_token;
-        void this.exchangeTokenForSession(token).catch(() => {});
+        await this.exchangeTokenForSession(token);
         const identity = await this.verifyIdentity(token);
         const isAdmin = identity.roles.includes('ADMIN') || identity.roles.includes('SUPER_ADMIN');
         const isStudent = identity.roles.includes('STUDENT');

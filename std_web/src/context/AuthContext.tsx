@@ -27,25 +27,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [identity, setIdentity] = useState<StudentIdentity | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const statusRef = React.useRef(status);
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
   const verifyCurrentSession = useCallback(async () => {
     try {
-      let verified: StudentIdentity | null = null;
-      const { data } = await supabase.auth.getSession();
-
-      if (data.session?.access_token) {
-        // Exchange Bearer token for server session cookie and fresh identity
-        verified = await authService.exchangeTokenForSession(data.session.access_token);
-        if (!verified) {
-          verified = await authService.verifyIdentity(data.session.access_token);
-        }
-      } else {
-        // Fallback: Check if there is an active HttpOnly cookie session
-        verified = await authService.getSessionIdentity();
-        if (!verified) {
-          setStatus('unauthenticated');
-          setIdentity(null);
-          return;
-        }
+      // Authoritatively verify the active HttpOnly cookie session from the server
+      const verified = await authService.getSessionIdentity();
+      if (!verified) {
+        setStatus('unauthenticated');
+        setIdentity(null);
+        return;
       }
 
       // Case B: Admin account signed in on the student website
@@ -102,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setStatus('unauthenticated');
         setIdentity(null);
       } else {
-        // Preserve Supabase session on network error or server startup
+        // Preserve state on network error or server startup
         setStatus(httpStatus === 403 ? 'unauthorized' : 'unauthenticated');
       }
     }
@@ -112,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     verifyCurrentSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_IN') {
         await verifyCurrentSession();
       } else if (event === 'SIGNED_OUT') {
         setStatus('unauthenticated');
@@ -130,11 +124,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setStatus('unauthorized');
     };
 
+    const onSessionExpired = (event: Event) => {
+      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      setError(detail?.message || 'Session expired due to inactivity. Please sign in again.');
+      setStatus('unauthenticated');
+      setIdentity(null);
+      void authService.signOut().catch(() => {});
+    };
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && statusRef.current === 'authenticated') {
+        const verified = await authService.getSessionIdentity();
+        if (!verified) {
+          setError('Session expired due to inactivity. Please sign in again.');
+          setStatus('unauthenticated');
+          setIdentity(null);
+          await authService.signOut().catch(() => {});
+        }
+      }
+    };
+
     window.addEventListener('nuc_student_access_blocked', onAccessBlocked);
+    window.addEventListener('nuc_session_expired', onSessionExpired);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       authListener.subscription.unsubscribe();
       window.removeEventListener('nuc_student_access_blocked', onAccessBlocked);
+      window.removeEventListener('nuc_session_expired', onSessionExpired);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [verifyCurrentSession]);
 

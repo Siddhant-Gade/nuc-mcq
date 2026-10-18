@@ -12,9 +12,9 @@ const isLocalhost =
 
 /**
  * Resolves the primary API base URL.
- * In production deployments (e.g. Vercel), when no explicit external base URL is provided,
- * using a relative path ("") routes API requests through Vercel's server-side /api/* rewrite proxy
- * to Render. This guarantees same-origin communication in the browser, eliminating CORS preflight errors.
+ * In both development (Vite proxy) and production (Vercel rewrites),
+ * using a relative path ("") routes API requests through the same-origin proxy.
+ * This guarantees same-origin cookies and eliminates cross-origin cookie dropping.
  */
 function resolvePrimaryBaseUrl(): string {
   const envUrl =
@@ -24,13 +24,11 @@ function resolvePrimaryBaseUrl(): string {
     return envUrl.trim().replace(/\/+$/, '');
   }
 
-  // On production hosting (Vercel, custom domain):
-  // Default to relative base URL ("") so requests go to same origin and get proxied to Render.
-  if (isBrowser && !isLocalhost) {
+  // Default to relative base URL ("") so all browser requests route through the same-origin proxy
+  if (isBrowser) {
     return '';
   }
 
-  // Local development default (points to Render backend if no local server configured)
   return RENDER_PROD_URL;
 }
 
@@ -38,13 +36,9 @@ const PRIMARY_BASE_URL = resolvePrimaryBaseUrl();
 
 /**
  * Fallback endpoints on connection failure.
- * In production: ONLY switch between the Vercel proxy ("") and direct Render backend.
- * Localhost and internal LAN IPs are strictly disabled in production.
+ * In production / local dev with proxy: switch between same-origin proxy ("") and direct Render backend.
  */
-const FALLBACK_URLS: string[] =
-  isBrowser && !isLocalhost
-    ? ['', RENDER_PROD_URL]
-    : ['http://localhost:3000', RENDER_PROD_URL];
+const FALLBACK_URLS: string[] = ['', RENDER_PROD_URL];
 
 export const apiClient = axios.create({
   baseURL: PRIMARY_BASE_URL,
@@ -53,16 +47,25 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    'X-Client-Type': 'STUDENT_WEB',
   },
 });
 
-// Bearer token interceptor: inject Supabase access token for authenticated API calls
+// Bearer token interceptor: ONLY inject Supabase access token for authentication exchange routes.
+// General student API requests rely on the secure HttpOnly session cookie to prevent token fallback
+// from masking expired session cookies.
 apiClient.interceptors.request.use(async (config) => {
   try {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (token && !config.headers.Authorization) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const isAuthExchange =
+      config.url?.includes('/api/v1/auth/session') ||
+      config.url?.includes('/api/v1/auth/me');
+
+    if (isAuthExchange) {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
   } catch {
     // Continue without token if session retrieval fails
@@ -77,6 +80,19 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as (typeof error.config & { _fallbackTried?: boolean });
+
+    // Detect session expiration (401)
+    if (error.response?.status === 401) {
+      const isAuthProbe = originalRequest?.url?.includes('/api/v1/auth/session');
+      if (typeof window !== 'undefined' && !isAuthProbe) {
+        const errData = error.response.data as { error?: { code?: string; message?: string } } | undefined;
+        window.dispatchEvent(
+          new CustomEvent('nuc_session_expired', {
+            detail: { message: errData?.error?.message || 'Session expired due to inactivity. Please sign in again.' },
+          })
+        );
+      }
+    }
 
     // Detect student suspension or access blocking
     if (error.response?.status === 403) {

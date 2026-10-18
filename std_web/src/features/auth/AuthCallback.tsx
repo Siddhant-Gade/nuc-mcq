@@ -41,7 +41,8 @@ export const AuthCallback: React.FC = () => {
           throw new Error('Authentication session could not be established. Please try signing in again.');
         }
 
-        // Authoritative verification via backend /api/v1/auth/me
+        // Establish server session cookie and verify identity
+        await authService.exchangeTokenForSession(session.access_token);
         const identity = await authService.verifyIdentity(session.access_token);
 
         // Enforce boundary: Case B (Admin on student website)

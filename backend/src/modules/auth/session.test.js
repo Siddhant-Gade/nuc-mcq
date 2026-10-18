@@ -415,3 +415,103 @@ test('Existing routes with Bearer token authentication remain 100% backward-comp
         await fixture.close();
     }
 });
+
+test('Passive polling with X-Passive-Request does not touch session activity', async () => {
+    const sessionStore = new MockSessionStore();
+    const fixture = await startTestFixture({ sessionStore });
+    try {
+        const { rawToken, session } = await sessionStore.createSession({
+            authUserId: '00000000-0000-4000-8000-000000000001',
+            identity: { studentId: 'PRN12345', roles: ['STUDENT'] },
+        });
+
+        // Set last activity to 15 seconds ago
+        const initialActivityTime = Date.now() - 15_000;
+        session.lastActivityAt = new Date(initialActivityTime);
+
+        const response = await fetch(`${fixture.url}/api/v1/auth/me`, {
+            headers: {
+                cookie: `student_session=${rawToken}`,
+                'x-passive-request': 'true',
+            },
+        });
+
+        assert.equal(response.status, 200);
+        // Session activity must NOT have been touched
+        assert.equal(session.lastActivityAt.getTime(), initialActivityTime);
+    } finally {
+        await fixture.close();
+    }
+});
+
+test('Active requests touch session activity when older than 10 seconds', async () => {
+    const sessionStore = new MockSessionStore();
+    const fixture = await startTestFixture({ sessionStore });
+    try {
+        const { rawToken, session } = await sessionStore.createSession({
+            authUserId: '00000000-0000-4000-8000-000000000001',
+            identity: { studentId: 'PRN12345', roles: ['STUDENT'] },
+        });
+
+        // Set last activity to 15 seconds ago
+        const initialActivityTime = Date.now() - 15_000;
+        session.lastActivityAt = new Date(initialActivityTime);
+
+        const response = await fetch(`${fixture.url}/api/v1/auth/me`, {
+            headers: {
+                cookie: `student_session=${rawToken}`,
+            },
+        });
+
+        assert.equal(response.status, 200);
+        // Session activity must have been refreshed to current time
+        assert.ok(session.lastActivityAt.getTime() > initialActivityTime);
+    } finally {
+        await fixture.close();
+    }
+});
+
+test('Student web requests (X-Client-Type: STUDENT_WEB) without cookie cannot bypass via Bearer token', async () => {
+    const fixture = await startTestFixture();
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/me`, {
+            headers: {
+                'x-client-type': 'STUDENT_WEB',
+                authorization: 'Bearer verified-token',
+            },
+        });
+
+        assert.equal(response.status, 401);
+        const body = await response.json();
+        assert.equal(body.error.code, 'AUTHENTICATION_ERROR');
+        assert.equal(body.error.message, 'Active web session is required.');
+    } finally {
+        await fixture.close();
+    }
+});
+
+test('Student web requests (X-Client-Type: STUDENT_WEB) CAN exchange Bearer token on POST /api/v1/auth/session', async () => {
+    const fixture = await startTestFixture();
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/session`, {
+            method: 'POST',
+            headers: {
+                'x-client-type': 'STUDENT_WEB',
+                authorization: 'Bearer verified-token',
+                'content-type': 'application/json',
+                origin: 'http://localhost:5173',
+            },
+            body: JSON.stringify({ clientType: 'STUDENT_WEB' }),
+        });
+
+        assert.equal(response.status, 200);
+        const body = await response.json();
+        assert.equal(body.success, true);
+        assert.equal(body.data.identity.studentId, 'PRN12345');
+        const setCookie = response.headers.get('set-cookie');
+        assert.ok(setCookie?.includes('student_session'));
+    } finally {
+        await fixture.close();
+    }
+});
+

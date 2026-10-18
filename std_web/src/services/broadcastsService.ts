@@ -25,7 +25,11 @@ export const broadcastsService = {
 
   async fetchUnreadCount(): Promise<number> {
     try {
-      const response = await apiClient.get('/api/v1/student/broadcasts/unread-count');
+      const response = await apiClient.get('/api/v1/student/broadcasts/unread-count', {
+        headers: {
+          'X-Passive-Request': 'true',
+        },
+      });
       const count = response.data?.data?.unreadCount;
       return typeof count === 'number' ? count : 0;
     } catch {
