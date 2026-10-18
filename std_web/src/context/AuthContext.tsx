@@ -29,14 +29,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyCurrentSession = useCallback(async () => {
     try {
+      let verified: StudentIdentity | null = null;
       const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        setStatus('unauthenticated');
-        setIdentity(null);
-        return;
-      }
 
-      const verified = await authService.verifyIdentity(data.session.access_token);
+      if (data.session?.access_token) {
+        // Exchange Bearer token for server session cookie and fresh identity
+        verified = await authService.exchangeTokenForSession(data.session.access_token);
+        if (!verified) {
+          verified = await authService.verifyIdentity(data.session.access_token);
+        }
+      } else {
+        // Fallback: Check if there is an active HttpOnly cookie session
+        verified = await authService.getSessionIdentity();
+        if (!verified) {
+          setStatus('unauthenticated');
+          setIdentity(null);
+          return;
+        }
+      }
 
       // Case B: Admin account signed in on the student website
       const isAdmin = verified.roles?.includes('ADMIN') || verified.roles?.includes('SUPER_ADMIN');
@@ -44,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (isAdmin && !isStudent) {
         // Clear unauthorized admin session from student portal storage
-        await supabase.auth.signOut();
+        await authService.signOut();
         setStatus('unauthenticated');
         setIdentity(null);
         setError('Admin accounts cannot access the Student Portal. Please use the Admin Portal.');
@@ -53,12 +63,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setIdentity(verified);
 
-      // Check if student role is confirmed and access status is not REVOKED/PENDING
-      const isBlocked =
-        verified.accessStatus?.toUpperCase() === 'REVOKED' ||
-        verified.accessStatus?.toUpperCase() === 'EXPIRED';
+      // Check if student access is revoked or expired
+      if (verified.accessStatus?.toUpperCase() === 'REVOKED') {
+        setStatus('unauthorized');
+        setError('Access revoked, contact administrator.');
+        return;
+      }
 
-      if (isStudent && !isBlocked) {
+      if (verified.accessStatus?.toUpperCase() === 'EXPIRED') {
+        setStatus('unauthorized');
+        setError('Access expired. Please contact the administrator.');
+        return;
+      }
+
+      if (isStudent && verified.accessStatus?.toUpperCase() === 'ACTIVE') {
         setStatus('authenticated');
         resultsService.setStudentContext(verified.authUserId || verified.studentId);
         void resultsService.syncFromBackend();
@@ -68,11 +86,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e: unknown) {
       console.warn('[AuthContext] Verification failed:', e);
       const httpStatus = (e as { response?: { status?: number } })?.response?.status;
+      const errData = (e as { response?: { data?: { error?: { code?: string; message?: string } } } })?.response?.data;
+
+      if (errData?.error?.message?.includes('Access revoked') || errData?.error?.code === 'STUDENT_ACCESS_REVOKED') {
+        setError('Access revoked, contact administrator.');
+        setStatus('unauthorized');
+        return;
+      }
+
       const isAuthRejection = httpStatus === 401;
 
       if (isAuthRejection) {
         // Explicitly rejected session/token
-        await supabase.auth.signOut().catch(() => {});
+        await authService.signOut().catch(() => {});
         setStatus('unauthenticated');
         setIdentity(null);
       } else {
@@ -94,8 +120,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
+    const onAccessBlocked = (event: Event) => {
+      const detail = (event as CustomEvent<{ code?: string; message?: string }>).detail;
+      if (detail?.code === 'STUDENT_ACCESS_REVOKED' || detail?.message?.includes('Access revoked')) {
+        setError('Access revoked, contact administrator.');
+      } else if (detail?.message) {
+        setError(detail.message);
+      }
+      setStatus('unauthorized');
+    };
+
+    window.addEventListener('nuc_student_access_blocked', onAccessBlocked);
+
     return () => {
       authListener.subscription.unsubscribe();
+      window.removeEventListener('nuc_student_access_blocked', onAccessBlocked);
     };
   }, [verifyCurrentSession]);
 

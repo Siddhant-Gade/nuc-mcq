@@ -20,12 +20,42 @@ import { createNotificationRouter } from './modules/notifications/notification.r
 import { createStudyMaterialAdminRouter, createStudentStudyMaterialRouter, } from './modules/study-materials/study-material.routes.js';
 import { createAdminQuestionBankRouter, createStudentQuestionBankRouter, } from './modules/question-bank/question-bank.routes.js';
 import { QuestionBankService } from './modules/question-bank/question-bank.service.js';
-export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, batchService, authorizationRequestService, dashboardService, studentIdentityService, resultService, broadcastService, notificationService, studyMaterialService, superAdminEmail = 'newuniquesupabase@gmail.com' }) => {
+import { createCookieMiddleware } from './middleware/cookie.middleware.js';
+import { createCsrfMiddleware } from './middleware/csrf.middleware.js';
+import { createSessionRouter } from './modules/auth/session.routes.js';
+
+export const createApp = ({
+    allowedCorsOrigins,
+    tokenVerifier,
+    studentService,
+    batchService,
+    authorizationRequestService,
+    dashboardService,
+    studentIdentityService,
+    resultService,
+    broadcastService,
+    notificationService,
+    studyMaterialService,
+    sessionStore,
+    superAdminEmail = 'newuniquesupabase@gmail.com',
+}) => {
+    // Attach sessionStore and studentIdentityService to tokenVerifier so child routes inherit hybrid auth
+    if (tokenVerifier) {
+        if (sessionStore && !tokenVerifier.sessionStore) {
+            tokenVerifier.sessionStore = sessionStore;
+        }
+        if (studentIdentityService && !tokenVerifier.studentIdentityService) {
+            tokenVerifier.studentIdentityService = studentIdentityService;
+        }
+    }
+
     const app = express();
     app.use(helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
     }));
     app.use(createCorsMiddleware(allowedCorsOrigins));
+    app.use(createCookieMiddleware(process.env.NODE_ENV === 'production'));
+    app.use(createCsrfMiddleware(allowedCorsOrigins));
 
     // Request timeout protection (30 seconds)
     app.use((request, response, next) => {
@@ -56,7 +86,10 @@ export const createApp = ({ allowedCorsOrigins, tokenVerifier, studentService, b
         },
     });
     app.use('/api/v1/auth', authLimiter);
-    const authenticationMiddleware = createAuthenticationMiddleware(tokenVerifier);
+    if (sessionStore) {
+        app.use('/api/v1/auth', createSessionRouter({ tokenVerifier, sessionStore, studentIdentityService }));
+    }
+    const authenticationMiddleware = createAuthenticationMiddleware(tokenVerifier, sessionStore, studentIdentityService);
     app.get('/health', (_request, response) => {
         response.status(200).json(successResponse({ status: 'healthy' }));
     });

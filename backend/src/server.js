@@ -24,13 +24,16 @@ import { ResultService } from './modules/results/result.service.js';
 import { DrizzleDeviceTokenRepository } from './database/device-token.repository.js';
 import { PushNotificationService } from './modules/notifications/push-notification.service.js';
 import { getFirebaseAdmin } from './config/firebase.js';
+import { DrizzleSessionStore } from './database/session-store.js';
 
 // Initialize Firebase Admin SDK eagerly on startup
 getFirebaseAdmin();
 
+const sessionStore = new DrizzleSessionStore(database);
+
 /**
- * Idempotent startup migration: creates the broadcast_read table and its
- * indexes if they were never applied to the production database.
+ * Idempotent startup migration: creates tables and indexes if they were never
+ * applied to the production database.
  * Safe to run on every cold start — all statements use IF NOT EXISTS.
  */
 async function runStartupMigrations() {
@@ -51,6 +54,13 @@ async function runStartupMigrations() {
     } catch (err) {
         // Log but don't crash — the rest of the backend must stay operational.
         console.error('[startup] broadcast_read migration failed (non-fatal):', err?.message ?? err);
+    }
+
+    try {
+        await sessionStore.ensureTable();
+        console.info('[startup] auth_sessions table migration: OK');
+    } catch (err) {
+        console.error('[startup] auth_sessions migration failed (non-fatal):', err?.message ?? err);
     }
 }
 
@@ -132,6 +142,7 @@ const app = createApp({
     broadcastService,
     notificationService,
     studyMaterialService,
+    sessionStore,
     superAdminEmail: env.SUPER_ADMIN_EMAIL,
 });
 const server = createServer(app);

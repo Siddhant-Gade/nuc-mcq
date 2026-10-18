@@ -44,12 +44,47 @@ export const TestEngineScreen: React.FC = () => {
     try {
       const parsed: GeneratedTest = JSON.parse(raw);
       setTest(parsed);
-      setSecondsRemaining(parsed.durationMinutes * 60);
+
+      // Restore previously selected answers if resuming after refresh or re-auth
+      const savedAnswers = sessionStorage.getItem(`active_test_answers_${parsed.testId}`);
+      if (savedAnswers) {
+        try {
+          setAnswers(JSON.parse(savedAnswers));
+        } catch {}
+      }
+
+      // Restore remaining seconds if saved
+      const savedSeconds = sessionStorage.getItem(`active_test_time_${parsed.testId}`);
+      if (savedSeconds) {
+        const sec = parseInt(savedSeconds, 10);
+        if (!isNaN(sec) && sec > 0) {
+          setSecondsRemaining(sec);
+        } else {
+          setSecondsRemaining(parsed.durationMinutes * 60);
+        }
+      } else {
+        setSecondsRemaining(parsed.durationMinutes * 60);
+      }
+
       startTimeRef.current = Date.now();
     } catch {
       navigate('/tests');
     }
   }, [navigate]);
+
+  // Persist answers to sessionStorage whenever changed
+  useEffect(() => {
+    if (test?.testId && Object.keys(answers).length > 0) {
+      sessionStorage.setItem(`active_test_answers_${test.testId}`, JSON.stringify(answers));
+    }
+  }, [answers, test?.testId]);
+
+  // Periodically persist remaining seconds
+  useEffect(() => {
+    if (test?.testId && secondsRemaining > 0) {
+      sessionStorage.setItem(`active_test_time_${test.testId}`, secondsRemaining.toString());
+    }
+  }, [secondsRemaining, test?.testId]);
 
   // Timer countdown
   useEffect(() => {
@@ -193,6 +228,10 @@ export const TestEngineScreen: React.FC = () => {
     // Save to session storage for immediate review
     sessionStorage.setItem('view_result', JSON.stringify(result));
     sessionStorage.removeItem('active_test');
+    if (test) {
+      sessionStorage.removeItem(`active_test_answers_${test.testId}`);
+      sessionStorage.removeItem(`active_test_time_${test.testId}`);
+    }
 
     navigate(`/results/${clientEventId}`);
   };
@@ -606,6 +645,10 @@ export const TestEngineScreen: React.FC = () => {
                 type="button"
                 onClick={() => {
                   sessionStorage.removeItem('active_test');
+                  if (test) {
+                    sessionStorage.removeItem(`active_test_answers_${test.testId}`);
+                    sessionStorage.removeItem(`active_test_time_${test.testId}`);
+                  }
                   navigate('/tests');
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all cursor-pointer"

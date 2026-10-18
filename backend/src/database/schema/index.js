@@ -228,3 +228,25 @@ export const studentDeviceTokens = pgTable('student_device_token', {
     index('device_token_fcm_token_idx').on(table.fcmToken),
 ]);
 
+export const authSessions = pgTable('auth_sessions', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+    authUserId: uuid('auth_user_id').notNull(),
+    studentProfileId: uuid('student_profile_id').references(() => studentProfiles.id, { onDelete: 'cascade' }),
+    studentId: varchar('student_id', { length: 100 }),
+    clientType: varchar('client_type', { length: 50 }).default('STUDENT_WEB').notNull(),
+    identity: jsonb('identity').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    lastActivityAt: timestamp('last_activity_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    absoluteExpiresAt: timestamp('absolute_expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    revokedReason: varchar('revoked_reason', { length: 100 }),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    userAgent: text('user_agent'),
+}, (table) => [
+    index('auth_sessions_auth_user_idx').on(table.authUserId),
+    index('auth_sessions_expires_at_idx').on(table.expiresAt),
+    index('auth_sessions_token_hash_idx').on(table.tokenHash),
+]);
+

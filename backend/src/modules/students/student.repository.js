@@ -237,6 +237,15 @@ export class DrizzleStudentRepository {
                     `);
                 } catch { }
             }
+            // Revoke all active server sessions immediately
+            try {
+                await this.database.execute(sql`
+                    UPDATE auth_sessions
+                    SET revoked_at = ${now}, revoked_reason = 'ADMIN_REVOKED'
+                    WHERE (student_profile_id = ${id}::uuid OR (auth_user_id = ${access?.authUserId}::uuid AND ${access?.authUserId} IS NOT NULL))
+                      AND revoked_at IS NULL;
+                `);
+            } catch { }
             return access;
         }
         if (status === 'PENDING') {
@@ -258,6 +267,15 @@ export class DrizzleStudentRepository {
                         .set({ status: 'PENDING', reviewedAt: null, reviewedBy: null, requestedAt: now })
                         .where(eq(authorizationRequests.studentProfileId, id));
                 }
+            } catch { }
+            // Terminate any active sessions on demotion to PENDING
+            try {
+                await this.database.execute(sql`
+                    UPDATE auth_sessions
+                    SET revoked_at = ${now}, revoked_reason = 'ACCESS_PENDING'
+                    WHERE (student_profile_id = ${id}::uuid OR (auth_user_id = ${access?.authUserId}::uuid AND ${access?.authUserId} IS NOT NULL))
+                      AND revoked_at IS NULL;
+                `);
             } catch { }
             if (access?.authUserId) {
                 try {
