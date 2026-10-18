@@ -83,9 +83,9 @@ export const createAuthenticationMiddleware = (
                     }
                 }
 
-                // Refresh idle activity if > 60 seconds since last activity
+                // Refresh idle activity if > 10 seconds since last activity
                 const lastActivityMs = new Date(session.lastActivityAt).getTime();
-                if (now.getTime() - lastActivityMs > 60_000) {
+                if (now.getTime() - lastActivityMs > 10_000) {
                     store.touchSessionActivity(session.id).catch(() => {});
                 }
 
