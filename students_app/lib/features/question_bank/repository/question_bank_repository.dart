@@ -8,7 +8,8 @@ import '../models/question_model.dart';
 /// Supports 100% offline practice tests with persistent local caching
 /// and automatic backend synchronization when online.
 class QuestionBankRepository {
-  QuestionBankRepository([List<QuestionModel>? initialQuestions, Dio? dio]) : _dio = dio {
+  QuestionBankRepository([List<QuestionModel>? initialQuestions, Dio? dio])
+    : _dio = dio {
     if (initialQuestions != null && initialQuestions.isNotEmpty) {
       _questions = List<QuestionModel>.from(initialQuestions);
     }
@@ -85,13 +86,15 @@ class QuestionBankRepository {
     if (client == null) return _questions.length;
 
     try {
-      final response = await client.get<Object?>('/api/v1/student/question-bank');
+      final response = await client.get<Object?>(
+        '/api/v1/student/question-bank',
+      );
       if (response.data is Map && (response.data as Map)['success'] == true) {
         final list = (response.data as Map)['data'];
         if (list is List && list.isNotEmpty) {
           final jsonString = jsonEncode(list);
           loadFromJsonString(jsonString);
-          
+
           // Persist to local storage for 100% offline test-taking
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(_cacheKey, jsonString);
@@ -110,7 +113,9 @@ class QuestionBankRepository {
   }
 
   /// Loads questions from JSON asset or raw JSON string.
-  Future<void> loadFromAsset([String assetPath = 'assets/data/question_bank.json']) async {
+  Future<void> loadFromAsset([
+    String assetPath = 'assets/data/question_bank.json',
+  ]) async {
     try {
       final jsonStr = await rootBundle.loadString(assetPath);
       loadFromJsonString(jsonStr);
@@ -120,55 +125,134 @@ class QuestionBankRepository {
   }
 
   void loadFromJsonString(String jsonString) {
-    final List<dynamic> list = jsonDecode(jsonString) as List<dynamic>;
-    _questions = list.map((item) => parseJsonItem(item as Map<String, dynamic>)).toList();
+    final decoded = jsonDecode(jsonString);
+    final dynamic rawList = decoded is List
+        ? decoded
+        : decoded is Map
+        ? (decoded['data'] ?? decoded['questions'])
+        : null;
+    if (rawList is! List) {
+      throw const FormatException(
+        'Question bank must contain a list of questions',
+      );
+    }
+
+    final parsed = <QuestionModel>[];
+    final seenIds = <String>{};
+    for (final item in rawList) {
+      if (item is! Map) continue;
+      try {
+        final question = parseJsonItem(Map<String, dynamic>.from(item));
+        if (question.questionText.trim().isEmpty ||
+            question.options.length < 2 ||
+            question.options.every((option) => option.trim().isEmpty) ||
+            !seenIds.add(question.id)) {
+          continue;
+        }
+        parsed.add(question);
+      } on FormatException {
+        continue;
+      }
+    }
+    if (parsed.isEmpty) {
+      throw const FormatException('Question bank contains no valid questions');
+    }
+    _questions = parsed;
   }
 
   static QuestionModel parseJsonItem(Map<String, dynamic> item) {
-    final secStr = item['section'] ?? '';
+    String text(dynamic value) => value == null ? '' : value.toString().trim();
+    final secStr = text(item['section']);
     final topic = _topicFromString(secStr);
-    final correctIdx = item['correct_index'] is int ? item['correct_index'] as int : 0;
-    final questionId = (item['id'] != null && item['id'].toString().isNotEmpty)
-        ? item['id'].toString()
-        : (item['sr'] != null
-            ? 'Q_${topic.name}_${item['sr']}'
-            : 'Q_${topic.name}_${(item['question_en'] ?? item['questionText'] ?? '').hashCode.abs()}');
+    final rawOptions = item['options'];
+    final options = rawOptions is List
+        ? rawOptions.map(text).toList()
+        : [
+            text(item['opt_a_en']),
+            text(item['opt_b_en']),
+            text(item['opt_c_en']),
+            text(item['opt_d_en']),
+          ];
+    final normalizedOptions = _normalizeOptions(options);
+    final questionText = text(item['question_en'] ?? item['questionText']);
+    final serial = text(item['sr']);
+    final questionId = text(item['id']).isNotEmpty
+        ? text(item['id'])
+        : (serial.isNotEmpty
+              ? 'Q_${topic.name}_$serial'
+              : 'Q_${topic.name}_${questionText.toLowerCase().replaceAll(RegExp(r'\W+'), '_').substring(0, questionText.length > 40 ? 40 : questionText.length)}');
+    final rawCorrect =
+        item['correct_index'] ??
+        item['correctOptionIndex'] ??
+        item['correct_option'];
+    final correctIdx = _parseCorrectIndex(rawCorrect, normalizedOptions.length);
+
+    List<String>? localizedOptions(String key, List<String> optionKeys) {
+      final raw = item[key];
+      final values = raw is List
+          ? raw.map(text).toList()
+          : optionKeys.map((optionKey) => text(item[optionKey])).toList();
+      return values.any((value) => value.isNotEmpty) ? values : null;
+    }
 
     return QuestionModel(
       id: questionId,
       topic: topic,
-      questionText: item['question_en'] ?? item['questionText'] ?? '',
-      options: [
-        item['opt_a_en'] ?? '',
-        item['opt_b_en'] ?? '',
-        item['opt_c_en'] ?? '',
-        item['opt_d_en'] ?? '',
-      ],
+      questionText: questionText,
+      options: normalizedOptions,
       correctOptionIndex: correctIdx,
-      explanation: item['explanation_en'] ?? item['explanation'] ?? '',
-      questionTextMr: item['question_mr'] ?? item['questionTextMr'],
-      optionsMr: () {
-        final list = [
-          (item['opt_a_mr'] ?? '').toString().trim(),
-          (item['opt_b_mr'] ?? '').toString().trim(),
-          (item['opt_c_mr'] ?? '').toString().trim(),
-          (item['opt_d_mr'] ?? '').toString().trim(),
-        ];
-        return list.any((s) => s.isNotEmpty) ? list : null;
-      }(),
-      explanationMr: item['explanation_mr'] ?? item['explanationMr'],
-      questionTextHi: item['question_hi'] ?? item['questionTextHi'],
-      optionsHi: () {
-        final list = [
-          (item['opt_a_hi'] ?? '').toString().trim(),
-          (item['opt_b_hi'] ?? '').toString().trim(),
-          (item['opt_c_hi'] ?? '').toString().trim(),
-          (item['opt_d_hi'] ?? '').toString().trim(),
-        ];
-        return list.any((s) => s.isNotEmpty) ? list : null;
-      }(),
-      explanationHi: item['explanation_hi'] ?? item['explanationHi'],
+      explanation: text(item['explanation_en'] ?? item['explanation']),
+      questionTextMr:
+          text(item['question_mr'] ?? item['questionTextMr']).isEmpty
+          ? null
+          : text(item['question_mr'] ?? item['questionTextMr']),
+      optionsMr: localizedOptions('optionsMr', const [
+        'opt_a_mr',
+        'opt_b_mr',
+        'opt_c_mr',
+        'opt_d_mr',
+      ]),
+      explanationMr:
+          text(item['explanation_mr'] ?? item['explanationMr']).isEmpty
+          ? null
+          : text(item['explanation_mr'] ?? item['explanationMr']),
+      questionTextHi:
+          text(item['question_hi'] ?? item['questionTextHi']).isEmpty
+          ? null
+          : text(item['question_hi'] ?? item['questionTextHi']),
+      optionsHi: localizedOptions('optionsHi', const [
+        'opt_a_hi',
+        'opt_b_hi',
+        'opt_c_hi',
+        'opt_d_hi',
+      ]),
+      explanationHi:
+          text(item['explanation_hi'] ?? item['explanationHi']).isEmpty
+          ? null
+          : text(item['explanation_hi'] ?? item['explanationHi']),
     );
+  }
+
+  static int _parseCorrectIndex(dynamic raw, int optionCount) {
+    final value = raw?.toString().trim() ?? '';
+    if (RegExp(r'^[A-D]$', caseSensitive: false).hasMatch(value)) {
+      return value.toUpperCase().codeUnitAt(0) - 65;
+    }
+
+    final parsed = int.tryParse(value);
+    if (parsed == null || optionCount == 0) return 0;
+    return parsed.clamp(0, optionCount - 1);
+  }
+
+  static List<String> _normalizeOptions(List<String> options) {
+    final cleaned = options.map((option) => option.trim()).toList();
+    final nonEmpty = cleaned.where((option) => option.isNotEmpty).toList();
+    final isTrueFalse =
+        nonEmpty.length >= 2 &&
+        RegExp(r'^(true|false)$', caseSensitive: false).hasMatch(nonEmpty[0]) &&
+        RegExp(r'^(true|false)$', caseSensitive: false).hasMatch(nonEmpty[1]) &&
+        nonEmpty[0].toLowerCase() != nonEmpty[1].toLowerCase();
+    return isTrueFalse ? nonEmpty.take(2).toList() : cleaned;
   }
 
   static QuestionTopic _topicFromString(String section) {

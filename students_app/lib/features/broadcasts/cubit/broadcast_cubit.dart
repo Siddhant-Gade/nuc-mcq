@@ -42,7 +42,8 @@ class BroadcastCubit extends Cubit<BroadcastState> {
     try {
       await _repository.syncPendingReads();
       final broadcasts = await _repository.fetchPublished();
-      final unreadCount = broadcasts.where((b) => !b.isRead).length;
+      final localUnreadCount = broadcasts.where((b) => !b.isRead).length;
+      final unreadCount = await _repository.fetchUnreadCount().catchError((_) => localUnreadCount);
       await AppBadgeService.instance.updateBadge(unreadCount);
       emit(BroadcastsLoaded(
         List.unmodifiable(broadcasts),
@@ -73,7 +74,13 @@ class BroadcastCubit extends Cubit<BroadcastState> {
 
     try {
       await _repository.markRead(id);
-    } catch (_) {}
+    } catch (_) {
+      final reverted = List<Broadcast>.from(updated);
+      reverted[index] = reverted[index].copyWith(isRead: false, readAt: null);
+      final revertedCount = reverted.where((b) => !b.isRead).length;
+      emit(BroadcastsLoaded(List.unmodifiable(reverted), unreadCount: revertedCount));
+      await AppBadgeService.instance.updateBadge(revertedCount);
+    }
   }
 
   Future<void> markAllAsSeen() async {

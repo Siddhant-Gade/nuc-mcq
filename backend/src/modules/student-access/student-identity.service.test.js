@@ -57,7 +57,7 @@ for (const authUserId of ['auth-pending', 'auth-revoked']) {
         await assert.rejects(() => service.requireActive(authUserId), (error) => {
             assert.ok(error instanceof ApiError);
             assert.equal(error.statusCode, 403);
-            assert.equal(error.code, 'STUDENT_ACCESS_INACTIVE');
+            assert.equal(error.code, authUserId === 'auth-revoked' ? 'STUDENT_ACCESS_REVOKED' : 'STUDENT_ACCESS_INACTIVE');
             return true;
         });
     });

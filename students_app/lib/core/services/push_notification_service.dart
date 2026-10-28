@@ -23,6 +23,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 typedef NotificationPayloadHandler = void Function(Map<String, dynamic> data);
+typedef NotificationReceivedHandler = void Function(Map<String, dynamic> data);
 
 class PushNotificationService {
   PushNotificationService._();
@@ -40,6 +41,7 @@ class PushNotificationService {
   Dio? _dio;
   bool _initialized = false;
   NotificationPayloadHandler? onNotificationTap;
+  NotificationReceivedHandler? onNotificationReceived;
 
   static const String _channelId = 'nuc_priority_channel';
   static const String _channelName = 'NUC Student Notifications';
@@ -50,15 +52,18 @@ class PushNotificationService {
   Future<void> init({
     Dio? dio,
     NotificationPayloadHandler? onNotificationTap,
+    NotificationReceivedHandler? onNotificationReceived,
   }) async {
     if (_initialized) {
       if (dio != null) _dio = dio;
       if (onNotificationTap != null) this.onNotificationTap = onNotificationTap;
+      if (onNotificationReceived != null) this.onNotificationReceived = onNotificationReceived;
       return;
     }
 
     _dio = dio;
     this.onNotificationTap = onNotificationTap;
+    this.onNotificationReceived = onNotificationReceived;
 
     if (Firebase.apps.isEmpty) {
       debugPrint(

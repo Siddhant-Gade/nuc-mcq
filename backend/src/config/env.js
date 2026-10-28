@@ -28,6 +28,7 @@ const environmentSchema = z.object({
     /** The Supabase email that is always granted ADMIN + SUPER_ADMIN roles.
      *  Defaults to the bootstrapped admin account; override in production env. */
     SUPER_ADMIN_EMAIL: z.string().trim().email().default('newuniquesupabase@gmail.com'),
+    ADMIN_SUPPORT_EMAIL: z.string().trim().email().default('newuniquesupabase@gmail.com'),
 });
 const parsedEnvironment = environmentSchema.safeParse(process.env);
 if (!parsedEnvironment.success) {

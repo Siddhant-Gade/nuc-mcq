@@ -38,6 +38,7 @@ export const createApp = ({
     studyMaterialService,
     sessionStore,
     superAdminEmail = 'newuniquesupabase@gmail.com',
+    supportEmail,
 }) => {
     // Attach sessionStore and studentIdentityService to tokenVerifier so child routes inherit hybrid auth
     if (tokenVerifier) {
@@ -223,6 +224,7 @@ export const createApp = ({
                 batchId: resolvedStudent?.profile?.batchId ?? null,
                 batchName: resolvedStudent?.batchName ?? null,
                 accessStatus: resolvedStudent?.access?.status ?? null,
+                ...(supportEmail ? { supportEmail } : {}),
             },
         }));
     });

@@ -34,8 +34,9 @@ class BroadcastRepository {
     try {
       final response = await _dio.get<Object?>('/api/v1/student/broadcasts/unread-count');
       final data = requireSuccessData(response.data);
-      if (data is Map && data['unreadCount'] is num) {
-        return (data['unreadCount'] as num).toInt();
+      if (data is Map && (data['unreadCount'] is num || data['count'] is num)) {
+        final value = data['unreadCount'] ?? data['count'];
+        return (value as num).toInt();
       }
       return 0;
     } on DioException catch (error) {

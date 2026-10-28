@@ -144,7 +144,21 @@ export interface StudentIdentity {
   batchId?: string | null;
   batchName?: string | null;
   accessStatus?: string | null;
+  supportEmail?: string | null;
   roles: string[];
+}
+
+export type NotificationType = 'announcement' | 'study_material' | 'system';
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  relatedRoute?: string | null;
+  isRead: boolean;
+  readAt?: string | null;
+  createdAt: string;
 }
 
 export interface StudentStats {
@@ -254,4 +268,3 @@ export interface LeaderboardEntry {
   batchName?: string | null;
   isCurrent: boolean;
 }
-

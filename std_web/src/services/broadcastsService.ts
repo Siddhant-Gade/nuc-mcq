@@ -30,11 +30,17 @@ export const broadcastsService = {
           'X-Passive-Request': 'true',
         },
       });
-      const count = response.data?.data?.unreadCount;
+      const count = response.data?.data?.unreadCount ?? response.data?.data?.count;
       return typeof count === 'number' ? count : 0;
     } catch {
       return 0;
     }
+  },
+
+  async refreshUnreadState(): Promise<number> {
+    const count = await this.fetchUnreadCount();
+    window.dispatchEvent(new CustomEvent('nuc_notifications_updated', { detail: { unreadCount: count } }));
+    return count;
   },
 
   async markRead(id: string): Promise<void> {

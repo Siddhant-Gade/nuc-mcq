@@ -122,6 +122,10 @@ const resultService = new ResultService(new DrizzleResultRepository(database));
 const broadcastService = new BroadcastService(new DrizzleBroadcastRepository(database));
 const notificationService = new NotificationService(new DrizzleNotificationRepository(database));
 notificationService.pushService = pushNotificationService;
+studentService.notificationService = notificationService;
+studentService.pushService = pushNotificationService;
+studentService.invalidateIdentityCache = invalidateIdentityCache;
+studentService.supportEmail = env.ADMIN_SUPPORT_EMAIL;
 studentIdentityService.deviceTokenRepository = deviceTokenRepository;
 const studyMaterialService = new StudyMaterialService(new DrizzleStudyMaterialRepository(database), supabaseStudyMaterialStorage, notificationService);
 authorizationRequestService.pushService = pushNotificationService;
@@ -144,6 +148,7 @@ const app = createApp({
     studyMaterialService,
     sessionStore,
     superAdminEmail: env.SUPER_ADMIN_EMAIL,
+    supportEmail: env.ADMIN_SUPPORT_EMAIL,
 });
 const server = createServer(app);
 // Close connections that have been idle or hung for more than 35 s (slightly above

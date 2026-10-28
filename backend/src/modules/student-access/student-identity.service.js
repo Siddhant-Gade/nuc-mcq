@@ -43,6 +43,12 @@ export class StudentIdentityService {
         if (resolved.access.status === 'SUSPENDED') {
             throw new ApiError(403, 'STUDENT_ACCESS_SUSPENDED', resolved.access.suspensionReason || 'Student access has been suspended by the administrator.');
         }
+        if (resolved.access.status === 'REVOKED') {
+            throw new ApiError(403, 'STUDENT_ACCESS_REVOKED', 'Your account has been deactivated. Please contact the administrator.');
+        }
+        if (resolved.access.status === 'EXPIRED') {
+            throw new ApiError(403, 'STUDENT_ACCESS_EXPIRED', 'Your student access has expired. Please contact the administrator.');
+        }
         if (resolved.access.status !== 'ACTIVE') {
             throw new ApiError(403, 'STUDENT_ACCESS_INACTIVE', `Student access is ${resolved.access.status}; ACTIVE access is required.`);
         }

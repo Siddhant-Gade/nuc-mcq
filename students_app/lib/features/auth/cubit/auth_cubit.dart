@@ -47,6 +47,12 @@ class AuthUnauthorized extends AuthState {
   final StudentIdentity identity;
 }
 
+class AuthDeactivated extends AuthState {
+  const AuthDeactivated(this.identity);
+
+  final StudentIdentity identity;
+}
+
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit(this._repository) : super(const AuthUnauthenticated()) {
     _authSub = _repository.onAuthSessionChange.listen((_) {
@@ -195,6 +201,10 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> refreshStatus({bool silent = false}) async {
     try {
       final identity = await _repository.verifyIdentity();
+      if (identity.accessStatus?.toUpperCase() == 'REVOKED') {
+        emit(AuthDeactivated(identity));
+        return;
+      }
       if (identity.isStudent) {
         emit(AuthAuthenticated(identity));
       } else if (!silent) {
@@ -219,6 +229,10 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> _verifySession() async {
     try {
       final identity = await _repository.verifyIdentity();
+      if (identity.accessStatus?.toUpperCase() == 'REVOKED') {
+        emit(AuthDeactivated(identity));
+        return;
+      }
       if (identity.isStudent) {
         emit(AuthAuthenticated(identity));
         PushNotificationService.instance.syncTokenWithBackend();

@@ -14,10 +14,7 @@ import '../models/question_model.dart';
 import '../repository/question_bank_repository.dart';
 
 class AllQuestionsScreen extends StatefulWidget {
-  const AllQuestionsScreen({
-    super.key,
-    this.initialTabIndex = 0,
-  });
+  const AllQuestionsScreen({super.key, this.initialTabIndex = 0});
 
   final int initialTabIndex;
 
@@ -126,7 +123,11 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
           actions: [
             IconButton(
               icon: _isSyncing
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.sync_rounded),
               tooltip: 'Sync Questions',
               onPressed: _isSyncing ? null : _syncQuestions,
@@ -142,13 +143,17 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurfaceVariant : const Color(0xFFE8F0FE),
+                    color: isDark
+                        ? AppColors.darkSurfaceVariant
+                        : const Color(0xFFE8F0FE),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.quiz_outlined,
                     size: 54,
-                    color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                    color: isDark
+                        ? AppColors.darkBluePrimary
+                        : AppColors.googleBlue,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -157,7 +162,9 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -167,12 +174,16 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     height: 1.4,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 RoyalButton(
-                  text: _isSyncing ? 'Downloading...' : 'Check & Download Questions',
+                  text: _isSyncing
+                      ? 'Downloading...'
+                      : 'Check & Download Questions',
                   icon: Icons.cloud_download_outlined,
                   isLoading: _isSyncing,
                   onPressed: _isSyncing ? null : _syncQuestions,
@@ -196,7 +207,11 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
         actions: [
           IconButton(
             icon: _isSyncing
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.sync_rounded),
             tooltip: 'Sync Questions',
             onPressed: _isSyncing ? null : _syncQuestions,
@@ -248,7 +263,9 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                         ? AppColors.darkSurfaceVariant
                         : const Color(0xFFF1F3F4),
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide.none,
@@ -277,11 +294,11 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                           side: BorderSide(
                             color: _selectedTopic == null
                                 ? (isDark
-                                    ? AppColors.darkBluePrimary
-                                    : AppColors.googleBlue)
+                                      ? AppColors.darkBluePrimary
+                                      : AppColors.googleBlue)
                                 : (isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.borderLight),
+                                      ? AppColors.darkBorder
+                                      : AppColors.borderLight),
                           ),
                           labelStyle: GoogleFonts.inter(
                             fontSize: 11,
@@ -290,13 +307,14 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                                 : FontWeight.w400,
                             color: _selectedTopic == null
                                 ? (isDark
-                                    ? AppColors.darkBluePrimary
-                                    : AppColors.googleBlue)
+                                      ? AppColors.darkBluePrimary
+                                      : AppColors.googleBlue)
                                 : (isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.textPrimary),
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.textPrimary),
                           ),
-                          onSelected: (_) => setState(() => _selectedTopic = null),
+                          onSelected: (_) =>
+                              setState(() => _selectedTopic = null),
                         ),
                       ),
                       ...QuestionTopic.values.map((topic) {
@@ -318,11 +336,11 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                             side: BorderSide(
                               color: isSelected
                                   ? (isDark
-                                      ? AppColors.darkBluePrimary
-                                      : AppColors.googleBlue)
+                                        ? AppColors.darkBluePrimary
+                                        : AppColors.googleBlue)
                                   : (isDark
-                                      ? AppColors.darkBorder
-                                      : AppColors.borderLight),
+                                        ? AppColors.darkBorder
+                                        : AppColors.borderLight),
                             ),
                             labelStyle: GoogleFonts.inter(
                               fontSize: 11,
@@ -331,11 +349,11 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                                   : FontWeight.w400,
                               color: isSelected
                                   ? (isDark
-                                      ? AppColors.darkBluePrimary
-                                      : AppColors.googleBlue)
+                                        ? AppColors.darkBluePrimary
+                                        : AppColors.googleBlue)
                                   : (isDark
-                                      ? AppColors.darkTextPrimary
-                                      : AppColors.textPrimary),
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.textPrimary),
                             ),
                             onSelected: (_) => setState(() {
                               _selectedTopic = isSelected ? null : topic;
@@ -353,7 +371,9 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
           // Question Count Subheader
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: isDark ? AppColors.darkSurfaceVariant.withOpacity(0.5) : const Color(0xFFF8FAFC),
+            color: isDark
+                ? AppColors.darkSurfaceVariant.withOpacity(0.5)
+                : const Color(0xFFF8FAFC),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -364,7 +384,9 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextSecondary : const Color(0xFF64748B),
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : const Color(0xFF64748B),
                   ),
                 ),
                 if (_selectedTopic != null)
@@ -373,7 +395,9 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                      color: isDark
+                          ? AppColors.darkBluePrimary
+                          : AppColors.googleBlue,
                     ),
                   ),
               ],
@@ -382,11 +406,7 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
 
           // Question List
           Expanded(
-            child: _buildQuestionList(
-              context,
-              filteredQuestions,
-              langCode,
-            ),
+            child: _buildQuestionList(context, filteredQuestions, langCode),
           ),
         ],
       ),
@@ -407,11 +427,13 @@ class _AllQuestionsScreenState extends State<AllQuestionsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_off_rounded,
-                  size: 40,
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.textSecondary),
+              Icon(
+                Icons.search_off_rounded,
+                size: 40,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
+              ),
               const SizedBox(height: 8),
               Text(
                 'No matching questions found',
@@ -491,76 +513,107 @@ class _InteractiveQuestionExplorerCardState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header: Topic Badge + Bookmark Button
+              // Header: clear question number, topic badge, and bookmark button
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    constraints: const BoxConstraints(
+                      minWidth: 42,
+                      minHeight: 42,
+                    ),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.darkBlueSurface
-                          : AppColors.googleBlueSurface,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ? AppColors.darkBluePrimary
+                          : AppColors.googleBlue,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Text(
-                      topicLabel,
+                      '${widget.index}',
                       style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? AppColors.darkBluePrimary
-                            : AppColors.googleBlue,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        '#${widget.index}',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.textTertiary,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.darkBlueSurface
+                                : AppColors.googleBlueSurface,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text(
+                            topicLabel,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.darkBluePrimary
+                                  : AppColors.googleBlue,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      ScalePress(
-                        onTap: () async {
-                          final isAdded = await context
-                              .read<BookmarksCubit>()
-                              .toggleBookmark(q.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isAdded
-                                      ? l10n.text('bookmark_added')
-                                      : l10n.text('bookmark_removed'),
-                                ),
-                                duration: const Duration(seconds: 1),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                        child: Icon(
-                          isBookmarked
-                              ? Icons.bookmark_rounded
-                              : Icons.bookmark_border_rounded,
-                          size: 22,
-                          color: isBookmarked
-                              ? AppColors.googleYellow
-                              : (isDark
-                                  ? AppColors.darkTextSecondary
-                                  : AppColors.textSecondary),
+                        Text(
+                          'Question ${widget.index}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  ),
+                  ScalePress(
+                    onTap: () async {
+                      final isAdded = await context
+                          .read<BookmarksCubit>()
+                          .toggleBookmark(q.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isAdded
+                                  ? l10n.text('bookmark_added')
+                                  : l10n.text('bookmark_removed'),
+                            ),
+                            duration: const Duration(seconds: 1),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    child: Icon(
+                      isBookmarked
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      color: isBookmarked
+                          ? AppColors.primeGold
+                          : (isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.textTertiary),
+                    ),
                   ),
                 ],
               ),
@@ -587,12 +640,15 @@ class _InteractiveQuestionExplorerCardState
                 final isAnswerKey = q.correctOptionIndex == idx;
                 final isSelected = _selectedPracticeOption == idx;
 
-                Color optionBg =
-                    isDark ? AppColors.darkSurface : const Color(0xFFFAFAFA);
-                Color borderColor =
-                    isDark ? AppColors.darkBorder : AppColors.borderLight;
-                Color textColor =
-                    isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+                Color optionBg = isDark
+                    ? AppColors.darkSurface
+                    : const Color(0xFFFAFAFA);
+                Color borderColor = isDark
+                    ? AppColors.darkBorder
+                    : AppColors.borderLight;
+                Color textColor = isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.textPrimary;
                 FontWeight fontWeight = FontWeight.w400;
 
                 if (_isAnswerRevealed) {
@@ -632,7 +688,9 @@ class _InteractiveQuestionExplorerCardState
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: optionBg,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -649,10 +707,10 @@ class _InteractiveQuestionExplorerCardState
                               color: _isAnswerRevealed && isAnswerKey
                                   ? AppColors.googleGreen
                                   : (_isAnswerRevealed &&
-                                          isSelected &&
-                                          !isAnswerKey
-                                      ? AppColors.googleRed
-                                      : Colors.transparent),
+                                            isSelected &&
+                                            !isAnswerKey
+                                        ? AppColors.googleRed
+                                        : Colors.transparent),
                               border: Border.all(
                                 color: _isAnswerRevealed && isAnswerKey
                                     ? AppColors.googleGreen
@@ -663,14 +721,15 @@ class _InteractiveQuestionExplorerCardState
                               _isAnswerRevealed && isAnswerKey
                                   ? '✓'
                                   : (_isAnswerRevealed &&
-                                          isSelected &&
-                                          !isAnswerKey
-                                      ? '✗'
-                                      : optionLetter),
+                                            isSelected &&
+                                            !isAnswerKey
+                                        ? '✗'
+                                        : optionLetter),
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: _isAnswerRevealed &&
+                                color:
+                                    _isAnswerRevealed &&
                                         (isAnswerKey ||
                                             (isSelected && !isAnswerKey))
                                     ? Colors.white
@@ -723,7 +782,9 @@ class _InteractiveQuestionExplorerCardState
                   if (_isAnswerRevealed)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark
                             ? const Color(0xFF13381B)
@@ -760,8 +821,11 @@ class _InteractiveQuestionExplorerCardState
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.lightbulb_outline_rounded,
-                          size: 16, color: AppColors.googleYellow),
+                      const Icon(
+                        Icons.lightbulb_outline_rounded,
+                        size: 16,
+                        color: AppColors.googleYellow,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -805,11 +869,14 @@ class BookmarkedMaterialCard extends StatelessWidget {
 
   bool _isPpt() {
     final fn = (material.fileName ?? '').toLowerCase();
-    return material.type == StudyDocType.ppt || fn.endsWith('.ppt') || fn.endsWith('.pptx');
+    return material.type == StudyDocType.ppt ||
+        fn.endsWith('.ppt') ||
+        fn.endsWith('.pptx');
   }
 
   bool _isVideo() {
-    return material.kind == 'VIDEO' || (material.embedUrl != null && material.embedUrl!.trim().isNotEmpty);
+    return material.kind == 'VIDEO' ||
+        (material.embedUrl != null && material.embedUrl!.trim().isNotEmpty);
   }
 
   bool _isPdf() {
@@ -939,11 +1006,7 @@ class BookmarkedMaterialCard extends StatelessWidget {
         color: const Color(0xFF1E40AF),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Icon(
-        Icons.article_rounded,
-        color: Colors.white,
-        size: 22,
-      ),
+      child: const Icon(Icons.article_rounded, color: Colors.white, size: 22),
     );
   }
 
@@ -952,10 +1015,18 @@ class BookmarkedMaterialCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkSurface : Colors.white;
     final cardBorder = isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
-    final titleColor = isDark ? AppColors.darkTextPrimary : const Color(0xFF0F172A);
-    final metaColor = isDark ? AppColors.darkTextSecondary : const Color(0xFF64748B);
-    final tagBg = isDark ? AppColors.darkSurfaceVariant : const Color(0xFFE8EEF5);
-    final tagTextColor = isDark ? AppColors.darkTextSecondary : const Color(0xFF475569);
+    final titleColor = isDark
+        ? AppColors.darkTextPrimary
+        : const Color(0xFF0F172A);
+    final metaColor = isDark
+        ? AppColors.darkTextSecondary
+        : const Color(0xFF64748B);
+    final tagBg = isDark
+        ? AppColors.darkSurfaceVariant
+        : const Color(0xFFE8EEF5);
+    final tagTextColor = isDark
+        ? AppColors.darkTextSecondary
+        : const Color(0xFF475569);
 
     final tagText = _getPillTag();
     final category = material.localizedCategory(langCode);
@@ -988,7 +1059,10 @@ class BookmarkedMaterialCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2.5,
+                    ),
                     margin: const EdgeInsets.only(bottom: 5),
                     decoration: BoxDecoration(
                       color: tagBg,
@@ -1017,10 +1091,7 @@ class BookmarkedMaterialCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     metaText,
-                    style: GoogleFonts.inter(
-                      fontSize: 11.5,
-                      color: metaColor,
-                    ),
+                    style: GoogleFonts.inter(fontSize: 11.5, color: metaColor),
                   ),
                 ],
               ),

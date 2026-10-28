@@ -33,7 +33,7 @@ void main() {
 
       expect(exam.mode, TestMode.exam);
       expect(exam.questions.length, 25);
-      expect(exam.durationMinutes, 30);
+      expect(exam.durationMinutes, exam.questions.length);
 
       // Verify unique questions
       final ids = exam.questions.map((q) => q.id).toSet();

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, CheckCheck, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { Broadcast } from '../../types';
+import { AppNotification, Broadcast } from '../../types';
 import { broadcastsService } from '../../services/broadcastsService';
+import { notificationsService } from '../../services/notificationsService';
 
 export const BroadcastsScreen: React.FC = () => {
   const { t } = useLanguage();
 
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   // Task 2: expose errors instead of silently showing empty list
   const [error, setError] = useState<string | null>(null);
@@ -16,8 +18,12 @@ export const BroadcastsScreen: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const list = await broadcastsService.fetchPublished();
+      const [list, appNotifications] = await Promise.all([
+        broadcastsService.fetchPublished(),
+        notificationsService.fetchAll(),
+      ]);
       setBroadcasts(list);
+      setNotifications(appNotifications);
     } catch (err) {
       console.error('[BroadcastsScreen] Failed to load notices:', err);
       setError('Unable to load notices. Please try again.');
@@ -29,6 +35,11 @@ export const BroadcastsScreen: React.FC = () => {
   useEffect(() => {
     loadData();
     broadcastsService.syncPendingReads().catch(() => {});
+    const refresh = () => loadData();
+    window.addEventListener('nuc_notifications_updated', refresh);
+    return () => {
+      window.removeEventListener('nuc_notifications_updated', refresh);
+    };
   }, []);
 
   const handleMarkRead = async (b: Broadcast) => {
@@ -39,12 +50,33 @@ export const BroadcastsScreen: React.FC = () => {
     );
   };
 
-  const handleMarkAllRead = async () => {
-    await broadcastsService.markAllRead();
-    setBroadcasts((prev) => prev.map((item) => ({ ...item, isRead: true })));
+  const unreadCount = broadcasts.filter((b) => !b.isRead).length +
+  notifications.filter((notification) => !notification.isRead).length;
+
+  const handleNotificationRead = async (notification: AppNotification) => {
+  if (notification.isRead) return;
+  try {
+    await notificationsService.markRead(notification.id);
+    setNotifications((previous) => previous.map((item) =>
+      item.id === notification.id ? { ...item, isRead: true, readAt: new Date().toISOString() } : item,
+    ));
+  } catch (error) {
+    console.error('[BroadcastsScreen] Failed to mark notification as read:', error);
+  }
   };
 
-  const unreadCount = broadcasts.filter((b) => !b.isRead).length;
+  const handleMarkAllRead = async () => {
+  try {
+    await Promise.all([
+      broadcastsService.markAllRead(),
+      notificationsService.markAllRead(),
+    ]);
+    setBroadcasts((prev) => prev.map((item) => ({ ...item, isRead: true })));
+    setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true, readAt: new Date().toISOString() })));
+  } catch (error) {
+    console.error('[BroadcastsScreen] Failed to mark all notifications as read:', error);
+  }
+  };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-fade-in pb-16">
@@ -107,6 +139,29 @@ export const BroadcastsScreen: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
+          {notifications.map((notification) => (
+            <div
+              key={`notification-${notification.id}`}
+              onClick={() => handleNotificationRead(notification)}
+              className={`p-5 rounded-2xl border transition-all cursor-pointer shadow-sm space-y-3 ${
+                !notification.isRead
+                  ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {!notification.isRead && <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse" />}
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400">
+                    {notification.type.replace('_', ' ')}
+                  </span>
+                </div>
+                <span className="text-xs text-slate-400">{new Date(notification.createdAt).toLocaleDateString()}</span>
+              </div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">{notification.title}</h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">{notification.message}</p>
+            </div>
+          ))}
           {broadcasts.map((b) => {
             const isUrgent = b.priority === 'URGENT' || b.priority === 'HIGH';
 

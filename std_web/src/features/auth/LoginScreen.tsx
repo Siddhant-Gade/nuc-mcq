@@ -100,7 +100,7 @@ export const LoginScreen: React.FC = () => {
 
     if (mode === 'signup') {
       if (password.length < 6) {
-        setLocalError('Password must be at least 6 characters.');
+        setLocalError('Password must be at least 6 characters long.');
         return;
       }
       if (password !== confirmPassword) {
@@ -118,7 +118,9 @@ export const LoginScreen: React.FC = () => {
       }
       navigate('/');
     } catch (err: unknown) {
-      setLocalError(err instanceof Error ? err.message : 'Authentication failed.');
+      setLocalError(
+        err instanceof Error ? err.message : 'Authentication failed. Please try again.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -130,9 +132,9 @@ export const LoginScreen: React.FC = () => {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
+      // On web OAuth flow, supabase may redirect immediately
     } catch (err: unknown) {
-      setLocalError(err instanceof Error ? err.message : 'Google sign-in failed.');
-    } finally {
+      setLocalError(err instanceof Error ? err.message : 'Google sign-in initiation failed.');
       setGoogleLoading(false);
     }
   };
@@ -140,33 +142,33 @@ export const LoginScreen: React.FC = () => {
   const displayedError = localError || error;
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 transition-colors">
+    <div className="min-h-[82vh] flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-5 sm:space-y-6 bg-white dark:bg-[#221810] p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200 dark:border-[#443224] transition-colors">
         {/* Header Branding */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-100 dark:border-indigo-900 shadow-sm">
-            <img src="/icon/small_Icon.png" alt="NUC Logo" className="w-12 h-12 rounded-xl object-contain" />
+        <div className="text-center space-y-1 sm:space-y-1.5">
+          <div className="inline-flex p-3 rounded-2xl bg-peach-50 dark:bg-[#332014] text-peach-600 dark:text-peach-400 mb-2 border border-peach-200 dark:border-[#523321]">
+            <LogIn className="w-7 h-7 sm:w-8 sm:h-8" />
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-[#fde8d7] tracking-tight">
             {t('institute_name')}
           </h2>
-          <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">
+          <p className="text-xs sm:text-sm text-peach-600 dark:text-peach-400 font-medium">
             {t('course_name')}
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+        <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-100 dark:bg-[#2c2016] text-xs font-semibold border border-slate-200/50 dark:border-[#443224]">
           <button
             type="button"
             onClick={() => {
               setMode('signin');
               setLocalError(null);
             }}
-            className={`py-2 rounded-lg transition-all ${
+            className={`py-2 rounded-lg transition-all cursor-pointer ${
               mode === 'signin'
-                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#19120c] text-peach-700 dark:text-[#fde8d7] shadow-xs'
+                : 'text-slate-600 dark:text-[#a8876e] hover:text-slate-900 dark:hover:text-[#fde8d7]'
             }`}
           >
             {t('btn_sign_in')}
@@ -177,10 +179,10 @@ export const LoginScreen: React.FC = () => {
               setMode('signup');
               setLocalError(null);
             }}
-            className={`py-2 rounded-lg transition-all ${
+            className={`py-2 rounded-lg transition-all cursor-pointer ${
               mode === 'signup'
-                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#19120c] text-peach-700 dark:text-[#fde8d7] shadow-xs'
+                : 'text-slate-600 dark:text-[#a8876e] hover:text-slate-900 dark:hover:text-[#fde8d7]'
             }`}
           >
             {t('create_account')}
@@ -189,16 +191,16 @@ export const LoginScreen: React.FC = () => {
 
         {/* Error Notification */}
         {displayedError && (
-          <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs flex items-start gap-2.5">
+          <div className="p-3 rounded-xl bg-red-50 dark:bg-[#3d171b] border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
             <div className="flex-1 leading-relaxed">{displayedError}</div>
           </div>
         )}
 
         {/* Credentials Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-[#d9b89f] mb-1">
               {t('input_prn')}
             </label>
             <div className="relative">
@@ -208,13 +210,13 @@ export const LoginScreen: React.FC = () => {
                 onChange={(e) => setPrn(e.target.value)}
                 placeholder="e.g. 20260101 or student@gmail.com"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-[#443224] bg-white dark:bg-[#19120c] text-slate-900 dark:text-[#fde8d7] text-sm placeholder-slate-400 dark:placeholder-[#a8876e] focus:outline-none focus:ring-2 focus:ring-peach-500 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-[#d9b89f] mb-1">
               {t('input_password')}
             </label>
             <div className="relative">
@@ -224,14 +226,14 @@ export const LoginScreen: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-[#443224] bg-white dark:bg-[#19120c] text-slate-900 dark:text-[#fde8d7] text-sm placeholder-slate-400 dark:placeholder-[#a8876e] focus:outline-none focus:ring-2 focus:ring-peach-500 transition-colors"
               />
             </div>
           </div>
 
           {mode === 'signup' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-[#d9b89f] mb-1">
                 Confirm Password
               </label>
               <input
@@ -240,7 +242,7 @@ export const LoginScreen: React.FC = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-[#443224] bg-white dark:bg-[#19120c] text-slate-900 dark:text-[#fde8d7] text-sm placeholder-slate-400 dark:placeholder-[#a8876e] focus:outline-none focus:ring-2 focus:ring-peach-500 transition-colors"
               />
             </div>
           )}
@@ -248,7 +250,7 @@ export const LoginScreen: React.FC = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-sm shadow-md shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl bg-peach-600 hover:bg-peach-700 disabled:bg-peach-400 text-white font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
           >
             {submitting ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -267,33 +269,31 @@ export const LoginScreen: React.FC = () => {
         </form>
 
         {/* Divider */}
-        <div className="relative my-6">
+        <div className="relative my-4 sm:my-5">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+            <div className="w-full border-t border-slate-200 dark:border-[#38281d]" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-medium">Or continue with</span>
+            <span className="bg-white dark:bg-[#221810] px-3 text-slate-400 dark:text-[#a8876e] font-medium">Or continue with</span>
           </div>
         </div>
 
         {/* Google Sign-In Container */}
         <div className="space-y-3">
-          {/* Official Google Identity Services Button Container */}
           <div
             ref={googleBtnContainerRef}
             className={gisReady ? 'flex justify-center w-full min-h-[40px] [&>div]:w-full' : 'hidden'}
           />
 
-          {/* Fallback Google Button shown ONLY when GIS is unavailable */}
           {!gisReady && (
             <button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={googleLoading}
-              className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm shadow-sm transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-[#443224] bg-white dark:bg-[#2c2016] hover:bg-slate-50 dark:hover:bg-[#35271d] text-slate-700 dark:text-[#fde8d7] font-semibold text-sm shadow-xs transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 active:scale-98"
             >
               {googleLoading ? (
-                <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-peach-600 border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -322,10 +322,10 @@ export const LoginScreen: React.FC = () => {
         </div>
 
         {/* Footer info & link */}
-        <div className="pt-4 text-center">
+        <div className="pt-2 text-center">
           <Link
             to="/unauthorized"
-            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 font-medium"
+            className="text-xs text-peach-600 dark:text-peach-400 hover:underline inline-flex items-center gap-1 font-medium"
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Admission pending? Request Access here</span>

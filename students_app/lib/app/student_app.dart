@@ -9,6 +9,7 @@ import '../core/theme/theme_cubit.dart';
 import '../features/auth/cubit/auth_cubit.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/unauthorized_screen.dart';
+import '../features/auth/models/student_identity.dart';
 import '../features/bookmarks/cubit/bookmarks_cubit.dart';
 import '../features/bookmarks/repository/bookmarks_repository.dart';
 import '../features/broadcasts/cubit/broadcast_cubit.dart';
@@ -55,18 +56,30 @@ class StudentApp extends StatefulWidget {
   State<StudentApp> createState() => _StudentAppState();
 }
 
-class _StudentAppState extends State<StudentApp> {
+class _StudentAppState extends State<StudentApp> with WidgetsBindingObserver {
   Map<String, dynamic>? _pendingNotificationPayload;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _setupNotificationHandling();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   void _setupNotificationHandling() {
     PushNotificationService.instance.onNotificationTap = (data) {
       _handleNotificationPayload(data);
+    };
+    PushNotificationService.instance.onNotificationReceived = (data) {
+      if (data['type']?.toString().toUpperCase() == 'ACCOUNT_REVOKED') {
+        widget.authCubit.refreshStatus();
+      }
     };
 
     // Check if app was opened from terminated state (cold start)
@@ -75,7 +88,15 @@ class _StudentAppState extends State<StudentApp> {
       if (initialPayload != null && initialPayload.isNotEmpty) {
         _handleNotificationPayload(initialPayload);
       }
+
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      widget.authCubit.refreshStatus(silent: true);
+    }
   }
 
   void _onAuthenticated() {
@@ -198,6 +219,40 @@ class _StudentAppState extends State<StudentApp> {
   }
 }
 
+class _AccountDeactivatedScreen extends StatelessWidget {
+  const _AccountDeactivatedScreen({required this.identity});
+
+  final StudentIdentity identity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.block_rounded, size: 72, color: Colors.redAccent),
+              const SizedBox(height: 20),
+              const Text('Account deactivated', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              const Text('Your account has been deactivated. Please contact the administrator.'),
+              const SizedBox(height: 8),
+              Text('Contact: ${identity.supportEmail ?? 'the administrator'}', style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => context.read<AuthCubit>().signOut(),
+                child: const Text('Sign out'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AuthGate extends StatelessWidget {
   const _AuthGate({
     required this.broadcastRepository,
@@ -227,6 +282,7 @@ class _AuthGate extends StatelessWidget {
             AuthUnknown() || AuthChecking() => const _SplashScreen(key: ValueKey('splash')),
             AuthSigningIn() || AuthUnauthenticated() => const LoginScreen(key: ValueKey('login')),
             AuthUnauthorized(:final identity) => UnauthorizedScreen(key: const ValueKey('unauthorized'), identity: identity),
+            AuthDeactivated(:final identity) => _AccountDeactivatedScreen(identity: identity),
             AuthAuthenticated(:final identity) => HomeShell(
                 key: const ValueKey('home'),
                 identity: identity,
@@ -247,6 +303,7 @@ class _AuthGate extends StatelessWidget {
       ),
     );
   }
+
 }
 
 class _SplashScreen extends StatelessWidget {

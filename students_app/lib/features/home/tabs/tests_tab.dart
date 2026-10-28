@@ -486,20 +486,25 @@ class _TestsTabState extends State<TestsTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Recommended Tag
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('👑', style: TextStyle(fontSize: 11)),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Recommended',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFFD97706),
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF38290E) : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF78350F) : const Color(0xFFFDE68A),
+                          width: 0.8,
                         ),
-                      ],
+                      ),
+                      child: Text(
+                        'OFFICIAL ASSESSMENT',
+                        style: GoogleFonts.inter(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                          color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -631,31 +636,6 @@ class _TestsTabState extends State<TestsTab> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Background particles / nodes
-          Positioned(
-            top: 4,
-            left: 2,
-            child: Container(
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFF93C5FD).withOpacity(0.6),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 12,
-            left: 14,
-            child: Container(
-              width: 3.5,
-              height: 3.5,
-              decoration: BoxDecoration(
-                color: const Color(0xFF60A5FA).withOpacity(0.4),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
           // Checklist Sheet
           Positioned(
             left: 8,

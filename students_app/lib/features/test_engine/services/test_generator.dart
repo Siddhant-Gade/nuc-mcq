@@ -46,10 +46,12 @@ class TestGenerator {
 
   /// Generates the Official Exam Mode Test:
   /// Exactly 25 questions selected across the 8 MS-CIT syllabus topics.
-  /// Duration: 30 minutes.
+  /// Duration: one minute per generated question.
   GeneratedTest generateExamTest() {
     final selectedQuestions = <QuestionModel>[];
-    final allQuestions = List<QuestionModel>.from(_questionBank.getAllQuestions());
+    final allQuestions = List<QuestionModel>.from(
+      _questionBank.getAllQuestions(),
+    );
     allQuestions.shuffle(_random);
 
     // Pick 3 from each of the 8 topics (24 questions) + 1 extra random question (total 25)
@@ -83,7 +85,7 @@ class TestGenerator {
       testId: testId,
       mode: TestMode.exam,
       questions: selectedQuestions,
-      durationMinutes: 30,
+      durationMinutes: selectedQuestions.length,
       blueprintVersion: currentBlueprintVersion,
       questionBankVersion: QuestionBankRepository.version,
       subject: 'MS-CIT Comprehensive Exam',
@@ -93,7 +95,9 @@ class TestGenerator {
   /// Generates the full Official 50-Question MS-CIT Mock Exam (60 minutes).
   GeneratedTest generateOfficialMscitExamTest() {
     final selectedQuestions = <QuestionModel>[];
-    final allQuestions = List<QuestionModel>.from(_questionBank.getAllQuestions());
+    final allQuestions = List<QuestionModel>.from(
+      _questionBank.getAllQuestions(),
+    );
     allQuestions.shuffle(_random);
 
     // Pick questions across syllabus topics
@@ -124,7 +128,7 @@ class TestGenerator {
       testId: testId,
       mode: TestMode.exam,
       questions: selectedQuestions,
-      durationMinutes: 60,
+      durationMinutes: selectedQuestions.length,
       blueprintVersion: currentBlueprintVersion,
       questionBankVersion: QuestionBankRepository.version,
       subject: 'MS-CIT Final Assessment',
@@ -154,12 +158,14 @@ class TestGenerator {
         : pool.take(totalQuestions.clamp(1, pool.length)).toList();
     selected.shuffle(_random);
 
-    final singleTopic = (topics != null && topics.length == 1) ? topics.first : null;
+    final singleTopic = (topics != null && topics.length == 1)
+        ? topics.first
+        : null;
     final subject = singleTopic != null
         ? singleTopic.label
         : (topics == null || topics.length == QuestionTopic.values.length
-            ? 'Comprehensive Practice'
-            : 'Practice Test');
+              ? 'Comprehensive Practice'
+              : 'Practice Test');
     final topicCode = singleTopic?.name;
 
     final testId = 'PRAC_${DateTime.now().millisecondsSinceEpoch}';

@@ -14,6 +14,7 @@ function statusBadgeClass(status) {
 export default function StatusUpdateModal({ studentName, currentStatus, onConfirm, onCancel }) {
     const [selected, setSelected] = useState(currentStatus);
     const isSame = selected === currentStatus;
+    const isRevoking = selected === 'REVOKED' && currentStatus !== 'REVOKED';
     const { t } = useLanguage();
     return (<div className={styles.overlay} onClick={onCancel}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -43,11 +44,17 @@ export default function StatusUpdateModal({ studentName, currentStatus, onConfir
           </div>
 
           {isSame && (<p className={styles.noChange}>{t('statusUpdate.noChange')}</p>)}
+          {isRevoking && (<p className={styles.noChange}>This will immediately deactivate the student's access on mobile and web.</p>)}
         </div>
 
         <div className={styles.modalFooter}>
           <button className={styles.cancelBtn} onClick={onCancel}>{t('statusUpdate.cancel')}</button>
-          <button className={styles.confirmBtn} disabled={isSame} onClick={() => onConfirm(selected)}>
+          <button className={styles.confirmBtn} disabled={isSame} onClick={() => {
+            if (isRevoking && !window.confirm(`Are you sure you want to revoke ${studentName}'s access? The student will immediately lose access.`)) {
+              return;
+            }
+            onConfirm(selected);
+          }}>
             {t('statusUpdate.confirm')}
           </button>
         </div>

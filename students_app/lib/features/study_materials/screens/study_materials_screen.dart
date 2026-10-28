@@ -438,48 +438,29 @@ class _MaterialCard extends StatelessWidget {
     }
 
     if (_isVideo()) {
-      // Elegant warm gradient matching reference cards
-      final titleHash = material.title.hashCode.abs();
-      final LinearGradient gradient;
-      if (titleHash % 3 == 0) {
-        gradient = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFE55D5D), Color(0xFFAC3B82)],
-        );
-      } else if (titleHash % 3 == 1) {
-        gradient = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0D9488), Color(0xFF0284C7)],
-        );
-      } else {
-        gradient = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF97316), Color(0xFFBE185D)],
-        );
-      }
-
       return Container(
         width: 48,
         height: 50,
         decoration: BoxDecoration(
-          gradient: gradient,
+          color: const Color(0xFF0F172A),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFFE50914).withOpacity(0.4),
+            width: 1,
+          ),
         ),
         child: Center(
           child: Container(
             width: 26,
             height: 26,
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: Color(0xFFE50914),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.play_arrow_rounded,
-              color: Color(0xFFAC3B82),
-              size: 18,
+              color: Colors.white,
+              size: 16,
             ),
           ),
         ),

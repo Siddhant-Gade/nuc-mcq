@@ -8,6 +8,29 @@ export default {
   theme: {
     extend: {
       colors: {
+        peachdark: {
+          bg: '#19120c',
+          surface: '#221810',
+          card: '#2a1f16',
+          hover: '#35271d',
+          border: '#443224',
+          subtle: '#33251a',
+          text: '#fde8d7',
+          muted: '#d9b89f',
+        },
+        peach: {
+          50: '#fffaf5',
+          100: '#ffeedd',
+          200: '#ffd8ba',
+          300: '#ffbc8c',
+          400: '#fa9d5f',
+          500: '#f57e3d',
+          600: '#e56124',
+          700: '#be4919',
+          800: '#973c1a',
+          900: '#7a3319',
+          950: '#421709',
+        },
         brand: {
           50: '#eef2ff',
           100: '#e0e7ff',

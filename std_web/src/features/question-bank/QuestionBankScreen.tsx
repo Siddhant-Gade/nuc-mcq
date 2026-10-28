@@ -188,12 +188,22 @@ export const QuestionBankScreen: React.FC = () => {
                 className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
               >
                 {/* Header info */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-                      {topicTitle}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span
+                      aria-label={`Question ${idx + 1}`}
+                      className="flex h-10 min-w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 px-2 text-base font-black text-white shadow-sm"
+                    >
+                      {idx + 1}
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">#{idx + 1}</span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                        {topicTitle}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Question {idx + 1}
+                      </span>
+                    </div>
                   </div>
 
                   <button

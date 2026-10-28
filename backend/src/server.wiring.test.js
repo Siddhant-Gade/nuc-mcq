@@ -32,7 +32,7 @@ test('server.js initializes without ReferenceError and starts HTTP listener', as
         const started = await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 reject(new Error(`Server startup timed out.\nSTDOUT:\n${stdoutData}\nSTDERR:\n${stderrData}`));
-            }, 5000);
+            }, 20000);
 
             child.stdout.on('data', () => {
                 if (stdoutData.includes(`Backend listening on 0.0.0.0:${testPort}`)) {

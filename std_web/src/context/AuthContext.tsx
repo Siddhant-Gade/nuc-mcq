@@ -134,13 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && statusRef.current === 'authenticated') {
-        const verified = await authService.getSessionIdentity();
-        if (!verified) {
-          setError('Session expired due to inactivity. Please sign in again.');
-          setStatus('unauthenticated');
-          setIdentity(null);
-          await authService.signOut().catch(() => {});
-        }
+        await verifyCurrentSession();
       }
     };
 

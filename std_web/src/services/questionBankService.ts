@@ -16,8 +16,8 @@ function mapSectionToTopic(section: string): QuestionTopicCode {
 }
 
 interface RawQuestionItem {
-  id?: string;
-  sr?: number;
+  id?: string | number;
+  sr?: number | string;
   section?: string;
   question_en?: string;
   questionText?: string;
@@ -26,8 +26,9 @@ interface RawQuestionItem {
   opt_c_en?: string;
   opt_d_en?: string;
   options?: string[];
-  correct_index?: number;
-  correctOptionIndex?: number;
+  correct_index?: number | string;
+  correctOptionIndex?: number | string;
+  correct_option?: string;
   explanation_en?: string;
   explanation?: string;
   question_mr?: string;
@@ -50,56 +51,86 @@ interface RawQuestionItem {
   explanationHi?: string;
 }
 
-export function parseRawQuestion(item: RawQuestionItem): QuestionModel {
-  const topic = mapSectionToTopic(item.section || '');
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : value == null ? '' : String(value).trim();
+}
+
+function optionList(item: RawQuestionItem, language: 'en' | 'mr' | 'hi'): string[] {
+  if (Array.isArray(item[language === 'en' ? 'options' : language === 'mr' ? 'optionsMr' : 'optionsHi'])) {
+    const values = item[language === 'en' ? 'options' : language === 'mr' ? 'optionsMr' : 'optionsHi'];
+    return normalizeOptions((values as unknown[]).map(asText));
+  }
+  const suffix = language === 'en' ? 'en' : language;
+  return normalizeOptions([
+    asText(item[`opt_a_${suffix}` as keyof RawQuestionItem]),
+    asText(item[`opt_b_${suffix}` as keyof RawQuestionItem]),
+    asText(item[`opt_c_${suffix}` as keyof RawQuestionItem]),
+    asText(item[`opt_d_${suffix}` as keyof RawQuestionItem]),
+  ]);
+}
+
+function normalizeOptions(options: string[]): string[] {
+  const cleaned = options.map(asText);
+  const nonEmpty = cleaned.filter(Boolean);
+  const isTrueFalse =
+    nonEmpty.length >= 2 &&
+    /^(true|false)$/i.test(nonEmpty[0]) &&
+    /^(true|false)$/i.test(nonEmpty[1]) &&
+    nonEmpty[0].toLowerCase() !== nonEmpty[1].toLowerCase();
+  return isTrueFalse ? nonEmpty.slice(0, 2) : cleaned;
+}
+
+function parseCorrectIndex(item: RawQuestionItem, optionCount: number): number {
+  const raw = item.correct_index ?? item.correctOptionIndex ?? item.correct_option;
+  if (typeof raw === 'string' && /^[A-D]$/i.test(raw.trim())) {
+    return raw.trim().toUpperCase().charCodeAt(0) - 65;
+  }
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed)) return 0;
+  return Math.min(Math.max(parsed, 0), Math.max(optionCount - 1, 0));
+}
+
+export function parseRawQuestion(item: RawQuestionItem): QuestionModel | null {
+  const topic = mapSectionToTopic(asText(item.section));
+  const serial = asText(item.sr);
+  const questionText = asText(item.question_en || item.questionText);
+  const options = optionList(item, 'en');
+  if (!questionText || options.length < 2 || options.every((option) => !option)) return null;
   const id =
-    item.id ||
-    (item.sr ? `Q_${topic}_${item.sr}` : `Q_${topic}_${Math.random().toString(36).substring(2, 9)}`);
-
-  const options: string[] = item.options || [
-    item.opt_a_en || '',
-    item.opt_b_en || '',
-    item.opt_c_en || '',
-    item.opt_d_en || '',
-  ];
-
-  const correctIndex =
-    typeof item.correct_index === 'number'
-      ? item.correct_index
-      : typeof item.correctOptionIndex === 'number'
-      ? item.correctOptionIndex
-      : 0;
-
-  const optionsMr = item.optionsMr || [
-    item.opt_a_mr || '',
-    item.opt_b_mr || '',
-    item.opt_c_mr || '',
-    item.opt_d_mr || '',
-  ];
+    asText(item.id) ||
+    (serial ? `Q_${topic}_${serial}` : `Q_${topic}_${questionText.toLowerCase().replace(/\W+/g, '_').slice(0, 40)}`);
+  const optionsMr = optionList(item, 'mr');
   const hasOptionsMr = optionsMr.some((o) => o.trim().length > 0);
-
-  const optionsHi = item.optionsHi || [
-    item.opt_a_hi || '',
-    item.opt_b_hi || '',
-    item.opt_c_hi || '',
-    item.opt_d_hi || '',
-  ];
+  const optionsHi = optionList(item, 'hi');
   const hasOptionsHi = optionsHi.some((o) => o.trim().length > 0);
 
   return {
     id,
     topic,
-    questionText: item.question_en || item.questionText || '',
+    questionText,
     options,
-    correctOptionIndex: correctIndex,
-    explanation: item.explanation_en || item.explanation || '',
-    questionTextMr: item.question_mr || item.questionTextMr,
+    correctOptionIndex: parseCorrectIndex(item, options.length),
+    explanation: asText(item.explanation_en || item.explanation),
+    questionTextMr: asText(item.question_mr || item.questionTextMr) || undefined,
     optionsMr: hasOptionsMr ? optionsMr : undefined,
-    explanationMr: item.explanation_mr || item.explanationMr,
-    questionTextHi: item.question_hi || item.questionTextHi,
+    explanationMr: asText(item.explanation_mr || item.explanationMr) || undefined,
+    questionTextHi: asText(item.question_hi || item.questionTextHi) || undefined,
     optionsHi: hasOptionsHi ? optionsHi : undefined,
-    explanationHi: item.explanation_hi || item.explanationHi,
+    explanationHi: asText(item.explanation_hi || item.explanationHi) || undefined,
   };
+}
+
+function parseQuestionList(raw: unknown): QuestionModel[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  return raw
+    .filter((item): item is RawQuestionItem => Boolean(item && typeof item === 'object'))
+    .map(parseRawQuestion)
+    .filter((question): question is QuestionModel => {
+      if (!question || seen.has(question.id)) return false;
+      seen.add(question.id);
+      return true;
+    });
 }
 
 class QuestionBankService {
@@ -115,9 +146,9 @@ class QuestionBankService {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
-        const rawList: RawQuestionItem[] = JSON.parse(cached);
-        if (Array.isArray(rawList) && rawList.length > 0) {
-          this.questions = rawList.map(parseRawQuestion);
+        const parsed = parseQuestionList(JSON.parse(cached));
+        if (parsed.length > 0) {
+          this.questions = parsed;
           this.isLoaded = true;
           return this.questions;
         }
@@ -130,8 +161,9 @@ class QuestionBankService {
     try {
       const response = await fetch('/data/question_bank.json');
       if (response.ok) {
-        const rawList: RawQuestionItem[] = await response.json();
-        this.questions = rawList.map(parseRawQuestion);
+        const rawList: unknown = await response.json();
+        this.questions = parseQuestionList(rawList);
+        if (this.questions.length === 0) return this.questions;
         this.isLoaded = true;
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(rawList));
@@ -153,7 +185,7 @@ class QuestionBankService {
       const res = await apiClient.get('/api/v1/student/question-bank');
       const data = res.data?.data;
       if (Array.isArray(data) && data.length > 0) {
-        this.questions = data.map(parseRawQuestion);
+        this.questions = parseQuestionList(data);
         this.isLoaded = true;
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(data));

@@ -8,6 +8,8 @@ class StudentIdentity {
     this.studentId,
     this.batchId,
     this.batchName,
+    this.accessStatus,
+    this.supportEmail,
   });
 
   final String authUserId;
@@ -16,6 +18,8 @@ class StudentIdentity {
   final String? studentId;
   final String? batchId;
   final String? batchName;
+  final String? accessStatus;
+  final String? supportEmail;
   final List<String> roles;
 
   bool get isStudent => roles.contains('STUDENT');
@@ -28,6 +32,8 @@ class StudentIdentity {
       studentId: map['studentId'] == null ? null : '${map['studentId']}',
       batchId: map['batchId'] == null ? null : '${map['batchId']}',
       batchName: map['batchName'] == null ? null : '${map['batchName']}',
+      accessStatus: map['accessStatus'] == null ? null : '${map['accessStatus']}',
+      supportEmail: map['supportEmail'] == null ? null : '${map['supportEmail']}',
       roles: (map['roles'] as List<dynamic>? ?? const <dynamic>[])
           .map((role) => '$role')
           .toList(growable: false),
@@ -42,8 +48,9 @@ class StudentIdentity {
       'studentId': studentId,
       'batchId': batchId,
       'batchName': batchName,
+      'accessStatus': accessStatus,
+      'supportEmail': supportEmail,
       'roles': roles,
     };
   }
 }
-

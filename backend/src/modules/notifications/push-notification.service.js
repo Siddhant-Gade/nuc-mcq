@@ -10,7 +10,7 @@ export class PushNotificationService {
     /**
      * Send push notification to all students, a batch, or selected individuals.
      */
-    async sendPush({ targetType, targetBatchId, targetAuthUserIds, title, body, type = 'ANNOUNCEMENT', materialId, actionRoute }) {
+    async sendPush({ targetType, targetBatchId, targetAuthUserIds, title, body, type = 'ANNOUNCEMENT', materialId, actionRoute, supportEmail }) {
         let tokens = [];
 
         if (targetType === 'ALL') {
@@ -28,13 +28,13 @@ export class PushNotificationService {
             return { sentCount: 0, failedCount: 0, message: 'No registered device tokens found for target.' };
         }
 
-        return this.sendToTokens(tokens, { title, body, type, materialId, actionRoute });
+        return this.sendToTokens(tokens, { title, body, type, materialId, actionRoute, supportEmail });
     }
 
     /**
      * Internal sender using sendEachForMulticast with invalid token auto-pruning.
      */
-    async sendToTokens(tokens, { title, body, type, materialId, actionRoute }) {
+    async sendToTokens(tokens, { title, body, type, materialId, actionRoute, supportEmail }) {
         if (!isFirebaseReady()) {
             console.log(`[FCM Mock] Would send push "${title}" to ${tokens.length} devices.`);
             return { sentCount: tokens.length, failedCount: 0, mock: true };
@@ -47,6 +47,7 @@ export class PushNotificationService {
         };
         if (materialId) dataPayload.materialId = String(materialId);
         if (actionRoute) dataPayload.actionRoute = String(actionRoute);
+        if (supportEmail) dataPayload.supportEmail = String(supportEmail);
 
         // FCM multicast limit is 500 tokens per batch
         const chunkSize = 500;

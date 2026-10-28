@@ -228,7 +228,7 @@ test('inactive student access cannot submit results', async () => {
     try {
         const response = await postSync(fixture.url, validPayload);
         assert.equal(response.status, 403);
-        assert.equal((await response.json()).error.code, 'STUDENT_ACCESS_INACTIVE');
+        assert.equal((await response.json()).error.code, 'STUDENT_ACCESS_REVOKED');
         assert.equal(repository.insertCalls, 0);
     }
     finally {

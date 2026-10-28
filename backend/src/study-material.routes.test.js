@@ -384,7 +384,7 @@ test('unlinked or revoked identities cannot reach the student surface', async ()
     try {
         const response = await fetch(`${revoked.url}/api/v1/student/study-materials`, { headers: adminHeaders });
         assert.equal(response.status, 403);
-        assert.equal((await response.json()).error.code, 'STUDENT_ACCESS_INACTIVE');
+        assert.equal((await response.json()).error.code, 'STUDENT_ACCESS_REVOKED');
     }
     finally {
         await revoked.close();

@@ -3,9 +3,81 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  /* Default light theme */
+  :root {
+    --bg-page: #f8fafc;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
   }
+
+  /* Peachpuff Dark Theme */
+  .dark {
+    --bg-page: #19120c;
+    --bg-surface: #221810;
+    --bg-card: #2a1f16;
+    --bg-card-hover: #35271d;
+    --border-color: #443224;
+    --border-subtle: #33251a;
+    --text-primary: #fde8d7;
+    --text-secondary: #d9b89f;
+    --text-muted: #a8876e;
+    --accent-peach: #f57e3d;
+    --accent-peach-light: #ffdab9;
+  }
+
+  body {
+    @apply font-sans antialiased bg-[#f8fafc] text-slate-900 dark:bg-[#19120c] dark:text-[#fde8d7] transition-colors duration-200;
+  }
+}
+
+/* Comprehensive Peachpuff Dark Theme utility mapping */
+.dark .bg-slate-900,
+.dark .bg-slate-950 {
+  background-color: #221810 !important;
+}
+
+.dark .bg-slate-800 {
+  background-color: #2c2016 !important;
+}
+
+.dark .bg-slate-800\/40,
+.dark .bg-slate-800\/60,
+.dark .bg-slate-800\/80 {
+  background-color: rgba(44, 32, 22, 0.7) !important;
+}
+
+.dark .border-slate-800,
+.dark .border-slate-700 {
+  border-color: #443224 !important;
+}
+
+.dark .border-slate-800\/60,
+.dark .border-slate-800\/80 {
+  border-color: rgba(68, 50, 36, 0.7) !important;
+}
+
+.dark .text-white {
+  color: #fde8d7 !important;
+}
+
+.dark .text-slate-400,
+.dark .text-slate-300 {
+  color: #d9b89f !important;
+}
+
+.dark .text-slate-500 {
+  color: #a8876e !important;
+}
+
+.dark .hover\:bg-slate-800:hover,
+.dark .hover\:bg-slate-800\/40:hover {
+  background-color: #35271d !important;
+}
+
+.dark .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #38281d !important;
 }
 
 /* Custom scrollbars */
@@ -19,9 +91,25 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+  @apply bg-slate-300 dark:bg-[#443224] rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400 dark:bg-slate-600;
+  @apply bg-slate-400 dark:bg-[#5c4431];
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

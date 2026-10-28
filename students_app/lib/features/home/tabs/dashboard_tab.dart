@@ -394,34 +394,23 @@ class _DashboardTabState extends State<DashboardTab> {
                   children: [
                     // Level Badge
                     Container(
-                      width: 46,
-                      height: 46,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withOpacity(0.25),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        'L$level',
-                        style: GoogleFonts.inter(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                        color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFF0284C7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'L$level',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   const SizedBox(width: 12),
                   // Level Title & XP Chip
                   Expanded(
@@ -1030,20 +1019,17 @@ class _DashboardTabState extends State<DashboardTab> {
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              _DashboardPalette.primaryBlue,
-              _DashboardPalette.primaryBlueDark,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: isDark ? const Color(0xFF131722) : const Color(0xFF0F172A),
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? const Color(0xFF1E293B) : const Color(0xFF334155),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
-              color: _DashboardPalette.primaryBlue.withOpacity(0.35),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
+              color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -1055,12 +1041,13 @@ class _DashboardTabState extends State<DashboardTab> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF334155), width: 0.8),
                   ),
                   child: const Icon(
-                    Icons.timer_rounded,
-                    color: Colors.white,
+                    Icons.play_circle_filled_rounded,
+                    color: Color(0xFF38BDF8),
                     size: 24,
                   ),
                 ),
@@ -1071,16 +1058,17 @@ class _DashboardTabState extends State<DashboardTab> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(6),
+                    color: const Color(0xFF38290E),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF78350F), width: 0.8),
                   ),
                   child: Text(
-                    'EXAM MODE',
+                    'OFFICIAL SIMULATION',
                     style: GoogleFonts.inter(
-                      fontSize: 10,
+                      fontSize: 9.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
-                      color: Colors.white,
+                      color: const Color(0xFFFBBF24),
                     ),
                   ),
                 ),
@@ -1101,7 +1089,7 @@ class _DashboardTabState extends State<DashboardTab> {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
-                color: Colors.white.withOpacity(0.9),
+                color: const Color(0xFF94A3B8),
               ),
             ),
             const SizedBox(height: 16),
@@ -1113,15 +1101,8 @@ class _DashboardTabState extends State<DashboardTab> {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFF0284C7),
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

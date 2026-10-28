@@ -27,7 +27,7 @@ export class StudentController {
     updateAccessStatus = async (_request, response) => {
         const { id } = response.locals.validated.params;
         const { status } = response.locals.validated.body;
-        response.status(200).json(successResponse(await this.service.updateAccessStatus(id, status)));
+        response.status(200).json(successResponse(await this.service.updateAccessStatus(id, status, _request.auth?.authUserId)));
     };
     delete = async (_request, response) => {
         const { id } = response.locals.validated.params;
