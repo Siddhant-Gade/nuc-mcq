@@ -30,6 +30,23 @@
   transition: box-shadow 150ms ease, border-color 150ms ease;
 }
 
+.statCardButton {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.statCardButton:hover {
+  transform: translateY(-1px);
+}
+
+.statCardButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .statCard:hover {
   box-shadow: var(--shadow-md);
   border-color: color-mix(in srgb, var(--color-outline-variant) 80%, var(--color-outline) 20%);

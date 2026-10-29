@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getStudents, getBatches, deleteStudent } from '../services';
 import { getErrorMessage } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -33,9 +33,10 @@ function avatarColor(name) {
 export default function StudentList() {
     const [students, setStudents] = useState([]);
     const [batches, setBatches] = useState([]);
+    const [searchParams] = useSearchParams();
     const [search, setSearch] = useState('');
     const [batchFilter, setBatchFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '');
     const [page, setPage] = useState(1);
     const [editingStudent, setEditingStudent] = useState(null);
     const [loadError, setLoadError] = useState(null);

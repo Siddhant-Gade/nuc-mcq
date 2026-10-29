@@ -14,6 +14,8 @@ import QuestionBank from '../pages/QuestionBank';
 import CreateAdmin from '../pages/CreateAdmin';
 import ImportAdmissions from '../pages/ImportAdmissions';
 import Settings from '../pages/Settings';
+import AdminProfile from '../pages/AdminProfile';
+import AccessRevocation from '../pages/AccessRevocation';
 import LoginPage from '../pages/Login';
 import NotFound from '../pages/NotFound';
 import ErrorPage from '../pages/ErrorPage';
@@ -40,6 +42,8 @@ const router = createBrowserRouter([
             { path: 'study-materials', element: <StudyMaterials /> },
             { path: 'question-bank', element: <QuestionBank /> },
             { path: 'admin/create', element: <CreateAdmin /> },
+            { path: 'profile', element: <AdminProfile /> },
+            { path: 'access-revocation', element: <AccessRevocation /> },
             { path: 'settings', element: <Settings /> },
         ],
     },

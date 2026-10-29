@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSidebar } from '../contexts/SidebarContext';
 import { getPendingAuthorizationRequests } from '../services';
-import { loadAdminInviteEnabled } from '../services/settingsStorage';
 import styles from './Sidebar.module.css';
 
 function NavIcon({ icon }) {
@@ -47,6 +46,9 @@ function NavIcon({ icon }) {
         questions: (<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm0-4.5h.01M10 11a1.5 1.5 0 0 1 1.5-1.5c1 0 1.5-1 1.5-1.5a2 2 0 1 0-3.5-1.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>),
+        revoke: (<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 5h10M7 5V3h6v2m-8 3 1 9h8l1-9M8.5 9v5m3-5v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>),
     };
     return icons[icon] ?? null;
 }
@@ -79,9 +81,11 @@ export default function Sidebar() {
         { to: '/broadcasts', label: t('nav.broadcasts'), icon: 'broadcast' },
         { to: '/study-materials', label: t('nav.materials'), icon: 'materials' },
         { to: '/question-bank', label: t('nav.questions') || 'Question Bank', icon: 'questions' },
-        ...(loadAdminInviteEnabled() ? [{ to: '/admin/create', label: t('nav.admin'), icon: 'admin' }] : []),
+        { to: '/admin/create', label: t('nav.addAdmin'), icon: 'admin' },
+        { to: '/access-revocation', label: 'Access Revocation', icon: 'revoke' },
     ];
     const bottomItems = [
+        { to: '/profile', label: 'My Profile', icon: 'admin' },
         { to: '/settings', label: t('nav.settings'), icon: 'settings' },
     ];
 

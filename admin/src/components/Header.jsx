@@ -17,7 +17,9 @@ const pageResults = [
     { id: 'page-broadcasts', label: 'nav.broadcasts', subtitle: 'nav.broadcastsSub', path: '/broadcasts', icon: 'page' },
     { id: 'page-materials', label: 'nav.materials', subtitle: 'nav.materialsSub', path: '/study-materials', icon: 'page' },
     { id: 'page-questions', label: 'nav.questions', subtitle: 'nav.questionsSub', path: '/question-bank', icon: 'page' },
-    { id: 'page-admin', label: 'nav.adminMgmt', subtitle: 'nav.adminMgmtSub', path: '/admin/create', icon: 'page' },
+    { id: 'page-admin', label: 'nav.addAdmin', subtitle: 'nav.adminMgmtSub', path: '/admin/create', icon: 'page' },
+    { id: 'page-profile', label: 'header.myProfile', subtitle: 'nav.adminPanel', path: '/profile', icon: 'page' },
+    { id: 'page-revoke', label: 'Access Revocation', subtitle: 'Manage student access', path: '/access-revocation', icon: 'page' },
     { id: 'page-import', label: 'nav.qImport', subtitle: 'nav.importSub', path: '/students/import', icon: 'page' },
 ];
 function ResultIcon({ icon }) {
@@ -253,7 +255,7 @@ export default function Header() {
                 </div>
               </div>
               <div className={styles.dropdownDivider}/>
-              <button className={styles.dropdownItem} onClick={() => { setProfileOpen(false); navigate('/admin/create'); }}>
+              <button className={styles.dropdownItem} onClick={() => { setProfileOpen(false); navigate('/profile'); }}>
                 <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.25"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>
                 {t('header.myProfile')}
               </button>

@@ -7,6 +7,7 @@ const translations = {
     'nav.auth': { en: 'Authorization Requests', mr: 'अधिकृत विनंत्या', hi: 'प्राधिकरण अनुरोध' },
     'nav.batches': { en: 'Batches', mr: 'बॅच', hi: 'बैच' },
     'nav.admin': { en: 'Admin Management', mr: 'प्रशासन व्यवस्थापन', hi: 'प्रशासन प्रबंधन' },
+    'nav.addAdmin': { en: 'Add Admin', mr: 'प्रशासक जोडा', hi: 'एडमिन जोड़ें' },
     'nav.broadcasts': { en: 'Broadcasts', mr: 'प्रसारण', hi: 'प्रसारण' },
     'nav.materials': { en: 'Study Materials', mr: 'अभ्यास साहित्य', hi: 'अध्ययन सामग्री' },
     'nav.questions': { en: 'Question Bank', mr: 'प्रश्न संच', hi: 'प्रश्न बैंक' },

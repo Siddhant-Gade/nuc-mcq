@@ -72,13 +72,13 @@ export default function Dashboard() {
         .reduce((sum, b) => sum + (b.capacity - b.enrolledCount), 0);
     const activeBatchesCount = batches.filter((b) => b.status === 'ACTIVE').length;
     const pendingAuth = authRequests.filter((r) => r.status === 'PENDING');
-    return (<div>
+    return (<div className={styles.dashboard}>
       <div className={pageStyles.pageHeader}>
         <h1 className={pageStyles.heading}>{t('dashboard.title')}</h1>
       </div>
 
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
+        <button type="button" className={`${styles.statCard} ${styles.statCardButton}`} onClick={() => navigate('/students')} aria-label="View all students">
           <div className={styles.statHeader}>
             <div>
               <p className={styles.statLabel}>{t('dashboard.totalStudents')}</p>
@@ -91,9 +91,9 @@ export default function Dashboard() {
           <div className={styles.statFooter}>
             <span className={styles.statSubtext}>{t('dashboard.enrolledAll')}</span>
           </div>
-        </div>
+        </button>
 
-        <div className={styles.statCard}>
+        <button type="button" className={`${styles.statCard} ${styles.statCardButton}`} onClick={() => navigate('/students?status=ACTIVE')} aria-label="View active students">
           <div className={styles.statHeader}>
             <div>
               <p className={styles.statLabel}>{t('dashboard.activeStudents')}</p>
@@ -106,9 +106,9 @@ export default function Dashboard() {
           <div className={styles.statProgressBar} role="progressbar" aria-valuenow={stats.totalStudents > 0 ? Math.round((stats.activeStudents / stats.totalStudents) * 100) : 0} aria-valuemin={0} aria-valuemax={100} aria-label="Active students progress">
             <div className={`${styles.statProgressFill} ${styles.statProgressSuccess}`} style={{ width: `${stats.totalStudents > 0 ? (stats.activeStudents / stats.totalStudents) * 100 : 0}%` }}/>
           </div>
-        </div>
+        </button>
 
-        <div className={styles.statCard}>
+        <button type="button" className={`${styles.statCard} ${styles.statCardButton}`} onClick={() => navigate('/authorization-requests')} aria-label="Review pending authorization requests">
           <div className={styles.statHeader}>
             <div>
               <p className={styles.statLabel}>{t('dashboard.pendingAuth')}</p>
@@ -118,13 +118,13 @@ export default function Dashboard() {
               <StatIcon type="pending"/>
             </div>
           </div>
-          <button className={styles.statLink} onClick={() => navigate('/authorization-requests')} aria-label={t('dashboard.reviewNow')}>
+          <span className={styles.statLink}>
             {t('dashboard.reviewNow')}
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false"><path d="M2 6h8m0 0L7 3m3 3L7 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-        </div>
+          </span>
+        </button>
 
-        <div className={styles.statCard}>
+        <button type="button" className={`${styles.statCard} ${styles.statCardButton}`} onClick={() => navigate('/batches')} aria-label="View batches and available capacity">
           <div className={styles.statHeader}>
             <div>
               <p className={styles.statLabel}>{t('dashboard.availableCapacity')}</p>
@@ -137,7 +137,7 @@ export default function Dashboard() {
           <div className={styles.statFooter}>
             <span className={styles.statSubtext}>{t('dashboard.openBatches').replace('open batches', `${activeBatchesCount} open batches`)}</span>
           </div>
-        </div>
+        </button>
       </div>
 
       <div className={styles.bentoGrid}>

@@ -152,7 +152,7 @@
 
 /* ── Analytics Visuals Section ── */
 .visualsGrid {
-  display: grid;
+  display: none;
   grid-template-columns: 1fr;
   gap: 1.25rem;
   align-items: start;
