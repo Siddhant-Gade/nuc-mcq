@@ -1,45 +1,353 @@
-.profileCard {
+.page {
+  max-width: 64rem;
+  padding-bottom: 2rem;
+}
+
+.heroCard {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  max-width: 42rem;
+  justify-content: space-between;
+  gap: 1.5rem;
   padding: 1.5rem;
-  background: var(--color-surface-card);
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-surface-card) 60%);
   border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
 }
 
+.heroIdentity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
 .avatar {
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 4.5rem;
+  height: 4.5rem;
   display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 4px solid var(--color-surface-card);
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+}
+
+.details {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin-bottom: 0.25rem;
+  color: var(--color-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.details h2 {
+  overflow: hidden;
+  color: var(--color-on-surface);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.details p {
+  overflow: hidden;
+  margin-top: 0.25rem;
+  color: var(--color-on-surface-variant);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.role,
+.activeBadge,
+.securePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.role {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.activeBadge,
+.securePill {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.statusDot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.heroActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.primaryButton,
+.secondaryButton,
+.textButton,
+.copyButton {
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.75rem;
+}
+
+.primaryButton {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.primaryButton:hover {
+  background: var(--color-primary-hover);
+}
+
+.secondaryButton {
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-card);
+  color: var(--color-on-surface);
+}
+
+.secondaryButton:hover,
+.copyButton:hover {
+  background: var(--color-surface-container);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.infoCard {
+  padding: 1.25rem;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.cardIcon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.cardIconSuccess {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.cardHeader h3 {
+  color: var(--color-on-surface);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.cardHeader p {
+  margin-top: 0.15rem;
+  color: var(--color-on-surface-variant);
+  font-size: 0.6875rem;
+}
+
+.detailList {
+  margin-top: 0.35rem;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--color-outline-subtle);
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+}
+
+.detailRow dt {
+  color: var(--color-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.detailRow dd {
+  min-width: 0;
+  color: var(--color-on-surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.emailRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.emailRow span {
+  overflow: hidden;
+  max-width: 12rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyButton {
+  flex-shrink: 0;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 0.625rem;
+}
+
+.securityState {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.1rem 0;
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container);
+}
+
+.securityState div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.securityState strong {
+  color: var(--color-on-surface);
+  font-size: 0.75rem;
+}
+
+.securityState span {
+  color: var(--color-on-surface-variant);
+  font-size: 0.6875rem;
+}
+
+.textButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+}
+
+.textButton:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+.sessionNote {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  color: var(--color-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.noteIcon {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
   place-items: center;
   border-radius: 50%;
   background: var(--color-primary-light);
   color: var(--color-primary);
-  font-size: 1.5rem;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
-.details h2 {
+.sessionNote strong {
   color: var(--color-on-surface);
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
 }
 
-.details p {
-  color: var(--color-on-surface-variant);
-  font-size: 0.8125rem;
-  margin-bottom: 0.625rem;
+@media (max-width: 700px) {
+  .heroCard {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .heroActions {
+    width: 100%;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    flex: 1;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.role {
-  display: inline-flex;
-  padding: 0.2rem 0.55rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-success-light);
-  color: var(--color-success);
-  font-size: 0.6875rem;
-  font-weight: 600;
+@media (max-width: 420px) {
+  .heroIdentity {
+    align-items: flex-start;
+  }
+
+  .avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
 }

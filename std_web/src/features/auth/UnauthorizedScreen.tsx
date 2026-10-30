@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldAlert, RefreshCw, Send, CheckCircle2, LogOut, Sparkles } from 'lucide-react';
+import { ShieldAlert, RefreshCw, Send, CheckCircle2, LogOut, Sparkles, Clock3, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -123,6 +123,34 @@ export const UnauthorizedScreen: React.FC = () => {
     }
   };
 
+  if (status === 'authenticated') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-slate-50 dark:bg-[#19120c]">
+        <div className="max-w-md w-full p-8 rounded-3xl bg-white dark:bg-[#221810] border border-emerald-200 dark:border-emerald-900/60 text-center shadow-xl space-y-5">
+          <div className="relative mx-auto w-16 h-16">
+            <div className="absolute inset-0 rounded-full bg-emerald-100 dark:bg-emerald-950/50 animate-pulse" />
+            <CheckCircle2 className="relative w-16 h-16 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+              Access approved
+            </p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Welcome to the Student Portal
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Your access has been approved. Preparing your dashboard…
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <Loader2 className="w-4 h-4 animate-spin text-emerald-600 dark:text-emerald-400" />
+            Loading your account
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isRevoked) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -196,7 +224,7 @@ export const UnauthorizedScreen: React.FC = () => {
           </div>
         )}
 
-        {message && (
+        {message && !submitted && (
           <div className="p-3 rounded-xl bg-peach-50 dark:bg-[#2c1d13] border border-peach-200 dark:border-[#523321] text-peach-800 dark:text-peach-200 text-xs">
             {message}
           </div>
@@ -227,9 +255,23 @@ export const UnauthorizedScreen: React.FC = () => {
             </button>
           </form>
         ) : (
-          <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-[#18291c] border border-emerald-200 dark:border-[#27442d] text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2.5 text-left">
-            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <span>Request registered! You will be admitted automatically once approved by the institute.</span>
+          <div className="p-5 rounded-2xl bg-amber-50 dark:bg-[#2f2415] border border-amber-200 dark:border-amber-900/60 text-left space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/60">
+                <Clock3 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                <span className="absolute inset-0 rounded-full border-2 border-amber-400/40 border-t-amber-600 animate-spin" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-900 dark:text-amber-200">Request submitted</p>
+                <p className="text-xs text-amber-800/80 dark:text-amber-300/80">Waiting for institute approval</p>
+              </div>
+            </div>
+            <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+              Keep this page open. We will automatically continue to your dashboard as soon as your access is approved.
+            </p>
+            <div className="h-1.5 overflow-hidden rounded-full bg-amber-200/70 dark:bg-amber-950/70">
+              <div className="h-full w-1/3 rounded-full bg-amber-500 animate-[access-progress_2s_ease-in-out_infinite]" />
+            </div>
           </div>
         )}
 

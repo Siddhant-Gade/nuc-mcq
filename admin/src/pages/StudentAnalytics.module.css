@@ -5,6 +5,15 @@
   padding-bottom: 3rem;
 }
 
+.errorMessage {
+  padding: 1rem;
+  background: var(--color-error-container);
+  border: 1px solid var(--color-error-light);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-size: 0.875rem;
+}
+
 .headerActions {
   display: flex;
   align-items: center;
@@ -99,6 +108,16 @@
   flex-shrink: 0;
 }
 
+.kpiIconPrimary {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.kpiIconSuccess {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
 .kpiValueRow {
   display: flex;
   align-items: baseline;
@@ -131,23 +150,23 @@
 }
 
 .badgeSuccess {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+  background: var(--color-success-light);
+  color: var(--color-success);
 }
 
 .badgeWarning {
-  background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .badgeDanger {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .badgeInfo {
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 /* ── Analytics Visuals Section ── */
@@ -415,15 +434,15 @@
 }
 
 .actionCardHigh {
-  border-left-color: #ef4444;
+  border-left-color: var(--color-primary);
 }
 
 .actionCardMed {
-  border-left-color: #f59e0b;
+  border-left-color: var(--color-primary);
 }
 
 .actionCardLow {
-  border-left-color: #10b981;
+  border-left-color: var(--color-success);
 }
 
 .actionPriority {
@@ -438,18 +457,18 @@
 }
 
 .priorityHigh {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .priorityMed {
-  background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .priorityLow {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+  background: var(--color-success-light);
+  color: var(--color-success);
 }
 
 .actionTitle {
@@ -474,8 +493,8 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-primary);
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-md);
   text-decoration: none;
   cursor: pointer;
@@ -485,7 +504,7 @@
 
 .actionBtn:hover {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
   border-color: var(--color-primary);
 }
 
@@ -542,8 +561,8 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary), #6366f1);
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font-weight: 600;
   font-size: 0.75rem;
   display: flex;
@@ -597,13 +616,13 @@
 }
 
 .modePractice {
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .modeExam {
-  background: rgba(139, 92, 246, 0.12);
-  color: #8b5cf6;
+  background: var(--color-success-light);
+  color: var(--color-success);
 }
 
 .resultPill {
@@ -617,13 +636,13 @@
 }
 
 .resultPassed {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+  background: var(--color-success-light);
+  color: var(--color-success);
 }
 
 .resultFailed {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .clickableRow {
@@ -731,7 +750,7 @@
 .barValueTextInside {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-on-primary);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 

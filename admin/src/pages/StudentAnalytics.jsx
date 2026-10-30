@@ -7,16 +7,16 @@ import pageStyles from '../shared/styles/Page.module.css';
 import styles from './StudentAnalytics.module.css';
 
 const TOPIC_COLORS = {
-  'Computer Fundamentals': '#6366F1', // Indigo
-  'Operating System': '#F59E0B',      // Amber
-  'MS Word': '#3B82F6',               // Blue
-  'MS Excel': '#10B981',              // Emerald
-  'Power-Point': '#EC4899',           // Pink
-  'PageMaker': '#8B5CF6',             // Purple
-  'Internet': '#06B6D4',              // Cyan
+  'Computer Fundamentals': 'var(--color-primary)',
+  'Operating System': 'var(--color-success)',
+  'MS Word': 'var(--color-primary)',
+  'MS Excel': 'var(--color-success)',
+  'Power-Point': 'var(--color-primary)',
+  'PageMaker': 'var(--color-success)',
+  'Internet': 'var(--color-primary)',
 };
 
-const DEFAULT_COLOR = '#64748B';
+const DEFAULT_COLOR = 'var(--color-primary)';
 
 function getTopicColor(topic) {
   return TOPIC_COLORS[topic] || DEFAULT_COLOR;
@@ -82,10 +82,10 @@ export default function StudentAnalytics() {
   const scoreDistribution = useMemo(() => {
     const submissions = data?.recentSubmissions || [];
     const bands = [
-      { band: '80% - 100%', label: 'Distinction (80-100%)', count: 0, color: '#10B981' },
-      { band: '60% - 79%', label: 'First Class (60-79%)', count: 0, color: '#3B82F6' },
-      { band: '40% - 59%', label: 'Passing (40-59%)', count: 0, color: '#F59E0B' },
-      { band: '0% - 39%', label: 'Needs Support (0-39%)', count: 0, color: '#EF4444' },
+      { band: '80% - 100%', label: 'Distinction (80-100%)', count: 0, color: 'var(--color-success)' },
+      { band: '60% - 79%', label: 'First Class (60-79%)', count: 0, color: 'var(--color-primary)' },
+      { band: '40% - 59%', label: 'Passing (40-59%)', count: 0, color: 'var(--color-primary)' },
+      { band: '0% - 39%', label: 'Needs Support (0-39%)', count: 0, color: 'var(--color-success)' },
     ];
 
     submissions.forEach((s) => {
@@ -210,14 +210,7 @@ export default function StudentAnalytics() {
 
       {error && (
         <div
-          style={{
-            padding: '1rem',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: 'var(--radius-md)',
-            color: '#ef4444',
-            fontSize: '0.875rem',
-          }}
+          className={styles.errorMessage}
         >
           {error}
         </div>
@@ -248,7 +241,7 @@ export default function StudentAnalytics() {
             <div className={styles.kpiCard}>
               <div className={styles.kpiTop}>
                 <span className={styles.kpiLabel}>{t('analytics.kpi.totalTests')}</span>
-                <div className={styles.kpiIconWrap} style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                <div className={`${styles.kpiIconWrap} ${styles.kpiIconPrimary}`}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
@@ -272,7 +265,7 @@ export default function StudentAnalytics() {
             <div className={styles.kpiCard}>
               <div className={styles.kpiTop}>
                 <span className={styles.kpiLabel}>{t('analytics.kpi.avgScore')}</span>
-                <div className={styles.kpiIconWrap} style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#6366f1' }}>
+                <div className={`${styles.kpiIconWrap} ${styles.kpiIconPrimary}`}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 20V10" />
                     <path d="M12 20V4" />
@@ -302,7 +295,7 @@ export default function StudentAnalytics() {
             <div className={styles.kpiCard}>
               <div className={styles.kpiTop}>
                 <span className={styles.kpiLabel}>{t('analytics.kpi.passRate')}</span>
-                <div className={styles.kpiIconWrap} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+                <div className={`${styles.kpiIconWrap} ${styles.kpiIconSuccess}`}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                     <polyline points="22 4 12 14.01 9 11.01" />
@@ -327,7 +320,7 @@ export default function StudentAnalytics() {
             <div className={styles.kpiCard}>
               <div className={styles.kpiTop}>
                 <span className={styles.kpiLabel}>{t('analytics.kpi.weakestTopic')}</span>
-                <div className={styles.kpiIconWrap} style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
+                <div className={`${styles.kpiIconWrap} ${styles.kpiIconPrimary}`}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
@@ -355,7 +348,7 @@ export default function StudentAnalytics() {
             <div className={styles.kpiCard}>
               <div className={styles.kpiTop}>
                 <span className={styles.kpiLabel}>{t('analytics.kpi.studentsAssessed')}</span>
-                <div className={styles.kpiIconWrap} style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6' }}>
+                <div className={`${styles.kpiIconWrap} ${styles.kpiIconSuccess}`}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
@@ -647,11 +640,11 @@ export default function StudentAnalytics() {
               </div>
               <div className={styles.lineChartLegend}>
                 <div className={styles.lineChartLegendItem}>
-                  <span className={styles.lineChartLegendLine} style={{ background: '#3b82f6' }} />
+                  <span className={styles.lineChartLegendLine} style={{ background: 'var(--color-primary)' }} />
                   <span>Student Avg Score</span>
                 </div>
                 <div className={styles.lineChartLegendItem}>
-                  <span className={styles.lineChartLegendLine} style={{ background: '#10b981', borderTop: '2px dashed #10b981' }} />
+                  <span className={styles.lineChartLegendLine} style={{ background: 'var(--color-success)', borderTop: '2px dashed var(--color-success)' }} />
                   <span>Passing Benchmark (40%)</span>
                 </div>
               </div>
@@ -694,8 +687,8 @@ export default function StudentAnalytics() {
                     >
                       <defs>
                         <linearGradient id="lineAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.28" />
-                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+                          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.22" />
+                          <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.0" />
                         </linearGradient>
                       </defs>
 
@@ -729,7 +722,7 @@ export default function StudentAnalytics() {
                         y1={passBenchmarkY}
                         x2={W - padRight}
                         y2={passBenchmarkY}
-                        stroke="#10b981"
+                        stroke="var(--color-success)"
                         strokeWidth="1.5"
                         strokeDasharray="5 5"
                         opacity="0.85"
@@ -741,7 +734,7 @@ export default function StudentAnalytics() {
                       {/* Performance Trend Line */}
                       <polyline
                         fill="none"
-                        stroke="#3b82f6"
+                        stroke="var(--color-primary)"
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -755,8 +748,8 @@ export default function StudentAnalytics() {
                             cx={c.x}
                             cy={c.y}
                             r={hoveredPoint === i ? 6 : 4.5}
-                            fill="#ffffff"
-                            stroke="#3b82f6"
+                            fill="var(--color-surface-card)"
+                            stroke="var(--color-primary)"
                             strokeWidth={hoveredPoint === i ? 3 : 2.5}
                             className={styles.lineChartPoint}
                             onMouseEnter={() => setHoveredPoint(i)}
@@ -931,10 +924,8 @@ export default function StudentAnalytics() {
                                   width: `${row.percentage}%`,
                                   background:
                                     row.percentage >= 60
-                                      ? '#10b981'
-                                      : row.percentage >= 40
-                                      ? '#f59e0b'
-                                      : '#ef4444',
+                                      ? 'var(--color-success)'
+                                      : 'var(--color-primary)',
                                 }}
                               />
                             </div>
