@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getStudents, updateStudentAccessStatus } from '../services';
 import { getErrorMessage } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
+import ConfirmModal from '../components/ConfirmModal';
 import pageStyles from '../shared/styles/Page.module.css';
 import styles from './AccessRevocation.module.css';
 
@@ -12,6 +13,8 @@ export default function AccessRevocation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [savingId, setSavingId] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   useEffect(() => {
     getStudents()
@@ -24,15 +27,14 @@ export default function AccessRevocation() {
     const normalizedQuery = query.trim().toLowerCase();
     return students.filter((student) => !normalizedQuery
       || student.name.toLowerCase().includes(normalizedQuery)
-      || student.studentId.toLowerCase().includes(normalizedQuery));
-  }, [query, students]);
+      || student.studentId.toLowerCase().includes(normalizedQuery)).filter((student) =>
+        statusFilter === 'ALL' || student.accessStatus === statusFilter);
+  }, [query, statusFilter, students]);
 
-  async function handleToggle(student) {
+  async function handleConfirmToggle() {
+    if (!selectedStudent) return;
+    const student = selectedStudent;
     const nextStatus = student.accessStatus === 'REVOKED' ? 'ACTIVE' : 'REVOKED';
-    const message = nextStatus === 'REVOKED'
-      ? `Revoke access for ${student.name}?`
-      : `Restore access for ${student.name}?`;
-    if (!window.confirm(message)) return;
     setSavingId(student.id);
     setError(null);
     try {
@@ -40,6 +42,7 @@ export default function AccessRevocation() {
       setStudents((current) => current.map((item) => item.id === student.id
         ? { ...item, accessStatus: nextStatus }
         : item));
+      setSelectedStudent(null);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -64,6 +67,19 @@ export default function AccessRevocation() {
           placeholder="Search by name or PRN"
           aria-label="Search students"
         />
+        <div className={styles.filters} aria-label="Filter students by access status">
+          {['ALL', 'ACTIVE', 'REVOKED'].map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              className={`${styles.filterButton} ${statusFilter === filter ? styles.selectedFilter : ''}`}
+              onClick={() => setStatusFilter(filter)}
+            >
+              {filter === 'ALL' ? 'All students' : filter === 'ACTIVE' ? 'Active' : 'Revoked'}
+              <span>{filter === 'ALL' ? students.length : students.filter((student) => student.accessStatus === filter).length}</span>
+            </button>
+          ))}
+        </div>
       </div>
       {loading ? <p className={pageStyles.subtext}>{t('common.loading')}</p> : (
         <div className={styles.card}>
@@ -77,7 +93,7 @@ export default function AccessRevocation() {
                     <td>{student.studentId}</td>
                     <td><span className={`${styles.status} ${student.accessStatus === 'REVOKED' ? styles.revoked : styles.active}`}>{student.accessStatus}</span></td>
                     <td>
-                      <button className={`${styles.action} ${student.accessStatus === 'REVOKED' ? styles.restore : ''}`} disabled={savingId === student.id} onClick={() => handleToggle(student)}>
+                      <button type="button" className={`${styles.action} ${student.accessStatus === 'REVOKED' ? styles.restore : ''}`} disabled={savingId === student.id} onClick={() => setSelectedStudent(student)}>
                         {savingId === student.id ? 'Saving...' : student.accessStatus === 'REVOKED' ? 'Restore Access' : 'Revoke Access'}
                       </button>
                     </td>
@@ -88,6 +104,23 @@ export default function AccessRevocation() {
             </table>
           </div>
         </div>
+      )}
+      {selectedStudent && (
+        <ConfirmModal
+          title={selectedStudent.accessStatus === 'REVOKED' ? 'Restore student access?' : 'Revoke student access?'}
+          message={selectedStudent.accessStatus === 'REVOKED'
+            ? 'This student will be able to access the student website again.'
+            : 'This student will no longer be able to access the student website.'}
+          fields={[
+            { label: 'Student', value: selectedStudent.name },
+            { label: 'PRN', value: selectedStudent.studentId },
+            { label: 'New status', value: selectedStudent.accessStatus === 'REVOKED' ? 'Active' : 'Revoked' },
+          ]}
+          confirmLabel={selectedStudent.accessStatus === 'REVOKED' ? 'Restore access' : 'Revoke access'}
+          onConfirm={handleConfirmToggle}
+          onCancel={() => !savingId && setSelectedStudent(null)}
+          disabled={savingId === selectedStudent.id}
+        />
       )}
     </div>
   );

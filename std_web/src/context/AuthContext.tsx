@@ -16,7 +16,7 @@ interface AuthContextType {
   signInWithGoogleCredential: (credential: string) => Promise<void>;
   signOut: () => Promise<void>;
   requestAccess: (prn?: string) => Promise<boolean>;
-  refreshIdentity: () => Promise<void>;
+  refreshIdentity: () => Promise<AuthStatus>;
   clearError: () => void;
 }
 
@@ -32,14 +32,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     statusRef.current = status;
   }, [status]);
 
-  const verifyCurrentSession = useCallback(async () => {
+  const verifyCurrentSession = useCallback(async (): Promise<AuthStatus> => {
     try {
       // Authoritatively verify the active HttpOnly cookie session from the server
       const verified = await authService.getSessionIdentity();
       if (!verified) {
         setStatus('unauthenticated');
         setIdentity(null);
-        return;
+        return 'unauthenticated';
       }
 
       // Case B: Admin account signed in on the student website
@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setStatus('unauthenticated');
         setIdentity(null);
         setError('Admin accounts cannot access the Student Portal. Please use the Admin Portal.');
-        return;
+        return 'unauthenticated';
       }
 
       setIdentity(verified);
@@ -61,21 +61,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (verified.accessStatus?.toUpperCase() === 'REVOKED') {
         setStatus('unauthorized');
         setError('Access revoked, contact administrator.');
-        return;
+        return 'unauthorized';
       }
 
       if (verified.accessStatus?.toUpperCase() === 'EXPIRED') {
         setStatus('unauthorized');
         setError('Access expired. Please contact the administrator.');
-        return;
+        return 'unauthorized';
       }
 
       if (isStudent && verified.accessStatus?.toUpperCase() === 'ACTIVE') {
         setStatus('authenticated');
         resultsService.setStudentContext(verified.authUserId || verified.studentId);
         void resultsService.syncFromBackend();
+        return 'authenticated';
       } else {
         setStatus('unauthorized');
+        return 'unauthorized';
       }
     } catch (e: unknown) {
       console.warn('[AuthContext] Verification failed:', e);
@@ -85,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (errData?.error?.message?.includes('Access revoked') || errData?.error?.code === 'STUDENT_ACCESS_REVOKED') {
         setError('Access revoked, contact administrator.');
         setStatus('unauthorized');
-        return;
+        return 'unauthorized';
       }
 
       const isAuthRejection = httpStatus === 401;
@@ -95,9 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await authService.signOut().catch(() => {});
         setStatus('unauthenticated');
         setIdentity(null);
+        return 'unauthenticated';
       } else {
         // Preserve state on network error or server startup
-        setStatus(httpStatus === 403 ? 'unauthorized' : 'unauthenticated');
+        const nextStatus = httpStatus === 403 ? 'unauthorized' : 'unauthenticated';
+        setStatus(nextStatus);
+        return nextStatus;
       }
     }
   }, []);
@@ -215,8 +220,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return await authService.requestAccess(prn);
   }, []);
 
-  const refreshIdentity = useCallback(async () => {
-    await verifyCurrentSession();
+  const refreshIdentity = useCallback(async (): Promise<AuthStatus> => {
+    return verifyCurrentSession();
   }, [verifyCurrentSession]);
 
   const clearError = useCallback(() => setError(null), []);

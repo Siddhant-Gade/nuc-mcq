@@ -61,7 +61,7 @@ export const UnauthorizedScreen: React.FC = () => {
       });
       const timer = setTimeout(() => {
         navigate('/');
-      }, 1200);
+      }, 2500);
       return () => clearTimeout(timer);
     }
 
@@ -103,16 +103,9 @@ export const UnauthorizedScreen: React.FC = () => {
     setChecking(true);
     setMessage(null);
     try {
-      await refreshIdentity();
-      if (status === 'authenticated') {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
-        setTimeout(() => {
-          navigate('/');
-        }, 1200);
+      const refreshedStatus = await refreshIdentity();
+      if (refreshedStatus === 'authenticated') {
+        setMessage('Access approved. Preparing your dashboard…');
       } else {
         setMessage('Access is still pending approval by the institute admin. Please wait.');
       }
