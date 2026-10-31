@@ -14,6 +14,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Language } from '../../types';
 import { resultsService } from '../../services/resultsService';
 import { bookmarksService } from '../../services/bookmarksService';
+import { SessionsAndCookies } from '../../components/common/SessionsAndCookies';
 
 export const SettingsScreen: React.FC = () => {
   const { identity, signOut } = useAuth();
@@ -59,9 +60,18 @@ export const SettingsScreen: React.FC = () => {
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
               {identity?.name || 'Student'}
             </h2>
-            <p className="text-xs text-slate-500 font-mono">
-              PRN: {identity?.studentId || 'N/A'}
-            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-xs text-slate-500 font-mono">
+                PRN: {identity?.studentId || 'N/A'}
+              </p>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-900/60">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                Active session
+              </span>
+            </div>
           </div>
         </div>
 
@@ -182,6 +192,9 @@ export const SettingsScreen: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Sessions & Cookies Component */}
+      <SessionsAndCookies />
 
       {/* Storage & Clear Cache */}
       <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">

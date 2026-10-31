@@ -20,6 +20,7 @@
 }
 
 .card {
+  position: relative;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 1rem;
@@ -40,18 +41,49 @@
   box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
+.closeBtn {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.closeBtn:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+:global(.dark) .closeBtn {
+  color: #a8876e;
+}
+
+:global(.dark) .closeBtn:hover {
+  color: #fde8d7;
+  background-color: #35271d;
+}
+
 .header {
   display: flex;
   align-items: flex-start;
   gap: 0.85rem;
+  padding-right: 1.5rem;
 }
 
 .iconWrapper {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.75rem;
-  background: #eff6fc;
-  color: #005fb8;
+  background: #eef2ff;
+  color: #4f46e5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,13 +175,13 @@
   letter-spacing: 0.04em;
   padding: 0.1rem 0.35rem;
   border-radius: 0.25rem;
-  background: #dff6dd;
-  color: #107c10;
+  background: #dcfce7;
+  color: #15803d;
 }
 
 :global(.dark) .tagRequired {
-  background: rgba(16, 124, 16, 0.2);
-  color: #5cdb5c;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
 }
 
 .switch {
@@ -197,7 +229,7 @@
 }
 
 .switch input:checked + .slider {
-  background-color: #005fb8;
+  background-color: #4f46e5;
 }
 
 :global(.dark) .switch input:checked + .slider {
@@ -223,7 +255,7 @@
 }
 
 .btnPrimary {
-  background: #005fb8;
+  background: #4f46e5;
   color: #ffffff;
   border: none;
   border-radius: 0.5rem;
@@ -234,18 +266,24 @@
   transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
+.btnPrimary:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+}
+
 :global(.dark) .btnPrimary {
   background: #f57e3d;
   color: #19120c;
+  font-weight: 700;
 }
 
-.btnPrimary:hover {
-  filter: brightness(0.92);
+:global(.dark) .btnPrimary:hover {
+  background: #e56124;
   transform: translateY(-1px);
 }
 
 .btnSecondary {
-  background: #f1f5f9;
+  background: #f8fafc;
   color: #334155;
   border: 1px solid #cbd5e1;
   border-radius: 0.5rem;
@@ -256,27 +294,29 @@
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-:global(.dark) .btnSecondary {
-  background: #2a1f16;
-  color: #d9b89f;
-  border-color: #443224;
+.btnSecondary:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
 }
 
-.btnSecondary:hover {
-  background: #e2e8f0;
+:global(.dark) .btnSecondary {
+  background: #2a1f16;
+  color: #fde8d7;
+  border-color: #443224;
 }
 
 :global(.dark) .btnSecondary:hover {
   background: #35271d;
+  border-color: #5c4431;
 }
 
 .btnLink {
   background: transparent;
-  color: #005fb8;
+  color: #4f46e5;
   border: none;
   padding: 0.5rem 0.6rem;
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   margin-right: auto;
   text-decoration: none;
@@ -285,17 +325,17 @@
   gap: 0.25rem;
 }
 
-:global(.dark) .btnLink {
-  color: #f57e3d;
-}
-
 .btnLink:hover {
   text-decoration: underline;
 }
 
-@media (max-width: 480px) {
+:global(.dark) .btnLink {
+  color: #f57e3d;
+}
+
+@media (max-width: 640px) {
   .overlay {
-    bottom: 5.5rem; /* leave space above MobileBottomNav on mobile */
+    bottom: 5.5rem; /* elevate above MobileBottomNav */
     right: 1rem;
     left: 1rem;
     width: auto;
