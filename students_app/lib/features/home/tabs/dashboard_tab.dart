@@ -1017,15 +1017,33 @@ class _DashboardTabState extends State<DashboardTab> {
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF131722) : const Color(0xFF0F172A),
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF1E222B),
+                    Color(0xFF161920),
+                  ],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF0F7FF),
+                    Color(0xFFE0EFFF),
+                  ],
+                ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFF334155),
-            width: 1,
+            color: isDark ? const Color(0xFF2C3545) : const Color(0xFFBAE6FD),
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+              color: isDark
+                  ? Colors.black.withOpacity(0.35)
+                  : const Color(0xFF0284C7).withOpacity(0.08),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -1039,13 +1057,25 @@ class _DashboardTabState extends State<DashboardTab> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF334155), width: 0.8),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFBAE6FD),
+                      width: 0.8,
+                    ),
+                    boxShadow: isDark
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: const Color(0xFF0284C7).withOpacity(0.08),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.play_circle_filled_rounded,
-                    color: Color(0xFF38BDF8),
+                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
                     size: 24,
                   ),
                 ),
@@ -1053,12 +1083,15 @@ class _DashboardTabState extends State<DashboardTab> {
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
-                    vertical: 3,
+                    vertical: 3.5,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF38290E),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF78350F), width: 0.8),
+                    color: isDark ? const Color(0xFF38290E) : const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF78350F) : const Color(0xFFFCD34D),
+                      width: 0.8,
+                    ),
                   ),
                   child: Text(
                     'OFFICIAL SIMULATION',
@@ -1066,7 +1099,7 @@ class _DashboardTabState extends State<DashboardTab> {
                       fontSize: 9.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
-                      color: const Color(0xFFFBBF24),
+                      color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
                     ),
                   ),
                 ),
@@ -1078,7 +1111,7 @@ class _DashboardTabState extends State<DashboardTab> {
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: isDark ? const Color(0xFFF4F4F5) : const Color(0xFF0F172A),
               ),
             ),
             const SizedBox(height: 4),
@@ -1087,7 +1120,7 @@ class _DashboardTabState extends State<DashboardTab> {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
-                color: const Color(0xFF94A3B8),
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
               ),
             ),
             const SizedBox(height: 16),
@@ -1096,11 +1129,18 @@ class _DashboardTabState extends State<DashboardTab> {
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
-                  vertical: 7,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0284C7),
                   borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0284C7).withOpacity(0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1111,7 +1151,7 @@ class _DashboardTabState extends State<DashboardTab> {
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: _DashboardPalette.primaryBlue,
+                          color: Colors.white,
                         ),
                       )
                     else ...[
@@ -1119,15 +1159,15 @@ class _DashboardTabState extends State<DashboardTab> {
                         'Start Mock Exam',
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: _DashboardPalette.primaryBlueDark,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 5),
                       const Icon(
                         Icons.play_arrow_rounded,
                         size: 18,
-                        color: _DashboardPalette.primaryBlueDark,
+                        color: Colors.white,
                       ),
                     ],
                   ],
