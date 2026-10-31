@@ -29,6 +29,7 @@ vite.log
 # IDE & Editor
 .vscode/
 .idea/
+.settings/
 *.suo
 *.ntvs*
 *.njsproj

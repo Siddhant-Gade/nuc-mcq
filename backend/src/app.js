@@ -175,7 +175,7 @@ export const createApp = ({
 
             response.status(200).json(successResponse({
                 studentId: student.profile.studentId,
-                email: student.profile.email,
+                email: student.profile.email || email,
                 name: student.profile.name,
                 authToken: studentAuthToken,
                 status: student.access.status,

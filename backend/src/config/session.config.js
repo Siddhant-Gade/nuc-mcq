@@ -1,4 +1,4 @@
-export const SESSION_IDLE_TIMEOUT_MS = 1 * 60 * 1000; // 1 minute (for testing)
+export const SESSION_IDLE_TIMEOUT_MS = Number(process.env.SESSION_IDLE_TIMEOUT_MS) || (30 * 60 * 1000); // 30 minutes default
 export const SESSION_ABSOLUTE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export const SESSION_COOKIE_NAME_PROD = '__Host-student_session';

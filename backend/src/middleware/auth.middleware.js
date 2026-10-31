@@ -146,7 +146,7 @@ export const createAuthenticationMiddleware = (
         // while preserving Bearer exchange during explicit POST /api/v1/auth/session.
         const isStudentWeb = request.header('x-client-type') === 'STUDENT_WEB';
         const rawPath = request.originalUrl?.split('?')[0] || request.path || '';
-        const isAuthExchangeRoute = request.method === 'POST' && (rawPath === '/api/v1/auth/session' || request.path === '/session');
+        const isAuthExchangeRoute = (request.method === 'POST' && (rawPath === '/api/v1/auth/session' || request.path === '/session')) || (request.method === 'POST' && (rawPath === '/api/v1/auth/logout' || request.path === '/logout'));
 
         if (isStudentWeb && !rawSessionToken && !isAuthExchangeRoute) {
             return next(new ApiError(401, 'AUTHENTICATION_ERROR', 'Active web session is required.'));

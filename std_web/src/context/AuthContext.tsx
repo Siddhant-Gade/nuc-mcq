@@ -34,8 +34,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyCurrentSession = useCallback(async (): Promise<AuthStatus> => {
     try {
-      // Authoritatively verify the active HttpOnly cookie session from the server
-      const verified = await authService.getSessionIdentity();
+      // Restore active session: checks Supabase tokens and exchanges for session cookies,
+      // and falls back seamlessly to server-managed HttpOnly cookie session
+      let verified: StudentIdentity | null = null;
+      try {
+        const restored = await authService.restoreSession();
+        if (restored.identity) {
+          verified = restored.identity;
+        }
+      } catch (_) {}
+
+      if (!verified) {
+        verified = await authService.getSessionIdentity();
+      }
+
       if (!verified) {
         setStatus('unauthenticated');
         setIdentity(null);

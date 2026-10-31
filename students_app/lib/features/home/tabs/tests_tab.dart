@@ -23,7 +23,7 @@ class _TestsPalette {
   static const Color textSecondary = Color(0xFF64748B);
 
   // Dark Mode Tokens
-  static const Color darkPageBg = Color(0xFF0B111D);
+  static const Color darkPageBg = Color(0xFF121214);
   static const Color darkTextPrimary = Color(0xFFF1F5F9);
   static const Color darkTextSecondary = Color(0xFF94A3B8);
 }
@@ -1563,7 +1563,7 @@ class _TestsTabState extends State<TestsTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF131C2E) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF18181B) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -1584,7 +1584,7 @@ class _TestsTabState extends State<TestsTab> {
                         height: 4,
                         decoration: BoxDecoration(
                           color: isDark
-                              ? const Color(0xFF1F2F4C)
+                              ? const Color(0xFF2E2E33)
                               : const Color(0xFFCBD5E1),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -1638,7 +1638,7 @@ class _TestsTabState extends State<TestsTab> {
                     Divider(
                       height: 1,
                       color: isDark
-                          ? const Color(0xFF1F2F4C)
+                          ? const Color(0xFF2E2E33)
                           : const Color(0xFFE2E8F0),
                     ),
                     const SizedBox(height: 16),

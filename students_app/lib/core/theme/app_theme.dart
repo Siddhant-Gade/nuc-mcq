@@ -54,11 +54,11 @@ class AppColors {
   static const Color primeRubySurface = Color(0xFFFEE2E2);
 
   // Dark Surfaces
-  static const Color primeObsidian = Color(0xFF0B111D);   // Midnight Background
-  static const Color primeCard = Color(0xFF131C2E);       // Dark Card Surface
-  static const Color primeCardElevated = Color(0xFF18243C);// Dark Elevated Card
-  static const Color primeCardHover = Color(0xFF20304E);  // Interactive Card Glow
-  static const Color primeBorder = Color(0xFF1F2F4C);     // Dark Divider / Outline
+  static const Color primeObsidian = Color(0xFF121214);   // Midnight Background
+  static const Color primeCard = Color(0xFF18181B);       // Dark Card Surface
+  static const Color primeCardElevated = Color(0xFF222226);// Dark Elevated Card
+  static const Color primeCardHover = Color(0xFF2A2A30);  // Interactive Card Glow
+  static const Color primeBorder = Color(0xFF2E2E33);     // Dark Divider / Outline
 
   // Light Mode Text & Surface Hierarchy (High-Contrast & Clearly Visible)
   static const Color textPrimary = Color(0xFF0F172A);     // Deep Slate Black
@@ -78,14 +78,14 @@ class AppColors {
   static const Color shadowDark = Color(0x80000000);      // 50% Deep Black
 
   // Dark Mode Palette
-  static const Color darkBg = Color(0xFF0B111D);
-  static const Color darkSurface = Color(0xFF131C2E);
-  static const Color darkSurfaceVariant = Color(0xFF18243C);
-  static const Color darkBorder = Color(0xFF1F2F4C);
-  static const Color darkTextPrimary = Color(0xFFF1F5F9);
-  static const Color darkTextSecondary = Color(0xFF94A3B8);
-  static const Color darkBluePrimary = Color(0xFF00A8E1);
-  static const Color darkBlueSurface = Color(0xFF0C243B);
+  static const Color darkBg = Color(0xFF121214);
+  static const Color darkSurface = Color(0xFF18181B);
+  static const Color darkSurfaceVariant = Color(0xFF222226);
+  static const Color darkBorder = Color(0xFF2E2E33);
+  static const Color darkTextPrimary = Color(0xFFF4F4F5);
+  static const Color darkTextSecondary = Color(0xFFA1A1AA);
+  static const Color darkBluePrimary = Color(0xFF38BDF8);
+  static const Color darkBlueSurface = Color(0xFF1E293B);
 
   // Semantic Aliases
   static const Color googleBlue = Color(0xFF0284C7);

@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/scale_press.dart';
 import '../../question_bank/repository/question_bank_repository.dart';
 import '../cubit/results_cubit.dart';
+import '../repository/results_repository.dart';
 import '../models/test_result_model.dart';
 import 'performance_summary_screen.dart';
 import 'result_detail_screen.dart';
@@ -27,6 +28,233 @@ class _ResultsHistoryScreenState extends State<ResultsHistoryScreen> {
         context.read<ResultsCubit>().loadResults();
       }
     });
+  }
+
+  @override
+  Widget _buildLevelProgressCard(
+    StudentStats stats,
+    bool isDark,
+    BuildContext context,
+  ) {
+    final level = stats.level;
+    final levelTitle = stats.levelTitle;
+    final totalXp = stats.totalXp;
+    final currentLevelXp = stats.currentLevelXp;
+    final levelProgress = stats.levelProgress;
+    final currentStreak = stats.currentStreak;
+
+    return ScalePress(
+      onTap: () {
+        Navigator.of(context).push(PerformanceSummaryScreen.route());
+      },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.35 : 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top Level & XP Header Row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Level Badge
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0284C7) : const Color(0xFF0284C7),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'L$level',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Level Title & XP Chip
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              levelTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF38290E)
+                                  : const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF6B4810)
+                                    : const Color(0xFFF6D8A6),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.bolt_rounded,
+                                  size: 13,
+                                  color: Color(0xFFD97706),
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '$totalXp XP',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? const Color(0xFFFBBF24)
+                                        : const Color(0xFFB45309),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        stats.totalTests > 0
+                            ? 'Level $level • Next unlock at ${stats.xpForNextLevel} XP'
+                            : 'Take your first test to earn XP and level up!',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (currentStreak > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF3B1D11) : const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF9A3412) : const Color(0xFFFFEDD5),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.local_fire_department_rounded,
+                          size: 14,
+                          color: Color(0xFFEA580C),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '$currentStreak',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFEA580C),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Level Progress Bar
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Level $level Progress',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : const Color(0xFF475569),
+                      ),
+                    ),
+                    Text(
+                      '$currentLevelXp / 150 XP',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? const Color(0xFF38BDF8)
+                            : const Color(0xFF0284C7),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: levelProgress,
+                    minHeight: 7,
+                    backgroundColor: isDark
+                        ? const Color(0xFF222226)
+                        : const Color(0xFFEEF2F6),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF0284C7),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -135,6 +363,12 @@ class _ResultsHistoryScreenState extends State<ResultsHistoryScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
+                  // Section 1B: Gamification & Level Progress (Visible in Results only)
+                  if (stats != null) ...[
+                    _buildLevelProgressCard(stats, isDark, context),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Section 2: Performance Summary Card (Interactive)
                   if (stats != null)

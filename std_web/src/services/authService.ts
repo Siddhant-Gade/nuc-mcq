@@ -347,10 +347,25 @@ export const authService = {
         return { status: 'unauthenticated', identity: null };
       }
 
-      // Proactively establish server-side session in background if supported
-      void this.exchangeTokenForSession(token).catch(() => {});
+      // Establish server-side session and obtain verified identity
+      let identity: StudentIdentity | null = null;
+      try {
+        identity = await this.exchangeTokenForSession(token);
+      } catch (_) {}
 
-      const identity = await this.verifyIdentity(token);
+      if (!identity) {
+        try {
+          identity = await this.verifyIdentity(token);
+        } catch (_) {}
+      }
+
+      if (!identity) {
+        identity = await this.getSessionIdentity();
+      }
+
+      if (!identity) {
+        return { status: 'unauthenticated', identity: null };
+      }
       const isAdmin = identity.roles?.includes('ADMIN') || identity.roles?.includes('SUPER_ADMIN');
       const isStudent = identity.roles?.includes('STUDENT');
 

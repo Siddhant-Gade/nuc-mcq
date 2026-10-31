@@ -33,11 +33,11 @@ class _DashboardPalette {
   static const Color borderLight = Color(0xFFE2E8F0);
 
   // Dark Mode Tokens
-  static const Color darkPageBg = Color(0xFF0B111D);
-  static const Color darkCard = Color(0xFF131C2E);
-  static const Color darkBorder = Color(0xFF1F2F4C);
-  static const Color darkTextPrimary = Color(0xFFF1F5F9);
-  static const Color darkTextSecondary = Color(0xFF94A3B8);
+  static const Color darkPageBg = Color(0xFF121214);
+  static const Color darkCard = Color(0xFF18181B);
+  static const Color darkBorder = Color(0xFF2E2E33);
+  static const Color darkTextPrimary = Color(0xFFF4F4F5);
+  static const Color darkTextSecondary = Color(0xFFA1A1AA);
 }
 
 /// Redesigned Student Home Dashboard.
@@ -141,9 +141,7 @@ class _DashboardTabState extends State<DashboardTab> {
                     // Section B: Latest Institute Announcement (omitted if empty)
                     _buildAnnouncementSection(isDark),
 
-                    // Section C: Learning Progress & Gamification
-                    _buildProgressSection(isDark),
-                    const SizedBox(height: AppSpacing.xl),
+                    
 
                     // Section D: Primary Learning Actions
                     _buildPrimaryActionsSection(context, isDark),
