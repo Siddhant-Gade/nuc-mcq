@@ -133,7 +133,7 @@ export default function Dashboard() {
           <button
             type="button"
             className={styles.quickPillSecondary}
-            onClick={() => navigate('/import-admissions')}
+            onClick={() => navigate('/students/import')}
             title="Import admissions from Excel"
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -384,7 +384,7 @@ export default function Dashboard() {
           <button
             type="button"
             className={styles.shortcutCard}
-            onClick={() => navigate('/student-analytics')}
+            onClick={() => navigate('/analytics')}
           >
             <div className={`${styles.shortcutIcon} ${styles.shortcutBlue}`}>
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8">

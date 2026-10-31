@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { requestPasswordReset } from '../services/authService';
 import {
     loadNotifications,
     saveNotifications,
@@ -29,6 +30,8 @@ export default function Settings() {
     const [notifications, setNotifications] = useState(loadNotifications);
     const [adminInviteEnabled, setAdminInviteEnabled] = useState(loadAdminInviteEnabled);
     const [saved, setSaved] = useState(false);
+    const [resetLoading, setResetLoading] = useState(false);
+    const [resetMsg, setResetMsg] = useState(null);
 
     const handleNotificationChange = useCallback((key) => {
         setNotifications((prev) => {
@@ -49,6 +52,25 @@ export default function Settings() {
     function handleSave() {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
+    }
+
+    async function handlePasswordReset() {
+        const targetEmail = identity?.email;
+        if (!targetEmail) {
+            setResetMsg({ type: 'error', text: 'No email associated with current session.' });
+            return;
+        }
+        setResetLoading(true);
+        setResetMsg(null);
+        try {
+            await requestPasswordReset(targetEmail);
+            setResetMsg({ type: 'success', text: `Password reset instructions sent to ${targetEmail}.` });
+        } catch (err) {
+            setResetMsg({ type: 'error', text: err?.message || 'Failed to send password reset email.' });
+        } finally {
+            setResetLoading(false);
+            setTimeout(() => setResetMsg(null), 5000);
+        }
     }
 
     return (
@@ -163,13 +185,23 @@ export default function Settings() {
               <span className={styles.accountValue}>Today, 10:30 AM</span>
             </div>
           </div>
-          <button className={styles.linkBtn}>
+          <button
+            type="button"
+            className={styles.linkBtn}
+            onClick={handlePasswordReset}
+            disabled={resetLoading}
+          >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <rect x="3" y="7" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.25"/>
               <path d="M5 7V5a3 3 0 1 1 6 0v2" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
             </svg>
-            {t('settings.changePassword')}
+            {resetLoading ? 'Sending reset link...' : t('settings.changePassword')}
           </button>
+          {resetMsg && (
+            <p style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: resetMsg.type === 'success' ? 'var(--color-success, #16a34a)' : 'var(--color-error, #dc2626)' }}>
+              {resetMsg.text}
+            </p>
+          )}
         </div>
 
         {/* Section 4: Notifications */}

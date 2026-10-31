@@ -4,8 +4,10 @@ import styles from './ConfirmModal.module.css';
 export default function ConfirmModal({
   title,
   message,
-  fields,
+  fields = [],
   confirmLabel,
+  confirmText,
+  cancelText,
   onConfirm,
   onCancel,
   disabled = false,
@@ -14,7 +16,8 @@ export default function ConfirmModal({
   avatarBg = null,
 }) {
   const { t } = useLanguage();
-  const resolvedConfirmLabel = confirmLabel ?? t('common.confirm');
+  const resolvedConfirmLabel = confirmLabel ?? confirmText ?? t('common.confirm');
+  const resolvedCancelLabel = cancelText ?? t('common.cancel');
 
   return (
     <div className={styles.overlay} onClick={() => !disabled && onCancel()} role="presentation">
@@ -48,19 +51,21 @@ export default function ConfirmModal({
             )}
           </div>
           <p className={styles.message}>{message}</p>
-          <div className={styles.summaryBox}>
-            {fields.map((f) => (
-              <div key={f.label} className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>{f.label}</span>
-                <span className={styles.summaryValue}>{f.value}</span>
-              </div>
-            ))}
-          </div>
+          {Array.isArray(fields) && fields.length > 0 && (
+            <div className={styles.summaryBox}>
+              {fields.map((f) => (
+                <div key={f.label} className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>{f.label}</span>
+                  <span className={styles.summaryValue}>{f.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className={styles.modalFooter}>
           <button type="button" className={styles.cancelBtn} onClick={onCancel} disabled={disabled}>
-            {t('common.cancel')}
+            {resolvedCancelLabel}
           </button>
           <button type="button" className={styles.confirmBtn} onClick={onConfirm} disabled={disabled}>
             {resolvedConfirmLabel}

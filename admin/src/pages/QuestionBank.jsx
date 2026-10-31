@@ -708,9 +708,13 @@ export default function QuestionBank() {
                 <ConfirmModal
                     title="Delete Question"
                     message={`Are you sure you want to delete Question #${deleteTarget.sr || ''}: "${deleteTarget.question_en?.slice(0, 80)}${deleteTarget.question_en?.length > 80 ? '...' : ''}"? This action cannot be undone.`}
-                    confirmText="Delete Question"
+                    fields={[
+                        { label: 'Topic', value: deleteTarget.section || 'General' },
+                        { label: 'Question', value: deleteTarget.question_en?.slice(0, 80) || '' },
+                        { label: 'Correct Answer', value: `Option ${deleteTarget.correct_option || 'A'}` },
+                    ]}
+                    confirmLabel={isDeleting ? 'Deleting...' : 'Delete Question'}
                     cancelText="Cancel"
-                    isDestructive={true}
                     disabled={isDeleting}
                     onConfirm={handleDeleteQuestion}
                     onCancel={() => setDeleteTarget(null)}

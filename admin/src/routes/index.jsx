@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
 import Dashboard from '../pages/Dashboard';
 import StudentAnalytics from '../pages/StudentAnalytics';
@@ -45,6 +45,8 @@ const router = createBrowserRouter([
             { path: 'profile', element: <AdminProfile /> },
             { path: 'access-revocation', element: <AccessRevocation /> },
             { path: 'settings', element: <Settings /> },
+            { path: 'import-admissions', element: <Navigate to="/students/import" replace /> },
+            { path: 'student-analytics', element: <Navigate to="/analytics" replace /> },
         ],
     },
     {

@@ -42,6 +42,16 @@ export async function signIn(email, password) {
 export async function signOut() {
     await requireSupabase().auth.signOut();
 }
+/** Sends a password reset email to the given address. */
+export async function requestPasswordReset(email) {
+    const client = requireSupabase();
+    const { error } = await client.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/login`,
+    });
+    if (error) {
+        throw new ApiError('RESET_PASSWORD_FAILED', error.message, 400);
+    }
+}
 /** Google OAuth sign-in (popup redirect) followed by ADMIN verification. */
 export async function signInWithGoogle() {
     const client = requireSupabase();
