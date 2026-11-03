@@ -155,23 +155,23 @@ Practice anytime on the New Unique Computers Student Portal!
   <title>MS-CIT Certificate - ${result.score} out of $total</title>
   <style>
     @page {
-      size: A4 landscape;
-      margin: 10mm;
+      size: A4 portrait;
+      margin: 12mm;
     }
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     body {
-      background-color: #f1f5f9;
+      background-color: #f8fafc;
+      color: #0f172a;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-height: 100vh;
-      padding: 20px;
+      padding: 24px 16px;
     }
     .print-actions {
       margin-bottom: 20px;
@@ -179,123 +179,125 @@ Practice anytime on the New Unique Computers Student Portal!
       gap: 12px;
     }
     .btn {
-      background: #1e3a8a;
-      color: white;
-      border: none;
-      padding: 10px 24px;
+      background: #0f172a;
+      color: #ffffff;
+      border: 1px solid #0f172a;
+      padding: 10px 22px;
       border-radius: 8px;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transition: background 0.15s ease;
     }
-    .btn:hover { background: #1e40af; }
+    .btn:hover { background: #1e293b; }
+    
     .certificate-card {
       background: #ffffff;
       width: 100%;
-      max-width: 960px;
-      padding: 36px 48px;
-      border: 8px double #1e3a8a;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      position: relative;
+      max-width: 820px;
+      padding: 44px 48px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     }
-    .corner-decor {
-      position: absolute;
-      width: 28px;
-      height: 28px;
-      border: 3px solid #d97706;
-    }
-    .top-left { top: 12px; left: 12px; border-right: none; border-bottom: none; }
-    .top-right { top: 12px; right: 12px; border-left: none; border-bottom: none; }
-    .bottom-left { bottom: 12px; left: 12px; border-right: none; border-top: none; }
-    .bottom-right { bottom: 12px; right: 12px; border-left: none; border-top: none; }
     
     .header {
       text-align: center;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 18px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f1f5f9;
       margin-bottom: 24px;
     }
     .inst-name {
-      font-size: 26px;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-      color: #1e3a8a;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #0f172a;
       text-transform: uppercase;
     }
     .inst-sub {
-      font-size: 13px;
-      color: #475569;
-      margin-top: 4px;
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 5px;
       font-weight: 500;
     }
+    
     .cert-title {
-      font-size: 20px;
+      font-size: 17px;
       font-weight: 700;
-      letter-spacing: 1px;
-      color: #b45309;
-      margin: 18px 0 10px 0;
+      letter-spacing: 0.6px;
+      color: #0f172a;
+      margin: 16px 0 6px 0;
       text-transform: uppercase;
       text-align: center;
     }
     .recipient-text {
       text-align: center;
-      font-size: 14px;
+      font-size: 13px;
       color: #64748b;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .subject-title {
       text-align: center;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 22px;
+      color: #0284c7;
+      margin-bottom: 24px;
     }
+    
     .score-banner {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 28px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 26px;
     }
     .score-block {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 12px;
       text-align: center;
     }
     .score-val {
-      font-size: 28px;
-      font-weight: 900;
-      color: #1e3a8a;
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
     }
     .score-lbl {
-      font-size: 11px;
+      font-size: 10px;
       color: #64748b;
       font-weight: 600;
       text-transform: uppercase;
-      margin-top: 2px;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
     }
     .status-badge {
       display: inline-block;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
       background: ${isPassed ? '#ecfdf5' : '#fef2f2'};
       color: $statusColor;
-      border: 1.5px solid ${isPassed ? '#a7f3d0' : '#fecaca'};
+      border: 1px solid ${isPassed ? '#a7f3d0' : '#fecaca'};
     }
+    
     .meta-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 30px;
+      margin-bottom: 28px;
       font-size: 13px;
+      table-layout: fixed;
     }
     .meta-table td {
-      padding: 8px 12px;
+      padding: 10px 14px;
       border: 1px solid #e2e8f0;
+      vertical-align: middle;
     }
     .meta-table td.label {
       background: #f8fafc;
@@ -303,61 +305,64 @@ Practice anytime on the New Unique Computers Student Portal!
       color: #475569;
       width: 25%;
     }
+    .meta-table td.value {
+      color: #0f172a;
+      width: 25%;
+    }
+    
     .footer {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px dashed #cbd5e1;
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #f1f5f9;
     }
     .stamp-box {
-      border: 2px dashed #94a3b8;
-      border-radius: 8px;
-      padding: 8px 16px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px 14px;
       font-size: 11px;
       color: #64748b;
       font-weight: 600;
       text-align: center;
+      line-height: 1.4;
+      background: #f8fafc;
     }
     .sig-line {
-      width: 180px;
+      width: 200px;
       border-top: 1.5px solid #0f172a;
       text-align: center;
-      padding-top: 4px;
+      padding-top: 6px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       color: #0f172a;
     }
 
     @media print {
-      body { background: white; padding: 0; }
+      body { background: #ffffff !important; padding: 0 !important; }
       .print-actions { display: none !important; }
       .certificate-card {
-        border-width: 6px;
-        box-shadow: none;
-        max-width: 100%;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        padding: 24px !important;
+        max-width: 100% !important;
       }
     }
   </style>
 </head>
 <body>
   <div class="print-actions">
-    <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    <button class="btn" onclick="window.print()">Print / Save PDF</button>
   </div>
   <div class="certificate-card">
-    <div class="corner-decor top-left"></div>
-    <div class="corner-decor top-right"></div>
-    <div class="corner-decor bottom-left"></div>
-    <div class="corner-decor bottom-right"></div>
-
     <div class="header">
       <div class="inst-name">New Unique Computers</div>
       <div class="inst-sub">MS-CIT Authorized Learning Center • Maharashtra Knowledge Corporation Limited (MKCL)</div>
     </div>
 
     <div class="cert-title">Certificate of Assessment & Performance Report</div>
-    <div class="recipient-text">This official assessment report card certifies student performance in:</div>
+    <div class="recipient-text">This certifies student performance in the following MS-CIT module:</div>
     <div class="subject-title">$subjectTitle</div>
 
     <div class="score-banner">
@@ -375,28 +380,28 @@ Practice anytime on the New Unique Computers Student Portal!
       </div>
       <div class="score-block">
         <div class="status-badge">$statusGrade</div>
-        <div class="score-lbl">Assessment Status</div>
+        <div class="score-lbl">Status</div>
       </div>
     </div>
 
     <table class="meta-table">
       <tr>
         <td class="label">Test Mode</td>
-        <td>${widget.result.testMode.label}</td>
+        <td class="value">${widget.result.testMode.label}</td>
         <td class="label">Assessment Date</td>
-        <td>$dateStr</td>
+        <td class="value">$dateStr</td>
       </tr>
       <tr>
         <td class="label">Correct Answers</td>
-        <td><strong style="color: #059669;">${result.correctCount}</strong> questions</td>
+        <td class="value"><strong style="color: #059669;">${result.correctCount}</strong> questions</td>
         <td class="label">Incorrect Answers</td>
-        <td><strong style="color: #dc2626;">${result.wrongCount}</strong> questions</td>
+        <td class="value"><strong style="color: #dc2626;">${result.wrongCount}</strong> questions</td>
       </tr>
       <tr>
         <td class="label">Pass Requirement</td>
-        <td>Minimum 40.0% Required</td>
+        <td class="value">Minimum 40.0% Required</td>
         <td class="label">Result ID</td>
-        <td style="font-family: monospace; font-size: 11px;">${result.clientEventId}</td>
+        <td class="value" style="font-family: monospace; font-size: 11px;">${result.clientEventId}</td>
       </tr>
     </table>
 
@@ -411,7 +416,6 @@ Practice anytime on the New Unique Computers Student Portal!
     </div>
   </div>
   <script>
-    // Auto-trigger system print dialog on open
     window.addEventListener('load', function() {
       setTimeout(function() {
         window.print();
@@ -462,14 +466,14 @@ Practice anytime on the New Unique Computers Student Portal!
     final textPrimary = isDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A);
     final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final badgeBg = isPassed
-        ? (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5))
-        : (isDark ? const Color(0xFF78350F) : const Color(0xFFFFFBEB));
+        ? (isDark ? const Color(0xFF064E3B).withOpacity(0.4) : const Color(0xFFECFDF5))
+        : (isDark ? const Color(0xFF7F1D1D).withOpacity(0.4) : const Color(0xFFFEF2F2));
     final badgeBorder = isPassed
         ? (isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0))
-        : (isDark ? const Color(0xFFD97706) : const Color(0xFFFDE68A));
+        : (isDark ? const Color(0xFFEF4444) : const Color(0xFFFECACA));
     final badgeText = isPassed
-        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF047857))
-        : (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309));
+        ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46))
+        : (isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B));
 
     return Container(
       padding: EdgeInsets.only(
@@ -512,11 +516,14 @@ Practice anytime on the New Unique Computers Student Portal!
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Institute Header Band
+                  // Institute Header Band - White & Clean in light mode
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFF1E3A8A),
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      border: Border(
+                        bottom: BorderSide(color: borderColor, width: 1.0),
+                      ),
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
                     ),
                     child: Row(
@@ -524,13 +531,13 @@ Practice anytime on the New Unique Computers Student Portal!
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.school_rounded,
                             size: 18,
-                            color: Colors.white,
+                            color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF1D4ED8),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -544,7 +551,7 @@ Practice anytime on the New Unique Computers Student Portal!
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0.6,
-                                  color: Colors.white,
+                                  color: textPrimary,
                                 ),
                               ),
                               Text(
@@ -552,7 +559,7 @@ Practice anytime on the New Unique Computers Student Portal!
                                 style: GoogleFonts.inter(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w400,
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: textSecondary,
                                 ),
                               ),
                             ],
@@ -561,7 +568,7 @@ Practice anytime on the New Unique Computers Student Portal!
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -570,7 +577,7 @@ Practice anytime on the New Unique Computers Student Portal!
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.5,
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
                             ),
                           ),
                         ),
@@ -691,7 +698,7 @@ Practice anytime on the New Unique Computers Student Portal!
                               child: _MetricTile(
                                 label: 'Correct',
                                 value: '${result.correctCount}',
-                                valueColor: const Color(0xFF059669),
+                                valueColor: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
                                 icon: Icons.check_circle_outline_rounded,
                                 surfaceColor: surfaceVariant,
                                 borderColor: borderColor,
@@ -704,7 +711,7 @@ Practice anytime on the New Unique Computers Student Portal!
                               child: _MetricTile(
                                 label: 'Incorrect',
                                 value: '${result.wrongCount}',
-                                valueColor: const Color(0xFFDC2626),
+                                valueColor: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
                                 icon: Icons.highlight_off_rounded,
                                 surfaceColor: surfaceVariant,
                                 borderColor: borderColor,

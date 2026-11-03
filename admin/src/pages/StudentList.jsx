@@ -36,7 +36,7 @@ export default function StudentList() {
     const [batches, setBatches] = useState([]);
     const [searchParams] = useSearchParams();
     const [search, setSearch] = useState('');
-    const [batchFilter, setBatchFilter] = useState('');
+    const [batchFilter, setBatchFilter] = useState(() => searchParams.get('batch') ?? searchParams.get('batchId') ?? '');
     const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? '');
     const [page, setPage] = useState(1);
     const [editingStudent, setEditingStudent] = useState(null);

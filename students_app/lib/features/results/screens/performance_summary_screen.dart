@@ -694,10 +694,10 @@ class _PerformanceSummaryScreenState extends State<PerformanceSummaryScreen> {
                     ? Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF2C1E1E) : const Color(0xFFFEF2F2),
+                          color: isDark ? const Color(0xFF7F1D1D).withOpacity(0.35) : const Color(0xFFFEF2F2),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA),
+                            color: isDark ? const Color(0xFFEF4444) : const Color(0xFFFECACA),
                           ),
                         ),
                         child: Column(
@@ -705,7 +705,11 @@ class _PerformanceSummaryScreenState extends State<PerformanceSummaryScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFFDC2626)),
+                                Icon(
+                                  Icons.bolt_rounded,
+                                  size: 16,
+                                  color: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
+                                ),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
@@ -715,7 +719,7 @@ class _PerformanceSummaryScreenState extends State<PerformanceSummaryScreen> {
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFFDC2626),
+                                      color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
                                     ),
                                   ),
                                 ),
@@ -1186,7 +1190,7 @@ class _PerformanceSummaryScreenState extends State<PerformanceSummaryScreen> {
                           border: Border.all(
                             color: isPassed
                                 ? (isDark ? const Color(0xFF059669) : const Color(0xFF86EFAC))
-                                : (isDark ? const Color(0xFFDC2626) : const Color(0xFFFCA5A5)),
+                                : (isDark ? const Color(0xFFEF4444) : const Color(0xFFFCA5A5)),
                             width: 0.8,
                           ),
                         ),
@@ -1195,7 +1199,9 @@ class _PerformanceSummaryScreenState extends State<PerformanceSummaryScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: isPassed ? const Color(0xFF059669) : const Color(0xFFDC2626),
+                            color: isPassed
+                                ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF059669))
+                                : (isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626)),
                           ),
                         ),
                       ),

@@ -157,8 +157,9 @@ class MainActivity : FlutterActivity() {
             }
         }
 
-        // Native app icon badge handler (ShortcutBadger + Xiaomi MIUI notification reflection)
+        // Native app icon badge handler (ShortcutBadger + Android 8+ NotificationCompat badge + Xiaomi reflection)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "flutter_app_icon_badge").setMethodCallHandler { call, result ->
+            val notificationManager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
             when (call.method) {
                 "updateBadge" -> {
                     try {
@@ -169,14 +170,74 @@ class MainActivity : FlutterActivity() {
                             is String -> countArg.toIntOrNull() ?: 0
                             else -> 0
                         }
-                        // 1. ShortcutBadger for OEM launchers
-                        me.leolin.shortcutbadger.ShortcutBadger.applyCount(applicationContext, count)
 
-                        // 2. Clear any legacy/stale notification 1001
-                        try {
-                            val notificationManager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                        if (count > 0) {
+                            // 1. ShortcutBadger for OEM launcher badging (Samsung, Asus, HTC, Sony, etc.)
+                            try {
+                                me.leolin.shortcutbadger.ShortcutBadger.applyCount(applicationContext, count)
+                            } catch (_: Throwable) {}
+
+                            // 2. Active status-bar notification badge for modern Android 8.0 - 15 (Pixel, Motorola, Xiaomi, OnePlus)
+                            if (notificationManager != null) {
+                                val channelId = "nuc_priority_channel"
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                    val existingChannel = notificationManager.getNotificationChannel(channelId)
+                                    if (existingChannel == null) {
+                                        val channel = android.app.NotificationChannel(
+                                            channelId,
+                                            "NUC Student Notifications",
+                                            android.app.NotificationManager.IMPORTANCE_HIGH
+                                        ).apply {
+                                            description = "Important notifications for students"
+                                            setShowBadge(true)
+                                            enableVibration(true)
+                                        }
+                                        notificationManager.createNotificationChannel(channel)
+                                    }
+                                }
+
+                                val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                                    flags = android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                }
+                                val pendingIntent = android.app.PendingIntent.getActivity(
+                                    applicationContext,
+                                    0,
+                                    intent,
+                                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or (if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) android.app.PendingIntent.FLAG_IMMUTABLE else 0)
+                                )
+
+                                val title = "New Unique Computers"
+                                val body = if (count == 1) "You have 1 new announcement" else "You have $count new announcements"
+
+                                val builder = androidx.core.app.NotificationCompat.Builder(applicationContext, channelId)
+                                    .setSmallIcon(R.drawable.ic_nuc_notification)
+                                    .setContentTitle(title)
+                                    .setContentText(body)
+                                    .setNumber(count)
+                                    .setAutoCancel(true)
+                                    .setOngoing(false)
+                                    .setContentIntent(pendingIntent)
+                                    .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                                    .setBadgeIconType(androidx.core.app.NotificationCompat.BADGE_ICON_SMALL)
+                                    .setColor(0xFF1A73E8.toInt())
+
+                                val notification = builder.build()
+                                // Xiaomi MIUI / HyperOS reflection for red badge counter on launcher
+                                try {
+                                    val extraField = notification.javaClass.getDeclaredField("extraNotification")
+                                    val extra = extraField.get(notification)
+                                    val method = extra.javaClass.getDeclaredMethod("setMessageCount", Int::class.javaPrimitiveType)
+                                    method.invoke(extra, count)
+                                } catch (_: Throwable) {}
+
+                                notificationManager.notify(1001, notification)
+                            }
+                        } else {
+                            try {
+                                me.leolin.shortcutbadger.ShortcutBadger.removeCount(applicationContext)
+                            } catch (_: Throwable) {}
                             notificationManager?.cancel(1001)
-                        } catch (_: Throwable) {}
+                        }
 
                         result.success(null)
                     } catch (e: Exception) {
@@ -185,8 +246,9 @@ class MainActivity : FlutterActivity() {
                 }
                 "removeBadge" -> {
                     try {
-                        me.leolin.shortcutbadger.ShortcutBadger.removeCount(applicationContext)
-                        val notificationManager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                        try {
+                            me.leolin.shortcutbadger.ShortcutBadger.removeCount(applicationContext)
+                        } catch (_: Throwable) {}
                         notificationManager?.cancel(1001)
                         result.success(null)
                     } catch (e: Exception) {
@@ -195,7 +257,7 @@ class MainActivity : FlutterActivity() {
                 }
                 "isAppBadgeSupported" -> {
                     try {
-                        result.success(me.leolin.shortcutbadger.ShortcutBadger.isBadgeCounterSupported(applicationContext))
+                        result.success(true)
                     } catch (e: Exception) {
                         result.success(false)
                     }

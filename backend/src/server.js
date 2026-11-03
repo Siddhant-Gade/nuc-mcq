@@ -175,6 +175,7 @@ authorizationRequestService.studentRepository = studentRepository;
 authorizationRequestService.batchRepository = batchRepository;
 studyMaterialService.pushService = pushNotificationService;
 broadcastService.pushService = pushNotificationService;
+broadcastService.notificationService = notificationService;
 const app = createApp({
     allowedCorsOrigins: env.CORS_ORIGINS,
     tokenVerifier,

@@ -202,4 +202,16 @@ export class DrizzleBroadcastRepository {
             .returning({ id: broadcasts.id });
         return deleted.length > 0;
     }
+    async getTargetStudentAuthUserIds(batchIds = []) {
+        const query = this.database
+            .select({ authUserId: schema.studentAccess.authUserId })
+            .from(schema.studentProfiles)
+            .innerJoin(schema.studentAccess, eq(schema.studentAccess.studentProfileId, schema.studentProfiles.id))
+            .where(and(
+                eq(schema.studentAccess.status, 'ACTIVE'),
+                batchIds && batchIds.length > 0 ? inArray(schema.studentProfiles.batchId, batchIds) : undefined
+            ));
+        const rows = await query;
+        return rows.map((r) => r.authUserId).filter((id) => id !== null && id !== undefined);
+    }
 }

@@ -278,6 +278,7 @@
   flex-direction: column;
   overflow: hidden;
   min-height: 330px;
+  min-width: 0;
   box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.05));
 }
 
@@ -395,12 +396,16 @@
   text-align: center;
 }
 
-.batchName {
+.batchNameCell {
   font-weight: 600;
   color: var(--color-on-surface);
-  display: flex;
+}
+
+.batchName {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  vertical-align: middle;
 }
 
 .batchDot {

@@ -291,9 +291,11 @@ export default function Dashboard() {
                   const remaining = b.capacity - b.enrolledCount;
                   return (
                     <tr key={b.batchId} onClick={() => navigate('/batches')}>
-                      <td className={styles.batchName}>
-                        <span className={styles.batchDot} />
-                        {b.batchName}
+                      <td className={styles.batchNameCell}>
+                        <span className={styles.batchName}>
+                          <span className={styles.batchDot} />
+                          {b.batchName}
+                        </span>
                       </td>
                       <td className={styles.textCenter}>{b.capacity}</td>
                       <td className={styles.textCenter}>
@@ -320,6 +322,7 @@ export default function Dashboard() {
           </div>
           <div className={styles.panelFooter}>
             <button
+              type="button"
               className={styles.panelLink}
               onClick={() => navigate('/batches')}
               aria-label={t('dashboard.viewAllBatches')}

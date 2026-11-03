@@ -3,6 +3,8 @@ export class BroadcastService {
     repository;
     /** Injected by server.js after construction (same pattern as studyMaterialService). */
     pushService = null;
+    notificationService = null;
+    studentProfileRepository = null;
     constructor(repository) {
         this.repository = repository;
     }
@@ -109,15 +111,54 @@ export class BroadcastService {
         }
         const published = { ...existing, status: 'PUBLISHED', publishedAt };
         // Fire push notification to all students (non-blocking — never fail the publish).
+        // Dispatch in-app notifications into database for students
+        if (this.notificationService && typeof this.repository.getTargetStudentAuthUserIds === 'function') {
+            try {
+                const targetBatches = existing.audienceType === 'BATCH' && Array.isArray(existing.targetBatchIds)
+                    ? existing.targetBatchIds
+                    : [];
+                const recipientIds = await this.repository.getTargetStudentAuthUserIds(targetBatches);
+                const title = 'Announcement: ' + existing.title;
+                const message = existing.message;
+                await Promise.allSettled(recipientIds.map((recipientAuthUserId) => {
+                    return this.notificationService.create({
+                        recipientAuthUserId,
+                        title,
+                        message,
+                        type: 'announcement',
+                        relatedRoute: '/broadcasts',
+                    });
+                }));
+            } catch (notifyErr) {
+                console.error('[BroadcastService] Failed to dispatch in-app notifications:', notifyErr);
+            }
+        }
+
+        // Fire push notification to all students (non-blocking — never fail the publish).
         if (this.pushService) {
             if (existing.audienceType === 'ALL') {
                 this.pushService
-                    .sendPush({ targetType: 'ALL', title: existing.title, body: existing.message, type: 'BROADCAST', actionRoute: '/broadcasts' })
+                    .sendPush({
+                        targetType: 'ALL',
+                        title: existing.title,
+                        body: existing.message,
+                        type: 'BROADCAST',
+                        broadcastId: existing.id,
+                        actionRoute: '/broadcasts',
+                    })
                     .catch((err) => { console.error('[BroadcastService] Push failed (non-fatal):', err?.message ?? err); });
             } else if (existing.audienceType === 'BATCH' && Array.isArray(existing.targetBatchIds)) {
                 for (const batchId of existing.targetBatchIds) {
                     this.pushService
-                        .sendPush({ targetType: 'BATCH', targetBatchId: batchId, title: existing.title, body: existing.message, type: 'BROADCAST', actionRoute: '/broadcasts' })
+                        .sendPush({
+                            targetType: 'BATCH',
+                            targetBatchId: batchId,
+                            title: existing.title,
+                            body: existing.message,
+                            type: 'BROADCAST',
+                            broadcastId: existing.id,
+                            actionRoute: '/broadcasts',
+                        })
                         .catch((err) => { console.error('[BroadcastService] Push failed for batch', batchId, '(non-fatal):', err?.message ?? err); });
                 }
             }

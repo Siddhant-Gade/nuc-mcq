@@ -10,7 +10,7 @@ export class PushNotificationService {
     /**
      * Send push notification to all students, a batch, or selected individuals.
      */
-    async sendPush({ targetType, targetBatchId, targetAuthUserIds, title, body, type = 'ANNOUNCEMENT', materialId, actionRoute, supportEmail }) {
+    async sendPush({ targetType, targetBatchId, targetAuthUserIds, title, body, type = 'ANNOUNCEMENT', broadcastId, materialId, actionRoute, supportEmail }) {
         let tokens = [];
 
         if (targetType === 'ALL') {
@@ -28,13 +28,13 @@ export class PushNotificationService {
             return { sentCount: 0, failedCount: 0, message: 'No registered device tokens found for target.' };
         }
 
-        return this.sendToTokens(tokens, { title, body, type, materialId, actionRoute, supportEmail });
+        return this.sendToTokens(tokens, { title, body, type, broadcastId, materialId, actionRoute, supportEmail });
     }
 
     /**
      * Internal sender using sendEachForMulticast with invalid token auto-pruning.
      */
-    async sendToTokens(tokens, { title, body, type, materialId, actionRoute, supportEmail }) {
+    async sendToTokens(tokens, { title, body, type, broadcastId, materialId, actionRoute, supportEmail }) {
         if (!isFirebaseReady()) {
             console.log(`[FCM Mock] Would send push "${title}" to ${tokens.length} devices.`);
             return { sentCount: tokens.length, failedCount: 0, mock: true };
@@ -43,8 +43,11 @@ export class PushNotificationService {
         const admin = getFirebaseAdmin();
         const dataPayload = {
             type: String(type),
+            title: String(title),
+            body: String(body),
             click_action: 'FLUTTER_NOTIFICATION_CLICK',
         };
+        if (broadcastId) dataPayload.broadcastId = String(broadcastId);
         if (materialId) dataPayload.materialId = String(materialId);
         if (actionRoute) dataPayload.actionRoute = String(actionRoute);
         if (supportEmail) dataPayload.supportEmail = String(supportEmail);
@@ -73,6 +76,7 @@ export class PushNotificationService {
                         defaultSound: true,
                         defaultVibrateTimings: true,
                         notificationPriority: 'PRIORITY_MAX',
+                        notificationCount: 1,
                     },
                 },
             };
