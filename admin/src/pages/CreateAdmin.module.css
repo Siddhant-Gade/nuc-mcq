@@ -268,3 +268,126 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.pinCard {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  max-width: 28rem;
+  margin: 2rem auto;
+  padding: 2.25rem 2rem;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.pinIcon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: rgba(30, 58, 138, 0.08);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem auto;
+}
+
+.pinTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin-bottom: 0.5rem;
+}
+
+.pinSubtext {
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.pinInput {
+  height: 2.75rem;
+  width: 100%;
+  max-width: 16rem;
+  margin: 0 auto 1rem auto;
+  text-align: center;
+  letter-spacing: 0.35rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border: 1.5px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  transition: all 0.15s ease;
+}
+
+.pinInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+}
+
+.adminListSection {
+  margin-top: 2rem;
+}
+
+.adminTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  margin-top: 0.75rem;
+}
+
+.adminTable th {
+  text-align: left;
+  padding: 0.625rem 0.75rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-outline-variant);
+  color: var(--color-on-surface-variant);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.adminTable td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+  color: var(--color-on-surface);
+}
+
+.superBadge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(180, 83, 9, 0.12);
+  color: #b45309;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.adminBadge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: var(--color-error);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background 0.12s;
+}
+
+.deleteBtn:hover {
+  background: rgba(220, 38, 38, 0.08);
+}

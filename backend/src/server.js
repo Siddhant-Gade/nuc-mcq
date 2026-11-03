@@ -62,6 +62,29 @@ async function runStartupMigrations() {
     } catch (err) {
         console.error('[startup] auth_sessions migration failed (non-fatal):', err?.message ?? err);
     }
+
+    try {
+        await database.execute(sql`
+            CREATE TABLE IF NOT EXISTS admin_users (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                email VARCHAR(320) NOT NULL UNIQUE,
+                name VARCHAR(200) NOT NULL,
+                role VARCHAR(50) NOT NULL DEFAULT 'ADMIN',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS admin_users_email_idx ON admin_users (email);
+
+            CREATE TABLE IF NOT EXISTS admin_security (
+                id VARCHAR(50) PRIMARY KEY DEFAULT 'master_pin',
+                pin_hash VARCHAR(128) NOT NULL,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+        `);
+        console.info('[startup] admin_users & admin_security migration: OK');
+    } catch (err) {
+        console.error('[startup] admin tables migration failed (non-fatal):', err?.message ?? err);
+    }
 }
 
 const baseTokenVerifier = new SupabaseJwtVerifier({
@@ -85,10 +108,25 @@ const tokenVerifier = {
         const identity = await baseTokenVerifier.verify(accessToken);
         const baseRoles = identity.roles.filter((r) => r !== 'STUDENT');
 
-        // Designate institute Super Admin — configured via SUPER_ADMIN_EMAIL env var.
-        if (identity.email && identity.email.toLowerCase() === env.SUPER_ADMIN_EMAIL.toLowerCase()) {
-            if (!baseRoles.includes('ADMIN')) baseRoles.push('ADMIN');
-            if (!baseRoles.includes('SUPER_ADMIN')) baseRoles.push('SUPER_ADMIN');
+        // Designate institute Super Admin and Registered Admins
+        if (identity.email) {
+            const emailLower = identity.email.toLowerCase();
+            if (emailLower === env.SUPER_ADMIN_EMAIL.toLowerCase()) {
+                if (!baseRoles.includes('ADMIN')) baseRoles.push('ADMIN');
+                if (!baseRoles.includes('SUPER_ADMIN')) baseRoles.push('SUPER_ADMIN');
+            } else {
+                try {
+                    const result = await database.execute(sql`
+                        SELECT role FROM admin_users WHERE LOWER(email) = ${emailLower} LIMIT 1
+                    `);
+                    const rows = result.rows || result;
+                    if (Array.isArray(rows) && rows.length > 0) {
+                        if (!baseRoles.includes('ADMIN')) baseRoles.push('ADMIN');
+                    }
+                } catch (err) {
+                    console.error('[tokenVerifier] Error checking admin_users:', err?.message ?? err);
+                }
+            }
         }
 
         const cached = identityCache.get(identity.authUserId);
@@ -149,6 +187,7 @@ const app = createApp({
     sessionStore,
     superAdminEmail: env.SUPER_ADMIN_EMAIL,
     supportEmail: env.ADMIN_SUPPORT_EMAIL,
+    database,
 });
 const server = createServer(app);
 // Close connections that have been idle or hung for more than 35 s (slightly above

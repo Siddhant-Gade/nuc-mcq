@@ -10,7 +10,7 @@ export const AppLayout: React.FC = () => {
   const { isSidebarCollapsed } = useLayout();
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#19120c] text-slate-900 dark:text-[#fde8d7] transition-colors flex flex-col">
+    <div className="min-h-screen min-h-[100dvh] bg-[#f8fafc] dark:bg-[#19120c] text-slate-900 dark:text-[#fde8d7] transition-colors flex flex-col overflow-x-hidden">
       {/* Collapsible Desktop Sidebar + Mobile Drawer */}
       <Sidebar />
 
@@ -22,8 +22,8 @@ export const AppLayout: React.FC = () => {
       >
         <Navbar />
 
-        {/* Bottom padding pb-20 on mobile ensures content never gets clipped under MobileBottomNav */}
-        <main className="flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-24 lg:pb-8">
+        {/* Bottom padding pb-24 on mobile ensures content never gets clipped under MobileBottomNav */}
+        <main className="flex-1 w-full max-w-[1400px] mx-auto px-3.5 sm:px-6 lg:px-8 py-3 sm:py-8 pb-24 lg:pb-8 min-w-0">
           <Outlet />
         </main>
 

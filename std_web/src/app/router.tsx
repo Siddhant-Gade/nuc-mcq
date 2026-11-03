@@ -108,7 +108,7 @@ export const router = createBrowserRouter([
     path: '/test/active',
     element: (
       <ProtectedRoute>
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6">
+        <div className="min-h-screen min-h-[100dvh] bg-[#f8fafc] dark:bg-[#19120c] p-2 sm:p-6 overflow-x-hidden">
           <TestEngineScreen />
         </div>
       </ProtectedRoute>

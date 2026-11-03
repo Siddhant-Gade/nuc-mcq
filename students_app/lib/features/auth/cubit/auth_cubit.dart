@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/api/api_exception.dart';
@@ -151,6 +152,14 @@ class AuthCubit extends Cubit<AuthState> {
         '[AuthCubit] Google sign-in rejected: [${error.code}] ${error.message}',
       );
       emit(AuthUnauthenticated(error: error.message));
+      return;
+    } on PlatformException catch (pe) {
+      debugPrint('[AuthCubit] Google sign-in PlatformException: ${pe.code} - ${pe.message}');
+      String msg = 'Google sign-in error: ${pe.message ?? pe.code}';
+      if (pe.code == 'sign_in_failed' || (pe.message?.contains('10') ?? false) || pe.toString().contains('10')) {
+        msg = 'Google Sign-In configuration error (ApiException 10: App signature mismatch). Rebuild APK with release keystore or add SHA-1 to Firebase.';
+      }
+      emit(AuthUnauthenticated(error: msg));
       return;
     } catch (e, stackTrace) {
       debugPrint(

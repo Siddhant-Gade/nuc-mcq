@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getStudents, getBatches, deleteStudent } from '../services';
@@ -67,6 +68,51 @@ export default function StudentList() {
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const currentPage = Math.min(page, totalPages);
     const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    
+    function exportToExcel() {
+        if (!students || students.length === 0) {
+            alert('No student records found to export.');
+            return;
+        }
+
+        const dataToExport = filtered.length > 0 ? filtered : students;
+
+        const rows = dataToExport.map((s, index) => ({
+            'Sr. No.': index + 1,
+            'PRN / Student ID': s.studentId || '',
+            'Full Name': s.name || '',
+            'Batch': batchMap.get(s.batchId) || s.batchId || 'Unassigned',
+            'Mobile Number': s.mobile || 'N/A',
+            'Email Address': s.email || 'N/A',
+            'Course': s.courseInfo || 'MS-CIT',
+            'Access Status': s.accessStatus || 'PENDING',
+            'Admission Date': s.createdAt ? formatDate(s.createdAt) : 'N/A',
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+
+        worksheet['!cols'] = [
+            { wch: 8 },
+            { wch: 18 },
+            { wch: 26 },
+            { wch: 18 },
+            { wch: 16 },
+            { wch: 28 },
+            { wch: 15 },
+            { wch: 14 },
+            { wch: 16 },
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
+
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const fileName = 'NewUniqueComputers_Students_' + dateStr + '.xlsx';
+
+        XLSX.writeFile(workbook, fileName);
+    }
+
     async function handleDelete(student) {
         const confirmed = window.confirm(`Are you sure you want to permanently delete student "${student.name}" (${student.studentId})? This action cannot be undone.`);
         if (!confirmed)
@@ -89,10 +135,22 @@ export default function StudentList() {
           <h1 className={styles.heading}>{t('students.title')}</h1>
           <p className={styles.subtext}>{t('students.subtitle')}</p>
         </div>
-        <button className={styles.addBtn} onClick={() => navigate('/students/admit')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          {t('students.addStudent')}
-        </button>
+        <div className={styles.headerActions}>
+          <button className={styles.exportBtn} onClick={exportToExcel} title="Export student records to Excel spreadsheet">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#059669' }}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="8" y1="13" x2="16" y2="13"></line>
+              <line x1="8" y1="17" x2="16" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Export Excel
+          </button>
+          <button className={styles.addBtn} onClick={() => navigate('/students/admit')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            {t('students.addStudent')}
+          </button>
+        </div>
       </div>
 
       <div className={styles.filterBar}>

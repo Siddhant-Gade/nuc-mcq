@@ -174,7 +174,7 @@ export const ResultDetailScreen: React.FC = () => {
 
       {/* Score Hero Card */}
       <div
-        className={`p-6 sm:p-8 rounded-3xl text-white shadow-xl relative overflow-hidden ${
+        className={`p-4 sm:p-8 rounded-2xl sm:rounded-3xl text-white shadow-xl relative overflow-hidden ${
           isPass
             ? 'bg-gradient-to-r from-emerald-600 to-teal-700'
             : 'bg-gradient-to-r from-rose-600 to-amber-700'
@@ -230,13 +230,13 @@ export const ResultDetailScreen: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto scrollbar-none">
           <button
             onClick={() => setFilterMode('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer whitespace-nowrap active:scale-95 touch-manipulation ${
               filterMode === 'all'
-                ? 'bg-indigo-600 text-white shadow-sm'
+                ? 'bg-peach-600 text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
@@ -244,9 +244,9 @@ export const ResultDetailScreen: React.FC = () => {
           </button>
           <button
             onClick={() => setFilterMode('wrong')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer whitespace-nowrap active:scale-95 touch-manipulation ${
               filterMode === 'wrong'
-                ? 'bg-rose-600 text-white shadow-sm'
+                ? 'bg-rose-600 text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
@@ -254,10 +254,10 @@ export const ResultDetailScreen: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={handleRetake}
-            className="px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 touch-manipulation"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>{t('btn_retake')}</span>
@@ -265,7 +265,7 @@ export const ResultDetailScreen: React.FC = () => {
 
           <button
             onClick={() => navigate('/results/summary')}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+            className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-peach-600 hover:bg-peach-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 touch-manipulation"
           >
             <TrendingUp className="w-3.5 h-3.5" />
             <span>{t('analytics_title')}</span>

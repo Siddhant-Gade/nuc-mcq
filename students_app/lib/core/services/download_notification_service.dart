@@ -22,7 +22,7 @@ class DownloadNotificationService {
     if (_initialized) return;
 
     const androidSettings =
-        AndroidInitializationSettings('@drawable/ic_nuc_notification');
+        AndroidInitializationSettings('ic_nuc_notification');
     const initSettings = InitializationSettings(
       android: androidSettings,
     );
@@ -38,9 +38,19 @@ class DownloadNotificationService {
     );
 
     if (Platform.isAndroid) {
+      const androidChannel = AndroidNotificationChannel(
+        _channelId,
+        _channelName,
+        description: _channelDesc,
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
+
       final androidImplementation = _notifications
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
+      await androidImplementation?.createNotificationChannel(androidChannel);
       await androidImplementation?.requestNotificationsPermission();
     }
 
@@ -64,8 +74,8 @@ class DownloadNotificationService {
       priority: Priority.high,
       showWhen: true,
       playSound: true,
-      icon: '@drawable/ic_nuc_notification',
-      largeIcon: DrawableResourceAndroidBitmap('@drawable/ic_nuc_large_icon'),
+      icon: 'ic_nuc_notification',
+      largeIcon: DrawableResourceAndroidBitmap('ic_nuc_large_icon'),
     );
 
     const details = NotificationDetails(android: androidDetails);
@@ -93,8 +103,8 @@ class DownloadNotificationService {
       importance: Importance.defaultImportance,
       priority: Priority.defaultPriority,
       showWhen: true,
-      icon: '@drawable/ic_nuc_notification',
-      largeIcon: DrawableResourceAndroidBitmap('@drawable/ic_nuc_large_icon'),
+      icon: 'ic_nuc_notification',
+      largeIcon: DrawableResourceAndroidBitmap('ic_nuc_large_icon'),
     );
 
     const details = NotificationDetails(android: androidDetails);

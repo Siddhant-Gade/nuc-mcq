@@ -1,23 +1,25 @@
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+import { request } from './api';
+
+export async function getPinStatus() {
+    return request('get', '/admin/security/pin-status');
 }
-const mockAdmins = [
-    { id: 'ADM001', name: 'System Admin', email: 'admin@mscit.edu', role: 'SUPER_ADMIN', createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
-];
+
+export async function setupPin(data) {
+    return request('post', '/admin/security/setup-pin', data);
+}
+
+export async function verifyPin(pin) {
+    return request('post', '/admin/security/verify-pin', { pin });
+}
+
 export async function getAdmins() {
-    await delay(300);
-    return [...mockAdmins];
+    return request('get', '/admin/admins');
 }
+
 export async function createAdmin(data) {
-    await delay(600);
-    const admin = {
-        id: 'ADM' + String(mockAdmins.length + 1).padStart(3, '0'),
-        name: data.name,
-        email: data.email,
-        role: 'ADMIN',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    };
-    mockAdmins.push(admin);
-    return admin;
+    return request('post', '/admin/admins', data);
+}
+
+export async function deleteAdmin(id, pin) {
+    return request('delete', `/admin/admins/${id}`, { pin });
 }

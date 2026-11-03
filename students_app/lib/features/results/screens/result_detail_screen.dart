@@ -10,6 +10,7 @@ import '../../../core/widgets/scale_press.dart';
 import '../../question_bank/models/question_model.dart';
 import '../../question_bank/repository/question_bank_repository.dart';
 import '../models/test_result_model.dart';
+import '../widgets/scorecard_dialog.dart';
 
 class ResultDetailScreen extends StatefulWidget {
   const ResultDetailScreen({
@@ -52,35 +53,12 @@ class _ResultDetailScreenState extends State<ResultDetailScreen> {
   }
 
   void _shareScorecard(BuildContext context) {
-    final result = widget.result;
-    final percentage = (result.score / result.totalQuestions * 100).toStringAsFixed(1);
-    final isPassed = result.isPassed;
-    final status = isPassed ? 'PASSED 🏆' : 'NEEDS PRACTICE ✍️';
     final langCode = context.read<LocaleCubit>().state.languageCode;
-    final displaySubject = result.getDisplaySubject(
-      langCode: langCode,
+    showScorecardSheet(
+      context: context,
+      result: widget.result,
       questionBank: widget.questionBank,
-    );
-
-    final text = '''
-🎓 New Unique Computers - MS-CIT Test Scorecard
-━━━━━━━━━━━━━━━━━━━━━━━━
-📚 Subject: $displaySubject
-📝 Mode: ${result.testMode.label}
-🎯 Score: ${result.score} / ${result.totalQuestions} ($percentage%)
-⏱️ Time: ${_formatDuration(result.timeTakenSeconds)}
-✅ Correct: ${result.correctCount}  |  ❌ Incorrect: ${result.wrongCount}
-📊 Status: $status
-━━━━━━━━━━━━━━━━━━━━━━━━
-Practice anytime on the New Unique Computers Student Portal!
-''';
-
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Scorecard copied to clipboard! Ready to share on WhatsApp.'),
-        behavior: SnackBarBehavior.floating,
-      ),
+      langCode: langCode,
     );
   }
 
@@ -446,7 +424,76 @@ Practice anytime on the New Unique Computers Student Portal!
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
+
+            // Share Score Card CTA
+            ScalePress(
+              onTap: () => _shareScorecard(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+                    width: 1.1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF25D366).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.share_rounded,
+                        color: Color(0xFF25D366),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'View & Share Score Card',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.darkTextPrimary : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          Text(
+                            'Official scorecard • WhatsApp & Clipboard share',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              color: isDark ? AppColors.darkTextSecondary : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: isDark ? AppColors.darkTextSecondary : const Color(0xFF94A3B8),
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
 
             // Card 4: Question Analysis Section
             Wrap(

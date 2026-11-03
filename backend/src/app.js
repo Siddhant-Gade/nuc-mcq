@@ -1,3 +1,4 @@
+import { createAdminManagementRouter } from './modules/admins/admin-management.routes.js';
 import express from 'express';
 import crypto from 'node:crypto';
 import helmet from 'helmet';
@@ -39,6 +40,7 @@ export const createApp = ({
     sessionStore,
     superAdminEmail = 'newuniquesupabase@gmail.com',
     supportEmail,
+    database,
 }) => {
     // Attach sessionStore and studentIdentityService to tokenVerifier so child routes inherit hybrid auth
     if (tokenVerifier) {
@@ -231,6 +233,9 @@ export const createApp = ({
     app.get('/api/v1/admin/access-check', authenticationMiddleware, requireRoles('ADMIN'), (_request, response) => {
         response.status(200).json(successResponse({ message: 'Admin access confirmed.' }));
     });
+    if (database) {
+        app.use('/api/v1/admin', createAdminManagementRouter({ database, tokenVerifier, superAdminEmail }));
+    }
     app.use('/api/v1/students', createStudentRouter(studentService, tokenVerifier));
     app.use('/api/v1/batches', createBatchRouter(batchService, tokenVerifier));
     app.use('/api/v1/authorization-requests', createAuthorizationRequestRouter(

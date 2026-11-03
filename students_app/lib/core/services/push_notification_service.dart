@@ -113,7 +113,7 @@ class PushNotificationService {
 
     // 3. Initialize flutter_local_notifications for foreground display & tap handling
     const initSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@drawable/ic_nuc_notification'),
+      android: AndroidInitializationSettings('ic_nuc_notification'),
     );
 
     await _localNotifications.initialize(
@@ -154,9 +154,9 @@ class PushNotificationService {
               _channelId,
               _channelName,
               channelDescription: _channelDesc,
-              icon: '@drawable/ic_nuc_notification',
+              icon: 'ic_nuc_notification',
               largeIcon: const DrawableResourceAndroidBitmap(
-                '@drawable/ic_nuc_large_icon',
+                'ic_nuc_large_icon',
               ),
               styleInformation: BigTextStyleInformation(
                 body ?? '',
