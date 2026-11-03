@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_nuc_*,@drawable/ic_nuc_large_icon,@drawable/ic_nuc_notification,@mipmap/launcher_icon,@color/notification_accent" />

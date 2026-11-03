@@ -391,3 +391,126 @@
 .deleteBtn:hover {
   background: rgba(220, 38, 38, 0.08);
 }
+
+/* Mode Switcher Tabs */
+.modeTabs {
+  display: flex;
+  background: var(--color-surface-container);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--color-outline-variant);
+  justify-content: center;
+}
+
+.modeTab {
+  flex: 1;
+  max-width: 9rem;
+  padding: 0.4rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.modeTab:hover {
+  color: var(--color-on-surface);
+}
+
+.modeTabActive {
+  background: var(--color-surface-card);
+  color: var(--color-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Master Security Sub-module Card */
+.securitySubmoduleCard {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.securityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.securityTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.securityStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.securityInfoGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 0.875rem;
+  background: var(--color-surface-container);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .securityInfoGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.securityInfoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.securityInfoLabel {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-on-surface-variant);
+  font-weight: 600;
+}
+
+.securityInfoValue {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.authBadge {
+  display: inline-block;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(30, 58, 138, 0.08);
+  color: var(--color-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}

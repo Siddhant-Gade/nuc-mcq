@@ -45,6 +45,7 @@ class DownloadNotificationService {
         importance: Importance.high,
         playSound: true,
         enableVibration: true,
+        showBadge: true,
       );
 
       final androidImplementation = _notifications

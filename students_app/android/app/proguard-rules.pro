@@ -21,10 +21,19 @@
 # Local notifications & plugins
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
 
+# App Icon Badges (ShortcutBadger)
+-dontwarn me.leolin.shortcutbadger.**
+-keep class me.leolin.shortcutbadger.** { *; }
+-keep interface me.leolin.shortcutbadger.** { *; }
+
+# AndroidX NotificationCompat & Badging
+-keep class androidx.core.app.NotificationCompat** { *; }
+-keep class androidx.core.app.NotificationManagerCompat** { *; }
+-keep class androidx.core.app.Person** { *; }
+
 # Core Desugaring & Java Time
 -dontwarn java.time.**
 -dontwarn org.codehaus.mojo.animal_sniffer.**
 
 # Preserve reflection and serialized models
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
-

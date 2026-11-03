@@ -78,8 +78,11 @@ async function runStartupMigrations() {
             CREATE TABLE IF NOT EXISTS admin_security (
                 id VARCHAR(50) PRIMARY KEY DEFAULT 'master_pin',
                 pin_hash VARCHAR(128) NOT NULL,
+                security_type VARCHAR(20) DEFAULT 'pin',
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
+            ALTER TABLE admin_security ADD COLUMN IF NOT EXISTS security_type VARCHAR(20) DEFAULT 'pin';
+            ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(128);
         `);
         console.info('[startup] admin_users & admin_security migration: OK');
     } catch (err) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
@@ -40,8 +41,21 @@ class PushNotificationService {
 
   Dio? _dio;
   bool _initialized = false;
-  NotificationPayloadHandler? onNotificationTap;
+  final Completer<void> _initCompleter = Completer<void>();
+
+  NotificationPayloadHandler? _onNotificationTap;
   NotificationReceivedHandler? onNotificationReceived;
+  Map<String, dynamic>? _pendingTapPayload;
+
+  NotificationPayloadHandler? get onNotificationTap => _onNotificationTap;
+  set onNotificationTap(NotificationPayloadHandler? handler) {
+    _onNotificationTap = handler;
+    if (handler != null && _pendingTapPayload != null) {
+      final payload = _pendingTapPayload!;
+      _pendingTapPayload = null;
+      handler(payload);
+    }
+  }
 
   static const String _channelId = 'nuc_priority_channel';
   static const String _channelName = 'NUC Student Notifications';
@@ -62,141 +76,173 @@ class PushNotificationService {
     }
 
     _dio = dio;
-    this.onNotificationTap = onNotificationTap;
-    this.onNotificationReceived = onNotificationReceived;
+    if (onNotificationTap != null) this.onNotificationTap = onNotificationTap;
+    if (onNotificationReceived != null) this.onNotificationReceived = onNotificationReceived;
 
     if (Firebase.apps.isEmpty) {
       debugPrint(
         '[FCM] Firebase not initialized (e.g. in test environment). Skipping native FCM setup.',
       );
       _initialized = true;
+      if (!_initCompleter.isCompleted) _initCompleter.complete();
       return;
     }
-    // 1. Request notification permissions (Android 13+ POST_NOTIFICATIONS / iOS)
-    if (Platform.isAndroid) {
-      final androidImplementation = _localNotifications
+
+    try {
+      // 1. Request notification permissions (Android 13+ POST_NOTIFICATIONS / iOS)
+      if (Platform.isAndroid) {
+        final androidImplementation = _localNotifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        await androidImplementation?.requestNotificationsPermission();
+      }
+      final settings = await _messaging?.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+      debugPrint('[FCM] Permission status: ${settings?.authorizationStatus}');
+
+      // Enable foreground notification presentation options for heads-up display
+      await _messaging?.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      // 2. Setup high-importance notification channel with showBadge: true
+      const androidChannel = AndroidNotificationChannel(
+        _channelId,
+        _channelName,
+        description: _channelDesc,
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        showBadge: true,
+      );
+
+      await _localNotifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
-          >();
-      await androidImplementation?.requestNotificationsPermission();
-    }
-    final settings = await _messaging?.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
-    debugPrint('[FCM] Permission status: ${settings?.authorizationStatus}');
+          >()
+          ?.createNotificationChannel(androidChannel);
 
-    // Enable foreground notification presentation options for heads-up display
-    await _messaging?.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+      // 3. Initialize flutter_local_notifications for foreground display & tap handling
+      const initSettings = InitializationSettings(
+        android: AndroidInitializationSettings('ic_nuc_notification'),
+      );
 
-    // 2. Setup high-importance notification channel for Android
-    const androidChannel = AndroidNotificationChannel(
-      _channelId,
-      _channelName,
-      description: _channelDesc,
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-    );
+      await _localNotifications.initialize(
+        settings: initSettings,
+        onDidReceiveNotificationResponse: (response) {
+          final payload = response.payload;
+          if (payload != null && payload.isNotEmpty) {
+            try {
+              final data = jsonDecode(payload) as Map<String, dynamic>;
+              if (_onNotificationTap != null) {
+                _onNotificationTap!(data);
+              } else {
+                _pendingTapPayload = data;
+              }
+            } catch (e) {
+              debugPrint('[FCM] Error decoding notification payload: $e');
+            }
+          }
+        },
+      );
 
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(androidChannel);
+      // 4. Foreground message listener -> show heads-up local notification banner with badge number
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+        debugPrint(
+          '[FCM Foreground] Message received: ${message.notification?.title}',
+        );
+        final title =
+            message.notification?.title ?? message.data['title']?.toString();
+        final body =
+            message.notification?.body ?? message.data['body']?.toString();
 
-    // 3. Initialize flutter_local_notifications for foreground display & tap handling
-    const initSettings = InitializationSettings(
-      android: AndroidInitializationSettings('ic_nuc_notification'),
-    );
+        if (title != null && !kIsWeb) {
+          await AppBadgeService.instance.incrementBadge();
+          final currentBadge = await AppBadgeService.instance.getBadgeCount();
+          final badgeNumber = currentBadge > 0 ? currentBadge : 1;
 
-    await _localNotifications.initialize(
-      settings: initSettings,
-      onDidReceiveNotificationResponse: (response) {
-        final payload = response.payload;
-        if (payload != null && payload.isNotEmpty) {
-          try {
-            final data = jsonDecode(payload) as Map<String, dynamic>;
-            this.onNotificationTap?.call(data);
-          } catch (e) {
-            debugPrint('[FCM] Error decoding notification payload: $e');
+          final broadcastId = message.data['broadcastId']?.toString();
+          final notifId = broadcastId != null ? broadcastId.hashCode : message.hashCode;
+
+          await _localNotifications.show(
+            id: notifId,
+            title: title,
+            body: body,
+            notificationDetails: NotificationDetails(
+              android: AndroidNotificationDetails(
+                _channelId,
+                _channelName,
+                channelDescription: _channelDesc,
+                icon: 'ic_nuc_notification',
+                largeIcon: const DrawableResourceAndroidBitmap(
+                  'ic_nuc_large_icon',
+                ),
+                styleInformation: BigTextStyleInformation(
+                  body ?? '',
+                  contentTitle: title,
+                  summaryText: 'NucMCQ • New Unique Computers',
+                ),
+                importance: Importance.max,
+                priority: Priority.high,
+                color: const Color(0xFF1A73E8),
+                playSound: true,
+                enableVibration: true,
+                showWhen: true,
+                channelShowBadge: true,
+                number: badgeNumber,
+              ),
+            ),
+            payload: jsonEncode(message.data),
+          );
+        }
+
+        if (message.data.isNotEmpty) {
+          onNotificationReceived?.call(message.data);
+        }
+      });
+
+      // 5. App opened from background by tapping system notification
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint('[FCM] App opened via notification: ${message.data}');
+        if (message.data.isNotEmpty) {
+          if (_onNotificationTap != null) {
+            _onNotificationTap!(message.data);
+          } else {
+            _pendingTapPayload = message.data;
           }
         }
-      },
-    );
+      });
 
-    // 4. Foreground message listener -> show heads-up local notification banner
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint(
-        '[FCM Foreground] Message received: ${message.notification?.title}',
-      );
-      final title =
-          message.notification?.title ?? message.data['title']?.toString();
-      final body =
-          message.notification?.body ?? message.data['body']?.toString();
+      // 6. Token refresh listener
+      _messaging?.onTokenRefresh.listen((newToken) {
+        debugPrint('[FCM] Token refreshed');
+        syncTokenWithBackend(newToken);
+      });
 
-      if (title != null && !kIsWeb) {
-        AppBadgeService.instance.incrementBadge();
-        final broadcastId = message.data['broadcastId']?.toString();
-        final notifId = broadcastId != null ? broadcastId.hashCode : message.hashCode;
-        _localNotifications.show(
-          id: notifId,
-          title: title,
-          body: body,
-          notificationDetails: NotificationDetails(
-            android: AndroidNotificationDetails(
-              _channelId,
-              _channelName,
-              channelDescription: _channelDesc,
-              icon: 'ic_nuc_notification',
-              largeIcon: const DrawableResourceAndroidBitmap(
-                'ic_nuc_large_icon',
-              ),
-              styleInformation: BigTextStyleInformation(
-                body ?? '',
-                contentTitle: title,
-                summaryText: 'NucMCQ • New Unique Computers',
-              ),
-              importance: Importance.max,
-              priority: Priority.high,
-              color: const Color(0xFF1A73E8),
-              playSound: true,
-              enableVibration: true,
-              showWhen: true,
-            ),
-          ),
-          payload: jsonEncode(message.data),
-        );
+      // 7. Sync initial token if available asynchronously
+      _messaging?.getToken().then((currentToken) {
+        if (currentToken != null) {
+          syncTokenWithBackend(currentToken);
+        }
+      }).catchError((e) {
+        debugPrint('[FCM] Error fetching initial token: $e');
+      });
+
+      _initialized = true;
+    } catch (e) {
+      debugPrint('[FCM] Initialization error: $e');
+    } finally {
+      if (!_initCompleter.isCompleted) {
+        _initCompleter.complete();
       }
-    });
-
-    // 5. App opened from background by tapping system notification
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('[FCM] App opened via notification: ${message.data}');
-      if (message.data.isNotEmpty) {
-        this.onNotificationTap?.call(message.data);
-      }
-    });
-
-    // 6. Token refresh listener
-    _messaging?.onTokenRefresh.listen((newToken) {
-      debugPrint('[FCM] Token refreshed');
-      syncTokenWithBackend(newToken);
-    });
-
-    // 7. Sync initial token if available
-    final currentToken = await _messaging?.getToken();
-    if (currentToken != null) {
-      await syncTokenWithBackend(currentToken);
     }
-
-    _initialized = true;
   }
 
   /// Check if the app was launched from a terminated state via a notification tap.
@@ -206,8 +252,20 @@ class PushNotificationService {
 
   /// Check if the app was launched from terminated state via either FCM or local notification tap.
   Future<Map<String, dynamic>?> getInitialPayload() async {
-    if (!_initialized) return null;
     try {
+      if (!_initialized) {
+        await _initCompleter.future.timeout(
+          const Duration(seconds: 3),
+          onTimeout: () {},
+        );
+      }
+
+      if (_pendingTapPayload != null) {
+        final pending = _pendingTapPayload;
+        _pendingTapPayload = null;
+        return pending;
+      }
+
       final fcmMessage = await _messaging?.getInitialMessage();
       if (fcmMessage != null && fcmMessage.data.isNotEmpty) {
         return fcmMessage.data;
@@ -228,9 +286,9 @@ class PushNotificationService {
 
   /// Dismisses a notification from the Android notification panel by broadcast ID.
   Future<void> dismissNotification(String broadcastId) async {
-    if (!_initialized) return;
     try {
       await _localNotifications.cancel(id: broadcastId.hashCode);
+      await AppBadgeService.instance.decrementBadge();
     } catch (e) {
       debugPrint('[FCM] Error dismissing notification $broadcastId: $e');
     }
@@ -238,7 +296,6 @@ class PushNotificationService {
 
   /// Dismisses all notifications from the Android notification panel.
   Future<void> dismissAllNotifications() async {
-    if (!_initialized) return;
     try {
       await _localNotifications.cancelAll();
       await AppBadgeService.instance.removeBadge();
@@ -268,8 +325,6 @@ class PushNotificationService {
           debugPrint('[FCM] Synced token with backend successfully.');
         } on DioException catch (dioErr) {
           if (dioErr.response?.statusCode == 401) {
-            // Expected on startup when student is not logged in yet.
-            // Token is cached in SharedPreferences and will be synced upon login.
             debugPrint(
               '[FCM] Student not signed in yet (HTTP 401). Token cached locally, will sync upon login.',
             );

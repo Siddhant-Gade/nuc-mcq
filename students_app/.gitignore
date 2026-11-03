@@ -48,3 +48,7 @@ app.*.map.json
 *.keystore
 *.jks
 **/android/key.properties
+
+# Kotlin build cache
+.kotlin/
+android/.kotlin/

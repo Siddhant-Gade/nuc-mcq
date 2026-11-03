@@ -125,7 +125,7 @@ apiClient.interceptors.response.use(
         if (candidate === apiClient.defaults.baseURL) continue;
         try {
           const probeUrl = candidate ? `${candidate.replace(/\/+$/, '')}/health` : '/health';
-          const probe = await axios.get(probeUrl, { timeout: 6000 });
+          const probe = await axios.get(probeUrl, { timeout: 35000 });
           if (probe.status === 200) {
             apiClient.defaults.baseURL = candidate;
             originalRequest.baseURL = candidate;
