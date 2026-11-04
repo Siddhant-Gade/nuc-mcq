@@ -79,6 +79,7 @@ class _StudentAppState extends State<StudentApp> with WidgetsBindingObserver {
     PushNotificationService.instance.onNotificationReceived = (data) {
       if (data['type']?.toString().toUpperCase() == 'ACCOUNT_REVOKED') {
         widget.authCubit.refreshStatus();
+        rootNavigatorKey.currentState?.popUntil((route) => route.isFirst);
       }
     };
 
@@ -270,6 +271,9 @@ class _AuthGate extends StatelessWidget {
           context.read<ResultsRepository>().clear();
           context.read<ResultsCubit>().reset();
           context.read<BroadcastCubit>().reset();
+          rootNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+        } else if (state is AuthDeactivated || state is AuthUnauthorized) {
+          rootNavigatorKey.currentState?.popUntil((route) => route.isFirst);
         } else if (state is AuthAuthenticated) {
           context.read<ResultsCubit>().loadResults(refreshFromCloud: true);
           context.read<BroadcastCubit>().load();

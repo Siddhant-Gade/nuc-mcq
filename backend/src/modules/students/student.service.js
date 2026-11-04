@@ -68,28 +68,40 @@ export class StudentService {
         if (updatedAccess === undefined) {
             throw new ApiError(404, 'NOT_FOUND', 'Student access record not found.');
         }
-        if (targetStatus === 'REVOKED' && updatedAccess.authUserId) {
-            this.invalidateIdentityCache?.(updatedAccess.authUserId);
-            const body = `Your account has been deactivated. Please contact the administrator${this.supportEmail ? ` at ${this.supportEmail}` : '.'}`;
-            if (this.notificationService) {
-                await this.notificationService.create({
-                    recipientAuthUserId: updatedAccess.authUserId,
-                    title: 'Account deactivated',
-                    message: body,
-                    type: 'system',
-                    relatedRoute: '/account-deactivated',
-                });
+        if (targetStatus === 'REVOKED') {
+            try {
+                await this.sessionStore?.revokeAllSessionsByStudentProfileId(id, 'STUDENT_ACCESS_REVOKED');
+            } catch (err) {
+                console.error('[StudentService] Session revocation by profile failed:', err?.message || err);
             }
-            if (this.pushService) {
-                this.pushService.sendPush({
-                    targetType: 'INDIVIDUAL',
-                    targetAuthUserIds: [updatedAccess.authUserId],
-                    title: 'Account deactivated',
-                    body,
-                    type: 'ACCOUNT_REVOKED',
-                    actionRoute: '/account-deactivated',
-                    supportEmail: this.supportEmail,
-                }).catch((error) => console.error('[StudentService] Revocation push failed:', error.message));
+            if (updatedAccess.authUserId) {
+                try {
+                    await this.sessionStore?.revokeAllUserSessions(updatedAccess.authUserId, 'STUDENT_ACCESS_REVOKED');
+                } catch (err) {
+                    console.error('[StudentService] Session revocation by authUser failed:', err?.message || err);
+                }
+                this.invalidateIdentityCache?.(updatedAccess.authUserId);
+                const body = `Your account has been deactivated. Please contact the administrator${this.supportEmail ? ` at ${this.supportEmail}` : '.'}`;
+                if (this.notificationService) {
+                    await this.notificationService.create({
+                        recipientAuthUserId: updatedAccess.authUserId,
+                        title: 'Account deactivated',
+                        message: body,
+                        type: 'system',
+                        relatedRoute: '/account-deactivated',
+                    });
+                }
+                if (this.pushService) {
+                    this.pushService.sendPush({
+                        targetType: 'INDIVIDUAL',
+                        targetAuthUserIds: [updatedAccess.authUserId],
+                        title: 'Account deactivated',
+                        body,
+                        type: 'ACCOUNT_REVOKED',
+                        actionRoute: '/account-deactivated',
+                        supportEmail: this.supportEmail,
+                    }).catch((error) => console.error('[StudentService] Revocation push failed:', error.message));
+                }
             }
         }
         return updatedAccess;

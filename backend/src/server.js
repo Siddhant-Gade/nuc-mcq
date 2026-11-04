@@ -165,6 +165,7 @@ const notificationService = new NotificationService(new DrizzleNotificationRepos
 notificationService.pushService = pushNotificationService;
 studentService.notificationService = notificationService;
 studentService.pushService = pushNotificationService;
+studentService.sessionStore = sessionStore;
 studentService.invalidateIdentityCache = invalidateIdentityCache;
 studentService.supportEmail = env.ADMIN_SUPPORT_EMAIL;
 studentIdentityService.deviceTokenRepository = deviceTokenRepository;

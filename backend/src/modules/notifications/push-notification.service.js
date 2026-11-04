@@ -72,11 +72,12 @@ export class PushNotificationService {
                     notification: {
                         channelId: 'nuc_priority_channel',
                         icon: 'ic_nuc_notification',
+                        color: '#1A73E8',
                         sound: 'default',
                         defaultSound: true,
                         defaultVibrateTimings: true,
-                        notificationPriority: 'PRIORITY_MAX',
-                        notificationCount: 1,
+                        priority: 'max',
+                        clickAction: 'FLUTTER_NOTIFICATION_CLICK',
                     },
                 },
             };

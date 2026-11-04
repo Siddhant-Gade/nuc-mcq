@@ -82,10 +82,10 @@ export default function Sidebar() {
         { to: '/study-materials', label: t('nav.materials'), icon: 'materials' },
         { to: '/question-bank', label: t('nav.questions') || 'Question Bank', icon: 'questions' },
         { to: '/admin/create', label: t('nav.addAdmin'), icon: 'admin' },
-        { to: '/access-revocation', label: 'Access Revocation', icon: 'revoke' },
+        { to: '/access-revocation', label: t('nav.accessRevocation') || 'Access Revocation', icon: 'revoke' },
     ];
     const bottomItems = [
-        { to: '/profile', label: 'My Profile', icon: 'admin' },
+        { to: '/profile', label: t('nav.profile') || 'My Profile', icon: 'admin' },
         { to: '/settings', label: t('nav.settings'), icon: 'settings' },
     ];
 

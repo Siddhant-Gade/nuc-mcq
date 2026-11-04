@@ -62,5 +62,8 @@ export function getFirebaseAdmin() {
 }
 
 export function isFirebaseReady() {
+    if (!firebaseApp) {
+        getFirebaseAdmin();
+    }
     return firebaseApp !== null;
 }

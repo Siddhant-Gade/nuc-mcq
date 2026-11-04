@@ -20,7 +20,63 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint(
     '[FCM Background] Message received: ${message.messageId}, data: ${message.data}',
   );
+
   await AppBadgeService.instance.incrementBadge();
+  final currentBadge = await AppBadgeService.instance.getBadgeCount();
+  final badgeNumber = currentBadge > 0 ? currentBadge : 1;
+
+  final title =
+      message.notification?.title ?? message.data['title']?.toString();
+  final body = message.notification?.body ?? message.data['body']?.toString();
+
+  // Show heads-up notification in Android notification shade while app is in background or terminated
+  if (title != null && title.isNotEmpty && !kIsWeb) {
+    try {
+      final localNotifications = FlutterLocalNotificationsPlugin();
+      const initSettings = InitializationSettings(
+        android: AndroidInitializationSettings('ic_nuc_notification'),
+      );
+      await localNotifications.initialize(settings: initSettings);
+
+      final broadcastId = message.data['broadcastId']?.toString();
+      final materialId = message.data['materialId']?.toString();
+      final notifId = broadcastId != null
+          ? broadcastId.hashCode
+          : (materialId != null ? materialId.hashCode : message.hashCode);
+
+      await localNotifications.show(
+        id: notifId,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            'nuc_priority_channel',
+            'NUC Student Notifications',
+            channelDescription:
+                'This channel is used for important student notifications.',
+            icon: 'ic_nuc_notification',
+            largeIcon: const DrawableResourceAndroidBitmap('ic_nuc_large_icon'),
+            styleInformation: BigTextStyleInformation(
+              body ?? '',
+              contentTitle: title,
+              summaryText: 'NucMCQ • New Unique Computers',
+            ),
+            importance: Importance.max,
+            priority: Priority.high,
+            color: const Color(0xFF1A73E8),
+            playSound: true,
+            enableVibration: true,
+            showWhen: true,
+            channelShowBadge: true,
+            number: badgeNumber,
+          ),
+        ),
+        payload: jsonEncode(message.data),
+      );
+    } catch (e) {
+      debugPrint('[FCM Background] Local notification error: $e');
+    }
+  }
 }
 
 typedef NotificationPayloadHandler = void Function(Map<String, dynamic> data);

@@ -118,9 +118,9 @@ export default function AccessRevocation() {
     <div className={styles.container}>
       <div className={pageStyles.pageHeader}>
         <div>
-          <h1 className={pageStyles.heading}>Access Revocation</h1>
+          <h1 className={pageStyles.heading}>{t('revocation.title')}</h1>
           <p className={pageStyles.subtext}>
-            Manage student access permissions, review active enrollments, and revoke or restore student credentials.
+            {t('revocation.subtitle')}
           </p>
         </div>
       </div>
@@ -140,7 +140,7 @@ export default function AccessRevocation() {
             className={styles.search}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by name, PRN, email, or mobile..."
+            placeholder={t('revocation.searchPlaceholder')}
             aria-label="Search students"
           />
           {query && (
@@ -161,7 +161,7 @@ export default function AccessRevocation() {
             className={`${styles.filterButton} ${statusFilter === 'ALL' ? styles.selectedFilter : ''}`}
             onClick={() => setStatusFilter('ALL')}
           >
-            All Students
+            {t('revocation.allStudents')}
             <span className={styles.filterCount}>{counts.all}</span>
           </button>
           <button
@@ -170,7 +170,7 @@ export default function AccessRevocation() {
             onClick={() => setStatusFilter('ACTIVE')}
           >
             <span className={styles.activeDot} />
-            Active
+            {t('revocation.active')}
             <span className={styles.filterCount}>{counts.active}</span>
           </button>
           <button
@@ -179,7 +179,7 @@ export default function AccessRevocation() {
             onClick={() => setStatusFilter('REVOKED')}
           >
             <span className={styles.revokedDot} />
-            Revoked
+            {t('revocation.revoked')}
             <span className={styles.filterCount}>{counts.revoked}</span>
           </button>
         </div>
@@ -196,12 +196,12 @@ export default function AccessRevocation() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Student Details</th>
-                  <th>PRN</th>
-                  <th>Batch</th>
-                  <th>Admission Date</th>
-                  <th>Access Status</th>
-                  <th className={styles.textRight}>Actions</th>
+                  <th>{t('revocation.studentDetails')}</th>
+                  <th>{t('revocation.prn')}</th>
+                  <th>{t('revocation.batch')}</th>
+                  <th>{t('revocation.admissionDate')}</th>
+                  <th>{t('revocation.accessStatus')}</th>
+                  <th className={styles.textRight}>{t('revocation.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -260,7 +260,7 @@ export default function AccessRevocation() {
                       <td>
                         <span className={`${styles.statusPill} ${isRevoked ? styles.statusRevoked : styles.statusActive}`}>
                           <span className={styles.statusDot} />
-                          {isRevoked ? 'Revoked' : 'Active'}
+                          {isRevoked ? t('revocation.revoked') : t('revocation.active')}
                         </span>
                       </td>
                       <td className={styles.textRight}>
@@ -280,7 +280,7 @@ export default function AccessRevocation() {
                                   <path d="M10 2v4m0 8v4M2 10h4m8 0h4" strokeLinecap="round"/>
                                   <circle cx="10" cy="10" r="4"/>
                                 </svg>
-                                Restore Access
+                                {t('revocation.restoreAccess')}
                               </>
                             ) : (
                               <>
@@ -288,7 +288,7 @@ export default function AccessRevocation() {
                                   <circle cx="10" cy="10" r="8"/>
                                   <line x1="4.93" y1="4.93" x2="15.07" y2="15.07"/>
                                 </svg>
-                                Revoke Access
+                                {t('revocation.revokeAccess')}
                               </>
                             )}
                           </button>
@@ -317,8 +317,8 @@ export default function AccessRevocation() {
                           <circle cx="11" cy="11" r="8"/>
                           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                         </svg>
-                        <p className={styles.emptyTitle}>No matching students found</p>
-                        <p className={styles.emptySubtitle}>Try adjusting your search query or status filter.</p>
+                        <p className={styles.emptyTitle}>{t('revocation.noMatching')}</p>
+                        <p className={styles.emptySubtitle}>{t('revocation.noMatchingSub')}</p>
                       </div>
                     </td>
                   </tr>
@@ -331,26 +331,26 @@ export default function AccessRevocation() {
 
       {selectedStudent && (
         <ConfirmModal
-          title={selectedStudent.accessStatus === 'REVOKED' ? 'Restore Student Access?' : 'Revoke Student Access?'}
+          title={selectedStudent.accessStatus === 'REVOKED' ? t('revocation.modalRestoreTitle') : t('revocation.modalRevokeTitle')}
           message={
             selectedStudent.accessStatus === 'REVOKED'
-              ? 'This student will immediately regain access to the student portal, enrolled tests, and study materials.'
-              : 'This student will be immediately signed out and blocked from taking exams or accessing student portal resources.'
+              ? t('revocation.modalRestoreDesc')
+              : t('revocation.modalRevokeDesc')
           }
           avatarUrl={!imageErrors[selectedStudent.id] ? selectedStudent.photoPath : null}
           avatarInitial={selectedStudent.name ? selectedStudent.name.charAt(0).toUpperCase() : '?'}
           avatarBg={getAvatarColor(selectedStudent.name)}
           fields={[
-            { label: 'Student', value: selectedStudent.name },
-            { label: 'PRN', value: selectedStudent.studentId },
-            { label: 'Batch', value: batchMap.get(selectedStudent.batchId) || selectedStudent.batchId || 'Unassigned' },
+            { label: t('revocation.studentDetails'), value: selectedStudent.name },
+            { label: t('revocation.prn'), value: selectedStudent.studentId },
+            { label: t('revocation.batch'), value: batchMap.get(selectedStudent.batchId) || selectedStudent.batchId || 'Unassigned' },
             { label: 'Contact', value: selectedStudent.email || selectedStudent.mobile || '—' },
             {
-              label: 'New Status',
-              value: selectedStudent.accessStatus === 'REVOKED' ? 'Active' : 'Revoked',
+              label: t('revocation.accessStatus'),
+              value: selectedStudent.accessStatus === 'REVOKED' ? t('revocation.active') : t('revocation.revoked'),
             },
           ]}
-          confirmLabel={selectedStudent.accessStatus === 'REVOKED' ? 'Restore Access' : 'Revoke Access'}
+          confirmLabel={selectedStudent.accessStatus === 'REVOKED' ? t('revocation.restoreAccess') : t('revocation.revokeAccess')}
           onConfirm={handleConfirmToggle}
           onCancel={() => !savingId && setSelectedStudent(null)}
           disabled={savingId === selectedStudent.id}

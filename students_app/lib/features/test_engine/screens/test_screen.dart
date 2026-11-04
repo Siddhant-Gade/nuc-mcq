@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../auth/cubit/auth_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/localization/locale_cubit.dart';
@@ -33,6 +35,7 @@ class TestScreen extends StatefulWidget {
 
 class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateMixin {
   bool _showHelp = false;
+  Timer? _accessRevocationTimer;
   int _lastQuestionIndex = 0;
   double _dragDelta = 0.0;
   int _correctStreak = 0;
@@ -51,10 +54,17 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
       parent: _celebrationAnimController!,
       curve: Curves.elasticOut,
     );
+    // Active heartbeat: immediately enforce access revocation during mid-session of an exam
+    _accessRevocationTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted) {
+        context.read<AuthCubit>().refreshStatus(silent: true);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _accessRevocationTimer?.cancel();
     _celebrationAnimController?.dispose();
     super.dispose();
   }
@@ -188,7 +198,20 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
     final l10n = AppLocalizations.of(context);
     final langCode = context.watch<LocaleCubit>().state.languageCode;
 
-    return BlocConsumer<TestEngineCubit, TestEngineState>(
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AuthCubit, AuthState>(
+          listener: (context, authState) {
+            if (authState is AuthDeactivated ||
+                authState is AuthUnauthorized ||
+                authState is AuthUnauthenticated) {
+              _accessRevocationTimer?.cancel();
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            }
+          },
+        ),
+      ],
+      child: BlocConsumer<TestEngineCubit, TestEngineState>(
       listener: (context, state) {
         if (state.status == TestExecutionStatus.completed &&
             state.completedResult != null) {
@@ -1098,7 +1121,8 @@ class _TestScreenState extends State<TestScreen> with SingleTickerProviderStateM
         ),
       );
     },
-    );
+    ),
+  );
   }
 
   void _showQuestionPaletteSheet(BuildContext context, TestEngineState state) {

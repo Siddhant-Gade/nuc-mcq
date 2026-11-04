@@ -8,6 +8,8 @@ const translations = {
     'nav.batches': { en: 'Batches', mr: 'बॅच', hi: 'बैच' },
     'nav.admin': { en: 'Admin Management', mr: 'प्रशासन व्यवस्थापन', hi: 'प्रशासन प्रबंधन' },
     'nav.addAdmin': { en: 'Add Admin', mr: 'प्रशासक जोडा', hi: 'एडमिन जोड़ें' },
+    'nav.accessRevocation': { en: 'Access Revocation', mr: 'प्रवेश रद्दीकरण', hi: 'पहुँच निरसन' },
+    'nav.profile': { en: 'My Profile', mr: 'माझे प्रोफाईल', hi: 'मेरी प्रोफाइल' },
     'nav.broadcasts': { en: 'Broadcasts', mr: 'प्रसारण', hi: 'प्रसारण' },
     'nav.materials': { en: 'Study Materials', mr: 'अभ्यास साहित्य', hi: 'अध्ययन सामग्री' },
     'nav.questions': { en: 'Question Bank', mr: 'प्रश्न संच', hi: 'प्रश्न बैंक' },
@@ -373,7 +375,7 @@ const translations = {
     'access.pending': { en: 'PENDING', mr: 'प्रलंबित', hi: 'लंबित' },
     'access.active': { en: 'ACTIVE', mr: 'सक्रिय', hi: 'सक्रिय' },
     'access.expired': { en: 'EXPIRED', mr: 'कालबाह्य', hi: 'समाप्त' },
-    'access.revoked': { en: 'REVOKED', mr: 'मागे घेतले', hi: 'रद्द' },
+    'access.revoked': { en: 'REVOKED', mr: 'रद्द केलेले', hi: 'रद्द किया गया' },
     // ── Broadcasts ──
     'broadcast.title': { en: 'Broadcast Messages', mr: 'प्रसारण संदेश', hi: 'प्रसारण संदेश' },
     'broadcast.subtitle': { en: 'Send announcements and updates to students.', mr: 'विद्यार्थ्यांना घोषणा आणि अपडेट पाठवा.', hi: 'छात्रों को घोषणाएं और अपडेट भेजें।' },
@@ -451,6 +453,27 @@ const translations = {
     'login.secureNote': { en: 'Secure Institutional Access Only', mr: 'फक्त सुरक्षित संस्थागत प्रवेश', hi: 'केवल सुरक्षित संस्थागत पहुंच' },
     // ── Dashboard (continued) ──
     'dashboard.pending': { en: 'Pending', mr: 'प्रलंबित', hi: 'लंबित' },
+    // ── Access Revocation ──
+    'revocation.title': { en: 'Access Revocation', mr: 'प्रवेश रद्दीकरण', hi: 'पहुँच निरसन' },
+    'revocation.subtitle': { en: 'Manage student access permissions, review active enrollments, and revoke or restore student credentials.', mr: 'विद्यार्थी प्रवेश परवानग्या व्यवस्थापित करा, सक्रिय प्रवेशांचे पुनरावलोकन करा आणि प्रवेश रद्द किंवा पूर्ववत करा.', hi: 'छात्र प्रवेश अनुमतियों को प्रबंधित करें, सक्रिय नामांकनों की समीक्षा करें, और छात्र क्रेडेंशियल रद्द या पुनर्स्थापित करें।' },
+    'revocation.searchPlaceholder': { en: 'Search by name, PRN, email, or mobile...', mr: 'नाव, PRN, ईमेल किंवा मोबाईलद्वारे शोधा...', hi: 'नाम, PRN, ईमेल या मोबाइल द्वारा खोजें...' },
+    'revocation.allStudents': { en: 'All Students', mr: 'सर्व विद्यार्थी', hi: 'सभी छात्र' },
+    'revocation.active': { en: 'Active', mr: 'सक्रिय', hi: 'सक्रिय' },
+    'revocation.revoked': { en: 'Revoked', mr: 'रद्द केलेले', hi: 'रद्द किया गया' },
+    'revocation.studentDetails': { en: 'Student Details', mr: 'विद्यार्थी तपशील', hi: 'छात्र विवरण' },
+    'revocation.prn': { en: 'PRN', mr: 'PRN', hi: 'PRN' },
+    'revocation.batch': { en: 'Batch', mr: 'बॅच', hi: 'बैच' },
+    'revocation.admissionDate': { en: 'Admission Date', mr: 'प्रवेश तारीख', hi: 'प्रवेश तिथि' },
+    'revocation.accessStatus': { en: 'Access Status', mr: 'प्रवेश स्थिती', hi: 'पहुँच स्थिति' },
+    'revocation.actions': { en: 'Actions', mr: 'कृती', hi: 'कार्रवाई' },
+    'revocation.revokeAccess': { en: 'Revoke Access', mr: 'प्रवेश रद्द करा', hi: 'पहुँच रद्द करें' },
+    'revocation.restoreAccess': { en: 'Restore Access', mr: 'प्रवेश पूर्ववत करा', hi: 'पहुँच पुनर्स्थापित करें' },
+    'revocation.modalRevokeTitle': { en: 'Revoke Student Access?', mr: 'विद्यार्थी प्रवेश रद्द करायचा?', hi: 'छात्र का प्रवेश रद्द करें?' },
+    'revocation.modalRestoreTitle': { en: 'Restore Student Access?', mr: 'विद्यार्थी प्रवेश पूर्ववत करायचा?', hi: 'छात्र का प्रवेश पुनर्स्थापित करें?' },
+    'revocation.modalRevokeDesc': { en: 'This student will be immediately signed out and blocked from taking exams or accessing student portal resources.', mr: 'हा विद्यार्थी त्वरित लॉग आउट होईल आणि चालू परीक्षा किंवा विद्यार्थी पोर्टल वापरण्यापासून त्वरित रोखला जाईल.', hi: 'यह छात्र तुरंत साइन आउट हो जाएगा और चालू परीक्षा देने या छात्र पोर्टल संसाधनों तक पहुँचने से रोक दिया जाएगा।' },
+    'revocation.modalRestoreDesc': { en: 'This student will immediately regain access to the student portal, enrolled tests, and study materials.', mr: 'या विद्यार्थ्याला विद्यार्थी पोर्टल, परीक्षा आणि अभ्यास साहित्याचा प्रवेश त्वरित पुन्हा मिळेल.', hi: 'इस छात्र को छात्र पोर्टल, परीक्षाओं और अध्ययन सामग्री तक तुरंत पुनः पहुँच प्राप्त होगी।' },
+    'revocation.noMatching': { en: 'No matching students found', mr: 'कोणतेही विद्यार्थी सापडले नाहीत', hi: 'कोई मेल खाने वाले छात्र नहीं मिले' },
+    'revocation.noMatchingSub': { en: 'Try adjusting your search query or status filter.', mr: 'तुमचा शोध शब्द किंवा स्थिती फिल्टर बदलून पहा.', hi: 'अपनी खोज या स्थिति फ़िल्टर को समायोजित करके देखें।' },
 };
 export function t(key, lang) {
     return translations[key]?.[lang] ?? translations[key]?.en ?? key;
