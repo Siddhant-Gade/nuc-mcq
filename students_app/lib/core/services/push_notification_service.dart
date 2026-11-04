@@ -30,7 +30,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final body = message.notification?.body ?? message.data['body']?.toString();
 
   // Show heads-up notification in Android notification shade while app is in background or terminated
-  if (title != null && title.isNotEmpty && !kIsWeb) {
+  // If message.notification != null, Google Play Services automatically renders the system notification tray entry.
+  // We explicitly present a local notification for data-only push messages to ensure 100% immediate delivery.
+  if (message.notification == null && title != null && title.isNotEmpty && !kIsWeb) {
     try {
       final localNotifications = FlutterLocalNotificationsPlugin();
       const initSettings = InitializationSettings(
@@ -298,6 +300,30 @@ class PushNotificationService {
       if (!_initCompleter.isCompleted) {
         _initCompleter.complete();
       }
+    }
+  }
+
+  /// Explicitly requests notification permissions from the user when UI is active (Android 13+ / iOS).
+  Future<bool> requestNotificationPermissions() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidImplementation = _localNotifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        await androidImplementation?.requestNotificationsPermission();
+      }
+      final settings = await _messaging?.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+      debugPrint('[FCM] Runtime permission status: ${settings?.authorizationStatus}');
+      return settings?.authorizationStatus == AuthorizationStatus.authorized;
+    } catch (e) {
+      debugPrint('[FCM] Error requesting notification permissions: $e');
+      return false;
     }
   }
 

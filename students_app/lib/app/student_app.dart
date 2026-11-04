@@ -83,8 +83,9 @@ class _StudentAppState extends State<StudentApp> with WidgetsBindingObserver {
       }
     };
 
-    // Check if app was opened from terminated state (cold start)
+    // Request runtime notification permission on UI mount (ensures Android 13+ dialog displays)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await PushNotificationService.instance.requestNotificationPermissions();
       final initialPayload = await PushNotificationService.instance.getInitialPayload();
       if (initialPayload != null && initialPayload.isNotEmpty) {
         _handleNotificationPayload(initialPayload);

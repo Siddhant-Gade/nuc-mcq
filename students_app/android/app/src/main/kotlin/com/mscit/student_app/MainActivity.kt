@@ -17,8 +17,35 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
+import android.os.Bundle
+
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.mscit.student_app/media_scanner"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        createNotificationChannel()
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+            val channelId = "nuc_priority_channel"
+            val channel = android.app.NotificationChannel(
+                channelId,
+                "NUC Student Notifications",
+                android.app.NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Important notifications for students"
+                setShowBadge(true)
+                enableVibration(true)
+                enableLights(true)
+                lightColor = Color.BLUE
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
+            notificationManager?.createNotificationChannel(channel)
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

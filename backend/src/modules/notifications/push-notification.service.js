@@ -78,6 +78,8 @@ export class PushNotificationService {
                         defaultVibrateTimings: true,
                         priority: 'max',
                         clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+                        visibility: 'public',
+                        notificationCount: 1,
                     },
                 },
             };
