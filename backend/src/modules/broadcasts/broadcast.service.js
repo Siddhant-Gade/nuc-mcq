@@ -134,33 +134,47 @@ export class BroadcastService {
             }
         }
 
-        // Fire push notification to all students (non-blocking — never fail the publish).
+        // Dispatch FCM push notifications with guaranteed delivery
         if (this.pushService) {
-            if (existing.audienceType === 'ALL') {
-                this.pushService
-                    .sendPush({
-                        targetType: 'ALL',
-                        title: existing.title,
-                        body: existing.message,
-                        type: 'BROADCAST',
-                        broadcastId: existing.id,
-                        actionRoute: '/broadcasts',
-                    })
-                    .catch((err) => { console.error('[BroadcastService] Push failed (non-fatal):', err?.message ?? err); });
-            } else if (existing.audienceType === 'BATCH' && Array.isArray(existing.targetBatchIds)) {
-                for (const batchId of existing.targetBatchIds) {
-                    this.pushService
+            try {
+                const targetBatches = existing.audienceType === 'BATCH' && Array.isArray(existing.targetBatchIds)
+                    ? existing.targetBatchIds
+                    : [];
+                let recipientAuthUserIds = [];
+                if (typeof this.repository.getTargetStudentAuthUserIds === 'function') {
+                    recipientAuthUserIds = await this.repository.getTargetStudentAuthUserIds(targetBatches);
+                }
+
+                if (existing.audienceType === 'ALL') {
+                    await this.pushService
                         .sendPush({
-                            targetType: 'BATCH',
-                            targetBatchId: batchId,
+                            targetType: 'ALL',
+                            targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
                             title: existing.title,
                             body: existing.message,
                             type: 'BROADCAST',
                             broadcastId: existing.id,
                             actionRoute: '/broadcasts',
                         })
-                        .catch((err) => { console.error('[BroadcastService] Push failed for batch', batchId, '(non-fatal):', err?.message ?? err); });
+                        .catch((err) => { console.error('[BroadcastService] Push failed (non-fatal):', err?.message ?? err); });
+                } else if (existing.audienceType === 'BATCH' && Array.isArray(existing.targetBatchIds)) {
+                    for (const batchId of existing.targetBatchIds) {
+                        await this.pushService
+                            .sendPush({
+                                targetType: 'BATCH',
+                                targetBatchId: batchId,
+                                targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
+                                title: existing.title,
+                                body: existing.message,
+                                type: 'BROADCAST',
+                                broadcastId: existing.id,
+                                actionRoute: '/broadcasts',
+                            })
+                            .catch((err) => { console.error('[BroadcastService] Push failed for batch', batchId, '(non-fatal):', err?.message ?? err); });
+                    }
                 }
+            } catch (pushErr) {
+                console.error('[BroadcastService] Push dispatch error (non-fatal):', pushErr?.message ?? pushErr);
             }
         }
         return published;

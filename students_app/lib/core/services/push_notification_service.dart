@@ -29,10 +29,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       message.notification?.title ?? message.data['title']?.toString();
   final body = message.notification?.body ?? message.data['body']?.toString();
 
-  // Show heads-up notification in Android notification shade while app is in background or terminated
-  // If message.notification != null, Google Play Services automatically renders the system notification tray entry.
-  // We explicitly present a local notification for data-only push messages to ensure 100% immediate delivery.
-  if (message.notification == null && title != null && title.isNotEmpty && !kIsWeb) {
+  // Guarantee heads-up notification banner & badge in Android notification shade while app is in background or terminated
+  if (title != null && title.isNotEmpty && !kIsWeb) {
     try {
       final localNotifications = FlutterLocalNotificationsPlugin();
       const initSettings = InitializationSettings(
@@ -300,6 +298,24 @@ class PushNotificationService {
       if (!_initCompleter.isCompleted) {
         _initCompleter.complete();
       }
+    }
+  }
+
+  /// Checks whether notifications are currently allowed on the device.
+  Future<bool> areNotificationsEnabled() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidImplementation = _localNotifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        final enabled = await androidImplementation?.areNotificationsEnabled();
+        return enabled ?? true;
+      }
+      final settings = await _messaging?.getNotificationSettings();
+      return settings?.authorizationStatus == AuthorizationStatus.authorized;
+    } catch (_) {
+      return true;
     }
   }
 
