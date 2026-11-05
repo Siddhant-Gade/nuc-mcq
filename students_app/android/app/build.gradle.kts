@@ -92,6 +92,9 @@ android {
                 "/META-INF/notice.txt"
             )
         }
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 

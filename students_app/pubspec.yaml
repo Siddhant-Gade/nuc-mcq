@@ -25,8 +25,8 @@ dependencies:
   flutter_local_notifications: ^22.3.0
   open_filex: ^4.7.0
   youtube_player_iframe: ^4.0.4
-  firebase_core: ^4.14.0
-  firebase_messaging: ^16.6.0
+  firebase_core: ^4.15.2
+  firebase_messaging: ^16.7.1
   google_sign_in: ^6.2.2
 
 dev_dependencies:

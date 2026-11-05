@@ -39,7 +39,9 @@ Future<void> main() async {
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
-        FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+        FirebaseMessaging.onBackgroundMessage(
+          firebaseMessagingBackgroundHandler,
+        );
       } catch (e) {
         debugPrint('[Firebase] Init error: $e');
       }
@@ -47,7 +49,8 @@ Future<void> main() async {
 
     // B. Supabase initialization
     () async {
-      if (config.supabaseUrl.isNotEmpty && config.supabasePublicKey.isNotEmpty) {
+      if (config.supabaseUrl.isNotEmpty &&
+          config.supabasePublicKey.isNotEmpty) {
         try {
           await Supabase.initialize(
             url: config.supabaseUrl,
@@ -65,7 +68,10 @@ Future<void> main() async {
   ]);
 
   // API Client with Supabase JWT bearer token
-  final dio = createApiClient(config, () => supabase?.auth.currentSession?.accessToken);
+  final dio = createApiClient(
+    config,
+    () => supabase?.auth.currentSession?.accessToken,
+  );
 
   // Initialize core domain repositories
   final authRepository = AuthRepository(supabase: supabase, dio: dio);
@@ -74,14 +80,16 @@ Future<void> main() async {
   final testGenerator = TestGenerator(questionBankRepository);
   final resultsRepository = ResultsRepository(dio: dio);
   final studyMaterialsRepository = StudyMaterialsRepository(dio: dio);
-  final syncRepository = SyncRepository(resultsRepository: resultsRepository, dio: dio);
+  final syncRepository = SyncRepository(
+    resultsRepository: resultsRepository,
+    dio: dio,
+  );
+
+  // Register FCM listeners before restoring the session so notification taps
+  // received during startup are retained until StudentApp attaches its handler.
+  await PushNotificationService.instance.init(dio: dio);
 
   final authCubit = AuthCubit(authRepository)..restoreSession();
-
-  // Run push notification token synchronization asynchronously in background
-  PushNotificationService.instance.init(dio: dio).catchError((e) {
-    debugPrint('[PushNotificationService] Background init warning: $e');
-  });
 
   runApp(
     StudentApp(
@@ -96,4 +104,3 @@ Future<void> main() async {
     ),
   );
 }
-

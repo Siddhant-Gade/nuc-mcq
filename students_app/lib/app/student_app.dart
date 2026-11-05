@@ -86,11 +86,11 @@ class _StudentAppState extends State<StudentApp> with WidgetsBindingObserver {
     // Request runtime notification permission on UI mount (ensures Android 13+ dialog displays)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await PushNotificationService.instance.requestNotificationPermissions();
-      final initialPayload = await PushNotificationService.instance.getInitialPayload();
+      final initialPayload = await PushNotificationService.instance
+          .getInitialPayload();
       if (initialPayload != null && initialPayload.isNotEmpty) {
         _handleNotificationPayload(initialPayload);
       }
-
     });
   }
 
@@ -126,7 +126,7 @@ class _StudentAppState extends State<StudentApp> with WidgetsBindingObserver {
       PushNotificationService.instance.dismissNotification(broadcastId);
     }
 
-    if (type == 'AUTHORIZATION') {
+    if (type == 'AUTHORIZATION' || actionRoute == '/login') {
       widget.authCubit.refreshStatus();
       return;
     }
@@ -148,17 +148,24 @@ class _StudentAppState extends State<StudentApp> with WidgetsBindingObserver {
         actionRoute == '/broadcasts' ||
         destination == 'broadcasts' ||
         (broadcastId != null && broadcastId.isNotEmpty)) {
-      Navigator.of(navContext).push(
-        MaterialPageRoute(builder: (_) => const BroadcastsScreen()),
-      );
-    } else if ((type == 'STUDY_MATERIAL' || materialId != null) &&
+      Navigator.of(
+        navContext,
+      ).push(MaterialPageRoute(builder: (_) => const BroadcastsScreen()));
+    } else if ((type == 'STUDY_MATERIAL' ||
+            actionRoute == '/notes' ||
+            materialId != null) &&
         materialId != null &&
         materialId.isNotEmpty) {
       try {
-        final materials = await widget.studyMaterialsRepository.getAllMaterials();
+        final materials = await widget.studyMaterialsRepository
+            .getAllMaterials();
         final match = materials.where((m) => m.id == materialId).firstOrNull;
         if (match != null && navContext.mounted) {
-          StudyMaterialsScreen.openReaderModal(navContext, match, widget.studyMaterialsRepository);
+          StudyMaterialsScreen.openReaderModal(
+            navContext,
+            match,
+            widget.studyMaterialsRepository,
+          );
         }
       } catch (e) {
         debugPrint('[StudentApp] Deep-link error opening material: $e');
@@ -183,10 +190,17 @@ class _StudentAppState extends State<StudentApp> with WidgetsBindingObserver {
           BlocProvider.value(value: widget.authCubit),
           BlocProvider(create: (_) => ThemeCubit()),
           BlocProvider(create: (_) => LocaleCubit()),
-          BlocProvider(create: (_) => BookmarksCubit(widget.bookmarksRepository)),
-          BlocProvider(create: (_) => ResultsCubit(widget.resultsRepository)..loadResults()),
+          BlocProvider(
+            create: (_) => BookmarksCubit(widget.bookmarksRepository),
+          ),
+          BlocProvider(
+            create: (_) =>
+                ResultsCubit(widget.resultsRepository)..loadResults(),
+          ),
           BlocProvider(create: (_) => SyncCubit(widget.syncRepository)),
-          BlocProvider(create: (_) => BroadcastCubit(widget.broadcastRepository)..load()),
+          BlocProvider(
+            create: (_) => BroadcastCubit(widget.broadcastRepository)..load(),
+          ),
         ],
         child: BlocBuilder<LocaleCubit, Locale>(
           builder: (context, locale) {
@@ -235,13 +249,25 @@ class _AccountDeactivatedScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.block_rounded, size: 72, color: Colors.redAccent),
+              const Icon(
+                Icons.block_rounded,
+                size: 72,
+                color: Colors.redAccent,
+              ),
               const SizedBox(height: 20),
-              const Text('Account deactivated', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text(
+                'Account deactivated',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
-              const Text('Your account has been deactivated. Please contact the administrator.'),
+              const Text(
+                'Your account has been deactivated. Please contact the administrator.',
+              ),
               const SizedBox(height: 8),
-              Text('Contact: ${identity.supportEmail ?? 'the administrator'}', style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                'Contact: ${identity.supportEmail ?? 'the administrator'}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: () => context.read<AuthCubit>().signOut(),
@@ -256,10 +282,7 @@ class _AccountDeactivatedScreen extends StatelessWidget {
 }
 
 class _AuthGate extends StatelessWidget {
-  const _AuthGate({
-    required this.broadcastRepository,
-    this.onAuthenticated,
-  });
+  const _AuthGate({required this.broadcastRepository, this.onAuthenticated});
 
   final BroadcastRepository broadcastRepository;
   final VoidCallback? onAuthenticated;
@@ -284,15 +307,22 @@ class _AuthGate extends StatelessWidget {
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final Widget child = switch (state) {
-            AuthUnknown() || AuthChecking() => const _SplashScreen(key: ValueKey('splash')),
-            AuthSigningIn() || AuthUnauthenticated() => const LoginScreen(key: ValueKey('login')),
-            AuthUnauthorized(:final identity) => UnauthorizedScreen(key: const ValueKey('unauthorized'), identity: identity),
-            AuthDeactivated(:final identity) => _AccountDeactivatedScreen(identity: identity),
+            AuthUnknown() ||
+            AuthChecking() => const _SplashScreen(key: ValueKey('splash')),
+            AuthSigningIn() ||
+            AuthUnauthenticated() => const LoginScreen(key: ValueKey('login')),
+            AuthUnauthorized(:final identity) => UnauthorizedScreen(
+              key: const ValueKey('unauthorized'),
+              identity: identity,
+            ),
+            AuthDeactivated(:final identity) => _AccountDeactivatedScreen(
+              identity: identity,
+            ),
             AuthAuthenticated(:final identity) => HomeShell(
-                key: const ValueKey('home'),
-                identity: identity,
-                broadcastRepository: broadcastRepository,
-              ),
+              key: const ValueKey('home'),
+              identity: identity,
+              broadcastRepository: broadcastRepository,
+            ),
           };
 
           return AnimatedSwitcher(
@@ -308,7 +338,6 @@ class _AuthGate extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _SplashScreen extends StatelessWidget {
@@ -318,9 +347,7 @@ class _SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.googleBlue,
-        ),
+        decoration: const BoxDecoration(color: AppColors.googleBlue),
         child: const Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

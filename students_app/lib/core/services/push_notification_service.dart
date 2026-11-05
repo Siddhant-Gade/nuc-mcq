@@ -34,7 +34,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If message.notification != null, Google Play Services natively displays the
   // notification banner and content in the Android notification panel.
   // We explicitly present a local notification for data-only push messages to avoid duplicate notifications.
-  if (message.notification == null && title != null && title.isNotEmpty && !kIsWeb) {
+  if (message.notification == null &&
+      title != null &&
+      title.isNotEmpty &&
+      !kIsWeb) {
     try {
       final localNotifications = FlutterLocalNotificationsPlugin();
       const initSettings = InitializationSettings(
@@ -102,6 +105,8 @@ class PushNotificationService {
   Dio? _dio;
   bool _initialized = false;
   final Completer<void> _initCompleter = Completer<void>();
+  Future<void>? _tokenSyncInFlight;
+  String? _pendingToken;
 
   NotificationPayloadHandler? _onNotificationTap;
   NotificationReceivedHandler? onNotificationReceived;
@@ -129,15 +134,25 @@ class PushNotificationService {
     NotificationReceivedHandler? onNotificationReceived,
   }) async {
     if (_initialized) {
-      if (dio != null) _dio = dio;
-      if (onNotificationTap != null) this.onNotificationTap = onNotificationTap;
-      if (onNotificationReceived != null) this.onNotificationReceived = onNotificationReceived;
+      if (dio != null) {
+        _dio = dio;
+      }
+      if (onNotificationTap != null) {
+        this.onNotificationTap = onNotificationTap;
+      }
+      if (onNotificationReceived != null) {
+        this.onNotificationReceived = onNotificationReceived;
+      }
       return;
     }
 
     _dio = dio;
-    if (onNotificationTap != null) this.onNotificationTap = onNotificationTap;
-    if (onNotificationReceived != null) this.onNotificationReceived = onNotificationReceived;
+    if (onNotificationTap != null) {
+      this.onNotificationTap = onNotificationTap;
+    }
+    if (onNotificationReceived != null) {
+      this.onNotificationReceived = onNotificationReceived;
+    }
 
     if (Firebase.apps.isEmpty) {
       debugPrint(
@@ -229,7 +244,9 @@ class PushNotificationService {
           final badgeNumber = currentBadge > 0 ? currentBadge : 1;
 
           final broadcastId = message.data['broadcastId']?.toString();
-          final notifId = broadcastId != null ? broadcastId.hashCode : message.hashCode;
+          final notifId = broadcastId != null
+              ? broadcastId.hashCode
+              : message.hashCode;
 
           await _localNotifications.show(
             id: notifId,
@@ -287,13 +304,16 @@ class PushNotificationService {
       });
 
       // 7. Sync initial token if available asynchronously
-      _messaging?.getToken().then((currentToken) {
-        if (currentToken != null) {
-          syncTokenWithBackend(currentToken);
-        }
-      }).catchError((e) {
-        debugPrint('[FCM] Error fetching initial token: $e');
-      });
+      _messaging
+          ?.getToken()
+          .then((currentToken) {
+            if (currentToken != null) {
+              syncTokenWithBackend(currentToken);
+            }
+          })
+          .catchError((e) {
+            debugPrint('[FCM] Error fetching initial token: $e');
+          });
 
       _initialized = true;
     } catch (e) {
@@ -339,7 +359,9 @@ class PushNotificationService {
         sound: true,
         provisional: false,
       );
-      debugPrint('[FCM] Runtime permission status: ${settings?.authorizationStatus}');
+      debugPrint(
+        '[FCM] Runtime permission status: ${settings?.authorizationStatus}',
+      );
       return settings?.authorizationStatus == AuthorizationStatus.authorized;
     } catch (e) {
       debugPrint('[FCM] Error requesting notification permissions: $e');
@@ -377,8 +399,8 @@ class PushNotificationService {
         _initialPayloadHandled = true;
         return fcmMessage.data;
       }
-      final launchDetails =
-          await _localNotifications.getNotificationAppLaunchDetails();
+      final launchDetails = await _localNotifications
+          .getNotificationAppLaunchDetails();
       if (launchDetails != null && launchDetails.didNotificationLaunchApp) {
         final payload = launchDetails.notificationResponse?.payload;
         if (payload != null && payload.isNotEmpty) {
@@ -414,33 +436,58 @@ class PushNotificationService {
 
   /// Sends the active device FCM token to the backend.
   Future<void> syncTokenWithBackend([String? token]) async {
-    try {
-      final fcmToken = token ?? await _messaging?.getToken();
-      if (fcmToken == null || fcmToken.isEmpty) return;
+    final requestedToken = token ?? await _messaging?.getToken();
+    if (requestedToken == null || requestedToken.isEmpty) return;
+    _pendingToken = requestedToken;
 
+    final currentSync = _tokenSyncInFlight;
+    if (currentSync != null) {
+      await currentSync;
+      if (_pendingToken != null && _pendingToken != requestedToken) {
+        await syncTokenWithBackend(_pendingToken);
+      }
+      return;
+    }
+
+    final sync = _syncPendingToken();
+    _tokenSyncInFlight = sync;
+    try {
+      await sync;
+    } finally {
+      _tokenSyncInFlight = null;
+    }
+  }
+
+  Future<void> _syncPendingToken() async {
+    final fcmToken = _pendingToken;
+    if (fcmToken == null || fcmToken.isEmpty) {
+      return;
+    }
+
+    try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('cached_fcm_token', fcmToken);
 
-      if (_dio != null) {
-        try {
-          await _dio!.post(
-            '/api/v1/student/fcm-token',
-            data: {
-              'token': fcmToken,
-              'platform': Platform.isAndroid ? 'android' : 'ios',
-            },
-          );
-          debugPrint('[FCM] Synced token with backend successfully.');
-        } on DioException catch (dioErr) {
-          if (dioErr.response?.statusCode == 401) {
-            debugPrint(
-              '[FCM] Student not signed in yet (HTTP 401). Token cached locally, will sync upon login.',
-            );
-            return;
-          }
-          rethrow;
-        }
+      if (_dio == null) {
+        return;
       }
+      await _dio!.post(
+        '/api/v1/student/fcm-token',
+        data: {
+          'token': fcmToken,
+          'platform': Platform.isAndroid ? 'android' : 'ios',
+        },
+      );
+      if (_pendingToken == fcmToken) {
+        _pendingToken = null;
+      }
+      debugPrint('[FCM] Synced token with backend successfully.');
+    } on DioException catch (dioErr) {
+      debugPrint(
+        '[FCM] Token sync failed: HTTP ${dioErr.response?.statusCode ?? 'network error'}',
+      );
+      // Keep the token queued. AuthCubit retries after a session is restored
+      // or established, and token refresh retries automatically as well.
     } catch (e) {
       debugPrint('[FCM] Could not sync token with backend: $e');
     }

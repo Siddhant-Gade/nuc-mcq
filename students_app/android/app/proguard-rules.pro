@@ -31,6 +31,26 @@
 -keep class androidx.core.app.NotificationManagerCompat** { *; }
 -keep class androidx.core.app.Person** { *; }
 
+# OpenFile plugin & FileProvider
+-dontwarn com.crazecoder.openfile.**
+-keep class com.crazecoder.openfile.** { *; }
+-keep class androidx.core.content.FileProvider { *; }
+
+# App Links / Deep Linking
+-dontwarn com.llfbandit.app_links.**
+-keep class com.llfbandit.app_links.** { *; }
+
+# Webview & YouTube Player
+-keepclassmembers class * extends android.webkit.WebViewClient {
+   public void *(android.webkit.WebView, java.lang.String);
+   public void *(android.webkit.WebView, java.lang.String, android.graphics.Bitmap);
+}
+-keepclassmembers class * extends android.webkit.WebChromeClient {
+   public void *(android.webkit.WebView, java.lang.String);
+}
+-dontwarn android.webkit.**
+-keep class android.webkit.** { *; }
+
 # Core Desugaring & Java Time
 -dontwarn java.time.**
 -dontwarn org.codehaus.mojo.animal_sniffer.**
