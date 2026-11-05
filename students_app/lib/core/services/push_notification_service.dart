@@ -21,7 +21,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     '[FCM Background] Message received: ${message.messageId}, data: ${message.data}',
   );
 
-  await AppBadgeService.instance.incrementBadge();
+  try {
+    await AppBadgeService.instance.incrementBadge();
+  } catch (_) {}
   final currentBadge = await AppBadgeService.instance.getBadgeCount();
   final badgeNumber = currentBadge > 0 ? currentBadge : 1;
 
@@ -29,8 +31,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       message.notification?.title ?? message.data['title']?.toString();
   final body = message.notification?.body ?? message.data['body']?.toString();
 
-  // Guarantee heads-up notification banner & badge in Android notification shade while app is in background or terminated
-  if (title != null && title.isNotEmpty && !kIsWeb) {
+  // If message.notification != null, Google Play Services natively displays the
+  // notification banner and content in the Android notification panel.
+  // We explicitly present a local notification for data-only push messages to avoid duplicate notifications.
+  if (message.notification == null && title != null && title.isNotEmpty && !kIsWeb) {
     try {
       final localNotifications = FlutterLocalNotificationsPlugin();
       const initSettings = InitializationSettings(
@@ -348,8 +352,11 @@ class PushNotificationService {
     return _messaging?.getInitialMessage();
   }
 
+  bool _initialPayloadHandled = false;
+
   /// Check if the app was launched from terminated state via either FCM or local notification tap.
   Future<Map<String, dynamic>?> getInitialPayload() async {
+    if (_initialPayloadHandled) return null;
     try {
       if (!_initialized) {
         await _initCompleter.future.timeout(
@@ -361,11 +368,13 @@ class PushNotificationService {
       if (_pendingTapPayload != null) {
         final pending = _pendingTapPayload;
         _pendingTapPayload = null;
+        _initialPayloadHandled = true;
         return pending;
       }
 
       final fcmMessage = await _messaging?.getInitialMessage();
       if (fcmMessage != null && fcmMessage.data.isNotEmpty) {
+        _initialPayloadHandled = true;
         return fcmMessage.data;
       }
       final launchDetails =
@@ -373,6 +382,7 @@ class PushNotificationService {
       if (launchDetails != null && launchDetails.didNotificationLaunchApp) {
         final payload = launchDetails.notificationResponse?.payload;
         if (payload != null && payload.isNotEmpty) {
+          _initialPayloadHandled = true;
           return jsonDecode(payload) as Map<String, dynamic>;
         }
       }

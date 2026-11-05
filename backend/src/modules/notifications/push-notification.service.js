@@ -79,7 +79,7 @@ export class PushNotificationService {
                         priority: 'max',
                         clickAction: 'FLUTTER_NOTIFICATION_CLICK',
                         visibility: 'public',
-                        notificationCount: 1,
+                        tag: broadcastId ? `broadcast_${broadcastId}` : (materialId ? `material_${materialId}` : undefined),
                     },
                 },
             };

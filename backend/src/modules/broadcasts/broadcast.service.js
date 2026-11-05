@@ -157,20 +157,34 @@ export class BroadcastService {
                             actionRoute: '/broadcasts',
                         })
                         .catch((err) => { console.error('[BroadcastService] Push failed (non-fatal):', err?.message ?? err); });
-                } else if (existing.audienceType === 'BATCH' && Array.isArray(existing.targetBatchIds)) {
-                    for (const batchId of existing.targetBatchIds) {
+                } else if (existing.audienceType === 'BATCH') {
+                    if (targetBatches.length > 0) {
+                        for (const batchId of targetBatches) {
+                            await this.pushService
+                                .sendPush({
+                                    targetType: 'BATCH',
+                                    targetBatchId: batchId,
+                                    targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
+                                    title: existing.title,
+                                    body: existing.message,
+                                    type: 'BROADCAST',
+                                    broadcastId: existing.id,
+                                    actionRoute: '/broadcasts',
+                                })
+                                .catch((err) => { console.error('[BroadcastService] Push failed for batch', batchId, '(non-fatal):', err?.message ?? err); });
+                        }
+                    } else if (recipientAuthUserIds.length > 0) {
                         await this.pushService
                             .sendPush({
-                                targetType: 'BATCH',
-                                targetBatchId: batchId,
-                                targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
+                                targetType: 'INDIVIDUAL',
+                                targetAuthUserIds: recipientAuthUserIds,
                                 title: existing.title,
                                 body: existing.message,
                                 type: 'BROADCAST',
                                 broadcastId: existing.id,
                                 actionRoute: '/broadcasts',
                             })
-                            .catch((err) => { console.error('[BroadcastService] Push failed for batch', batchId, '(non-fatal):', err?.message ?? err); });
+                            .catch((err) => { console.error('[BroadcastService] Push failed (non-fatal):', err?.message ?? err); });
                     }
                 }
             } catch (pushErr) {
