@@ -254,7 +254,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   _SpecRow(label: 'Institute', value: 'New Unique Computers'),
                   _SpecRow(label: 'Curriculum', value: 'MS-CIT Authorized'),
-                  _SpecRow(label: 'App Version', value: '1.0.0'),
+                  _SpecRow(label: 'App Version', value: '1.0.1'),
                   _SpecRow(label: 'Question Bank', value: 'v${QuestionBankRepository.version} (Offline)'),
                   _SpecRow(label: 'Exam Blueprint', value: 'v${TestGenerator.currentBlueprintVersion} (25 Questions)'),
                 ],
