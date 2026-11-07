@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -57,7 +57,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         body: body,
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
-            'nuc_priority_channel',
+            'nuc_priority_v2_channel',
             'NUC Student Notifications',
             channelDescription:
                 'This channel is used for important student notifications.',
@@ -76,6 +76,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
             showWhen: true,
             channelShowBadge: true,
             number: badgeNumber,
+            category: AndroidNotificationCategory.message,
           ),
         ),
         payload: jsonEncode(message.data),
@@ -112,6 +113,45 @@ class PushNotificationService {
   NotificationReceivedHandler? onNotificationReceived;
   Map<String, dynamic>? _pendingTapPayload;
 
+  static const MethodChannel _nativeChannel = MethodChannel(
+    'com.mscit.student_app/media_scanner',
+  );
+
+  /// Returns the Android device manufacturer in lowercase (e.g. 'xiaomi', 'samsung').
+  Future<String> getDeviceManufacturer() async {
+    try {
+      if (!Platform.isAndroid) return '';
+      final manufacturer = await _nativeChannel.invokeMethod<String>(
+        'getDeviceManufacturer',
+      );
+      return manufacturer?.toLowerCase() ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// Opens the system app notification settings for NucMCQ.
+  Future<void> openNotificationSettings() async {
+    try {
+      if (Platform.isAndroid) {
+        await _nativeChannel.invokeMethod('openNotificationSettings');
+      }
+    } catch (_) {}
+  }
+
+  /// Opens Xiaomi / MIUI Auto-start manager (or OEM equivalent).
+  Future<bool> openAutoStartSettings() async {
+    try {
+      if (Platform.isAndroid) {
+        final res = await _nativeChannel.invokeMethod<bool>('openAutoStartSettings');
+        return res ?? false;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   NotificationPayloadHandler? get onNotificationTap => _onNotificationTap;
   set onNotificationTap(NotificationPayloadHandler? handler) {
     _onNotificationTap = handler;
@@ -122,7 +162,7 @@ class PushNotificationService {
     }
   }
 
-  static const String _channelId = 'nuc_priority_channel';
+  static const String _channelId = 'nuc_priority_v2_channel';
   static const String _channelName = 'NUC Student Notifications';
   static const String _channelDesc =
       'This channel is used for important student notifications.';
@@ -274,6 +314,7 @@ class PushNotificationService {
                 showWhen: true,
                 channelShowBadge: true,
                 number: badgeNumber,
+            category: AndroidNotificationCategory.message,
               ),
             ),
             payload: jsonEncode(message.data),

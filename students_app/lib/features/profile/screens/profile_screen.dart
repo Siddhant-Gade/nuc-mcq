@@ -10,6 +10,7 @@ import '../../question_bank/repository/question_bank_repository.dart';
 import '../../results/cubit/results_cubit.dart';
 import '../../sync/cubit/sync_cubit.dart';
 import '../../test_engine/services/test_generator.dart';
+import '../../../core/services/push_notification_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({
@@ -238,6 +239,94 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
+            // Push Notifications & Background Alerts
+            Text(
+              'Notifications & Instant Alerts',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            FrostedCard(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.notifications_active_outlined,
+                        size: 20,
+                        color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'WhatsApp-Style Background Delivery',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'On Xiaomi / Redmi devices (MIUI / HyperOS), the system disables background notifications for closed apps by default. To receive instant alerts like WhatsApp:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '1. Enable Autostart for NucMCQ.\n2. Set Battery Saver to "No restrictions".\n3. Enable "Floating notifications" & "Lock screen".',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.bolt_rounded, size: 16),
+                          label: const Text('Autostart', style: TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            side: BorderSide(
+                              color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                            ),
+                          ),
+                          onPressed: () => PushNotificationService.instance.openAutoStartSettings(),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.settings_outlined, size: 16),
+                          label: const Text('App Alerts', style: TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            side: BorderSide(
+                              color: isDark ? AppColors.darkBluePrimary : AppColors.googleBlue,
+                            ),
+                          ),
+                          onPressed: () => PushNotificationService.instance.openNotificationSettings(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             // Institute Info
             Text(
               'About Application',

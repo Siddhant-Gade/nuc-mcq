@@ -69,14 +69,17 @@ export class PushNotificationService {
                 tokens: chunk,
                 android: {
                     priority: 'high',
+                    ttl: 2419200,
                     notification: {
-                        channelId: 'nuc_priority_channel',
+                        channelId: 'nuc_priority_v2_channel',
                         icon: 'ic_nuc_notification',
                         color: '#1A73E8',
                         sound: 'default',
                         defaultSound: true,
                         defaultVibrateTimings: true,
                         priority: 'max',
+                        notificationCount: 1,
+                        ticker: title,
                         clickAction: 'FLUTTER_NOTIFICATION_CLICK',
                         visibility: 'public',
                         tag: broadcastId ? `broadcast_${broadcastId}` : (materialId ? `material_${materialId}` : undefined),

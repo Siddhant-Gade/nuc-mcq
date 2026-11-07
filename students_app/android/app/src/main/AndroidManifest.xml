@@ -2,6 +2,8 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
     <!-- App icon badge permissions for OEM launchers (MIUI, Samsung, Huawei, etc.) -->
@@ -36,7 +38,7 @@
             </intent-filter>
         </activity>
         <!-- FCM default notification channel & icon -->
-        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="nuc_priority_channel"/>
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="nuc_priority_v2_channel"/>
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_nuc_notification"/>
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_accent"/>
         <meta-data android:name="flutterEmbedding" android:value="2"/>

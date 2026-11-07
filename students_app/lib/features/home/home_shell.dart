@@ -59,8 +59,36 @@ class _HomeShellState extends State<HomeShell> {
         context.read<BroadcastCubit>().load();
         PushNotificationService.instance.syncTokenWithBackend();
         _checkStudyMaterialsIndicator();
+        _checkXiaomiAutostartHint();
       }
     });
+  }
+
+  Future<void> _checkXiaomiAutostartHint() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('shown_miui_autostart_hint') == true) return;
+
+      final mfg = await PushNotificationService.instance.getDeviceManufacturer();
+      if (mfg.contains('xiaomi') || mfg.contains('redmi') || mfg.contains('poco')) {
+        await prefs.setBool('shown_miui_autostart_hint', true);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Redmi/Xiaomi: Enable Autostart to receive notifications like WhatsApp when closed.',
+              style: TextStyle(fontSize: 12),
+            ),
+            duration: const Duration(seconds: 8),
+            action: SnackBarAction(
+              label: 'Enable',
+              textColor: const Color(0xFF8AB4F8),
+              onPressed: () => PushNotificationService.instance.openAutoStartSettings(),
+            ),
+          ),
+        );
+      }
+    } catch (_) {}
   }
 
   Future<void> _checkStudyMaterialsIndicator() async {
