@@ -24,6 +24,7 @@ import { QuestionBankService } from './modules/question-bank/question-bank.servi
 import { createCookieMiddleware } from './middleware/cookie.middleware.js';
 import { createCsrfMiddleware } from './middleware/csrf.middleware.js';
 import { createSessionRouter } from './modules/auth/session.routes.js';
+import { isFirebaseReady } from './config/firebase.js';
 
 export const createApp = ({
     allowedCorsOrigins,
@@ -94,7 +95,7 @@ export const createApp = ({
     }
     const authenticationMiddleware = createAuthenticationMiddleware(tokenVerifier, sessionStore, studentIdentityService);
     app.get('/health', (_request, response) => {
-        response.status(200).json(successResponse({ status: 'healthy' }));
+        response.status(200).json(successResponse({ status: 'healthy', fcmReady: isFirebaseReady() }));
     });
     app.post('/api/v1/auth/resolve-identifier', async (request, response, next) => {
         try {
