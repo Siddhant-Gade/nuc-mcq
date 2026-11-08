@@ -2,9 +2,8 @@ import React, { useEffect } from 'react';
 import styles from './QuestionDetailModal.module.css';
 
 export default function QuestionDetailModal({ question, onClose, onEdit }) {
-    if (!question) return null;
-
     useEffect(() => {
+        if (!question) return;
         function handleKeyDown(e) {
             if (e.key === 'Escape') {
                 onClose?.();
@@ -12,7 +11,9 @@ export default function QuestionDetailModal({ question, onClose, onEdit }) {
         }
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onClose]);
+    }, [question, onClose]);
+
+    if (!question) return null;
 
     const options = [
         {

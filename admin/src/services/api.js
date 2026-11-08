@@ -39,6 +39,7 @@ function extractBackendError(data) {
 }
 const apiClient = axios.create({
     baseURL: config.apiBaseUrl,
+    timeout: 15000,
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',

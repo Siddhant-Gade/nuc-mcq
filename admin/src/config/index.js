@@ -1,6 +1,7 @@
-const defaultApiBaseUrl = typeof window !== 'undefined' && window.location.hostname
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const defaultApiBaseUrl = isLocal
     ? `http://${window.location.hostname}:3000/api/v1`
-    : 'http://localhost:3000/api/v1';
+    : 'https://nuc-mcq-server.onrender.com/api/v1';
 const config = {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl,
     supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
