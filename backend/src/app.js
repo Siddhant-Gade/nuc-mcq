@@ -24,7 +24,6 @@ import { QuestionBankService } from './modules/question-bank/question-bank.servi
 import { createCookieMiddleware } from './middleware/cookie.middleware.js';
 import { createCsrfMiddleware } from './middleware/csrf.middleware.js';
 import { createSessionRouter } from './modules/auth/session.routes.js';
-import { isFirebaseReady } from './config/firebase.js';
 
 export const createApp = ({
     allowedCorsOrigins,
@@ -58,6 +57,12 @@ export const createApp = ({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
     }));
     app.use(createCorsMiddleware(allowedCorsOrigins));
+
+    // Fast un-gated health probe for Render / load balancers / monitoring
+    app.get('/health', (_request, response) => {
+        response.status(200).json(successResponse({ status: 'healthy' }));
+    });
+
     app.use(createCookieMiddleware(process.env.NODE_ENV === 'production'));
     app.use(createCsrfMiddleware(allowedCorsOrigins));
 
@@ -94,9 +99,6 @@ export const createApp = ({
         app.use('/api/v1/auth', createSessionRouter({ tokenVerifier, sessionStore, studentIdentityService }));
     }
     const authenticationMiddleware = createAuthenticationMiddleware(tokenVerifier, sessionStore, studentIdentityService);
-    app.get('/health', (_request, response) => {
-        response.status(200).json(successResponse({ status: 'healthy', fcmReady: isFirebaseReady() }));
-    });
     app.post('/api/v1/auth/resolve-identifier', async (request, response, next) => {
         try {
             const rawIdentifier = (request.body?.identifier ?? '').toString().trim();

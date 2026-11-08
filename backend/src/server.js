@@ -195,10 +195,10 @@ const app = createApp({
     database,
 });
 const server = createServer(app);
-// Close connections that have been idle or hung for more than 35 s (slightly above
-// the 30 s middleware timeout so the JSON error response reaches the client first).
-server.timeout = 35_000;
-server.keepAliveTimeout = 65_000; // Must exceed ALB/Render's 60 s idle timeout.
+// Node.js reverse-proxy / ALB keep-alive configuration:
+// headersTimeout MUST strictly exceed keepAliveTimeout to prevent dropped connections.
+server.keepAliveTimeout = 65_000;
+server.headersTimeout = 66_000;
 let isShuttingDown = false;
 
 // Run idempotent startup migrations, then start accepting traffic.
