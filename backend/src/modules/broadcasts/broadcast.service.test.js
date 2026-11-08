@@ -66,6 +66,9 @@ class FakeBroadcastRepository {
     async existsById(id) {
         return this.rows.some((row) => row.id === id);
     }
+    async getTargetStudentAuthUserIds() {
+        return ['student-1', 'student-2'];
+    }
     async removeById(id) {
         const before = this.rows.length;
         this.rows = this.rows.filter((row) => row.id !== id);
@@ -170,6 +173,25 @@ test('publishing a DRAFT stamps the timestamp exactly once', async () => {
     });
     const stored = await repository.getById('broadcast-draft');
     assert.equal(stored?.publishedAt?.getTime(), first.publishedAt?.getTime());
+});
+test('publishing dispatches the push to the resolved active students', async () => {
+    const { service } = serviceWith(draftRow());
+    const pushes = [];
+    service.pushService = {
+        async sendPush(payload) {
+            pushes.push(payload);
+            return { sentCount: 2, failedCount: 0 };
+        },
+    };
+
+    await service.publish('broadcast-draft');
+
+    assert.equal(pushes.length, 1);
+    assert.equal(pushes[0].targetType, 'INDIVIDUAL');
+    assert.deepEqual(pushes[0].targetAuthUserIds, ['student-1', 'student-2']);
+    assert.equal(pushes[0].type, 'BROADCAST');
+    assert.equal(pushes[0].broadcastId, 'broadcast-draft');
+    assert.equal(pushes[0].actionRoute, '/broadcasts');
 });
 test('publishing or fetching an unknown broadcast reports not found', async () => {
     const { service } = serviceWith();

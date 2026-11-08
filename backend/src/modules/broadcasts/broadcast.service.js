@@ -146,11 +146,14 @@ export class BroadcastService {
                 }
 
                 console.info(`[BroadcastService] Publishing push: id=${existing.id}, title="${existing.title}", audience=${existing.audienceType}, batches=${targetBatches.join(',') || 'ALL'}, eligibleStudents=${recipientAuthUserIds.length}`);
+                const pushTargetType = recipientAuthUserIds.length > 0
+                    ? 'INDIVIDUAL'
+                    : existing.audienceType;
 
                 if (existing.audienceType === 'ALL') {
                     const result = await this.pushService
                         .sendPush({
-                            targetType: 'ALL',
+                            targetType: pushTargetType,
                             targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
                             title: existing.title,
                             body: existing.message,
@@ -162,7 +165,7 @@ export class BroadcastService {
                 } else if (existing.audienceType === 'BATCH') {
                     const result = await this.pushService
                         .sendPush({
-                            targetType: 'BATCH',
+                            targetType: pushTargetType,
                             targetBatchIds: targetBatches,
                             targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
                             title: existing.title,
