@@ -29,6 +29,8 @@ const environmentSchema = z.object({
      *  Defaults to the bootstrapped admin account; override in production env. */
     SUPER_ADMIN_EMAIL: z.string().trim().email().default('newuniquesupabase@gmail.com'),
     ADMIN_SUPPORT_EMAIL: z.string().trim().email().default('newuniquesupabase@gmail.com'),
+    /** Number of trusted reverse proxy hops (e.g. Render edge proxy = 1). */
+    TRUST_PROXY: z.coerce.number().int().min(0).default(1),
 });
 const parsedEnvironment = environmentSchema.safeParse(process.env);
 if (!parsedEnvironment.success) {

@@ -41,6 +41,7 @@ export const createApp = ({
     superAdminEmail = 'newuniquesupabase@gmail.com',
     supportEmail,
     database,
+    trustProxy = 1,
 }) => {
     // Attach sessionStore and studentIdentityService to tokenVerifier so child routes inherit hybrid auth
     if (tokenVerifier) {
@@ -53,6 +54,11 @@ export const createApp = ({
     }
 
     const app = express();
+    // Trust the first reverse-proxy hop (e.g. Render edge proxy / Cloudflare)
+    // so req.ip and rate-limiting use the verified client IP from X-Forwarded-For
+    if (trustProxy !== undefined && trustProxy !== false) {
+        app.set('trust proxy', trustProxy);
+    }
     app.use(helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
     }));

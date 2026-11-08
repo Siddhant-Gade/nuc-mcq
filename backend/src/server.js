@@ -193,6 +193,7 @@ const app = createApp({
     superAdminEmail: env.SUPER_ADMIN_EMAIL,
     supportEmail: env.ADMIN_SUPPORT_EMAIL,
     database,
+    trustProxy: env.TRUST_PROXY,
 });
 const server = createServer(app);
 // Node.js reverse-proxy / ALB keep-alive configuration:

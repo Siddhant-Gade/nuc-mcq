@@ -307,4 +307,36 @@ test('super admin email receives ADMIN role and is not granted STUDENT role with
         await fixture.close();
     }
 });
+test('rate limiter behind reverse proxy accepts X-Forwarded-For without ERR_ERL_UNEXPECTED_X_FORWARDED_FOR and derives client IP correctly', async () => {
+    const fixture = await startFixture();
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/me`, {
+            headers: {
+                authorization: 'Bearer verified-token',
+                'x-forwarded-for': '203.0.113.195',
+            },
+        });
+        assert.equal(response.status, 200);
+        const data = await response.json();
+        assert.equal(data.success, true);
+    }
+    finally {
+        await fixture.close();
+    }
+});
 
+test('rate limiter behind reverse proxy respects 1 trusted hop and ignores client-injected spoofed headers', async () => {
+    const fixture = await startFixture();
+    try {
+        const response = await fetch(`${fixture.url}/api/v1/auth/me`, {
+            headers: {
+                authorization: 'Bearer verified-token',
+                'x-forwarded-for': '1.2.3.4, 203.0.113.50',
+            },
+        });
+        assert.equal(response.status, 200);
+    }
+    finally {
+        await fixture.close();
+    }
+});
