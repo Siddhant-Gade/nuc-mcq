@@ -1,4 +1,4 @@
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { studentAccess, studentDeviceTokens, studentProfiles } from './schema/index.js';
 
 export class DrizzleDeviceTokenRepository {
@@ -69,14 +69,21 @@ export class DrizzleDeviceTokenRepository {
     }
 
     /**
-     * Get tokens for a list of student user IDs.
+     * Get tokens for a list of student user IDs (only ACTIVE students).
      */
     async getTokensForUsers(authUserIds) {
         if (!authUserIds || authUserIds.length === 0) return [];
         return this.database
             .select({ fcmToken: studentDeviceTokens.fcmToken })
             .from(studentDeviceTokens)
-            .where(inArray(studentDeviceTokens.authUserId, authUserIds));
+            .innerJoin(
+                studentAccess,
+                eq(studentAccess.authUserId, studentDeviceTokens.authUserId)
+            )
+            .where(and(
+                inArray(studentDeviceTokens.authUserId, authUserIds),
+                eq(studentAccess.status, 'ACTIVE')
+            ));
     }
 
     async getTokensForAuthUsers(authUserIds) {
@@ -84,16 +91,21 @@ export class DrizzleDeviceTokenRepository {
     }
 
     /**
-     * Get all active tokens.
+     * Get all active tokens for ACTIVE students.
      */
     async getAllTokens() {
         return this.database
             .select({ fcmToken: studentDeviceTokens.fcmToken })
-            .from(studentDeviceTokens);
+            .from(studentDeviceTokens)
+            .innerJoin(
+                studentAccess,
+                eq(studentAccess.authUserId, studentDeviceTokens.authUserId)
+            )
+            .where(eq(studentAccess.status, 'ACTIVE'));
     }
 
     /**
-     * Get tokens for students enrolled in a specific batch.
+     * Get tokens for students enrolled in a specific batch (ACTIVE students only).
      */
     async getTokensForBatch(batchId) {
         return this.database
@@ -107,6 +119,31 @@ export class DrizzleDeviceTokenRepository {
                 studentProfiles,
                 eq(studentProfiles.id, studentAccess.studentProfileId)
             )
-            .where(eq(studentProfiles.batchId, batchId));
+            .where(and(
+                eq(studentProfiles.batchId, batchId),
+                eq(studentAccess.status, 'ACTIVE')
+            ));
+    }
+
+    /**
+     * Get tokens for students enrolled in any of the specified batches (ACTIVE students only).
+     */
+    async getTokensForBatches(batchIds) {
+        if (!batchIds || batchIds.length === 0) return [];
+        return this.database
+            .select({ fcmToken: studentDeviceTokens.fcmToken })
+            .from(studentDeviceTokens)
+            .innerJoin(
+                studentAccess,
+                eq(studentAccess.authUserId, studentDeviceTokens.authUserId)
+            )
+            .innerJoin(
+                studentProfiles,
+                eq(studentProfiles.id, studentAccess.studentProfileId)
+            )
+            .where(and(
+                inArray(studentProfiles.batchId, batchIds),
+                eq(studentAccess.status, 'ACTIVE')
+            ));
     }
 }

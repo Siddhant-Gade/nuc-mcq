@@ -145,8 +145,10 @@ export class BroadcastService {
                     recipientAuthUserIds = await this.repository.getTargetStudentAuthUserIds(targetBatches);
                 }
 
+                console.info(`[BroadcastService] Publishing push: id=${existing.id}, title="${existing.title}", audience=${existing.audienceType}, batches=${targetBatches.join(',') || 'ALL'}, eligibleStudents=${recipientAuthUserIds.length}`);
+
                 if (existing.audienceType === 'ALL') {
-                    await this.pushService
+                    const result = await this.pushService
                         .sendPush({
                             targetType: 'ALL',
                             targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
@@ -155,37 +157,21 @@ export class BroadcastService {
                             type: 'BROADCAST',
                             broadcastId: existing.id,
                             actionRoute: '/broadcasts',
-                        })
-                        .catch((err) => { console.error('[BroadcastService] Push failed (non-fatal):', err?.message ?? err); });
+                        });
+                    console.info(`[BroadcastService] Push result for ALL: sent=${result?.sentCount}, failed=${result?.failedCount}`);
                 } else if (existing.audienceType === 'BATCH') {
-                    if (targetBatches.length > 0) {
-                        for (const batchId of targetBatches) {
-                            await this.pushService
-                                .sendPush({
-                                    targetType: 'BATCH',
-                                    targetBatchId: batchId,
-                                    targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
-                                    title: existing.title,
-                                    body: existing.message,
-                                    type: 'BROADCAST',
-                                    broadcastId: existing.id,
-                                    actionRoute: '/broadcasts',
-                                })
-                                .catch((err) => { console.error('[BroadcastService] Push failed for batch', batchId, '(non-fatal):', err?.message ?? err); });
-                        }
-                    } else if (recipientAuthUserIds.length > 0) {
-                        await this.pushService
-                            .sendPush({
-                                targetType: 'INDIVIDUAL',
-                                targetAuthUserIds: recipientAuthUserIds,
-                                title: existing.title,
-                                body: existing.message,
-                                type: 'BROADCAST',
-                                broadcastId: existing.id,
-                                actionRoute: '/broadcasts',
-                            })
-                            .catch((err) => { console.error('[BroadcastService] Push failed (non-fatal):', err?.message ?? err); });
-                    }
+                    const result = await this.pushService
+                        .sendPush({
+                            targetType: 'BATCH',
+                            targetBatchIds: targetBatches,
+                            targetAuthUserIds: recipientAuthUserIds.length > 0 ? recipientAuthUserIds : undefined,
+                            title: existing.title,
+                            body: existing.message,
+                            type: 'BROADCAST',
+                            broadcastId: existing.id,
+                            actionRoute: '/broadcasts',
+                        });
+                    console.info(`[BroadcastService] Push result for BATCH (${targetBatches.join(',')}): sent=${result?.sentCount}, failed=${result?.failedCount}`);
                 }
             } catch (pushErr) {
                 console.error('[BroadcastService] Push dispatch error (non-fatal):', pushErr?.message ?? pushErr);
