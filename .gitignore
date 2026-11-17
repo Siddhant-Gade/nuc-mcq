@@ -17,6 +17,7 @@ build/
 serviceAccountKey.json
 */serviceAccountKey.json
 firebase-service-account.json
+*firebase-adminsdk*.json
 
 # Logs
 *.log
